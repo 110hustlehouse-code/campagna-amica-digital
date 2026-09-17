@@ -52,3 +52,22 @@ export async function getRegisteredCompanies(): Promise<Company[]> {
     await supabase.from('companies').select('*').eq('is_registered', true).order('name'),
     'Aziende registrate')
 }
+
+/**
+ * Imposta i mercati in cui l'azienda e' presente.
+ *
+ * Passa da una funzione del database perche' l'operazione tocca anche
+ * la tabella markets, che un produttore non puo' modificare
+ * direttamente. La funzione verifica la proprieta' dell'azienda e
+ * aggiorna entrambi i lati della relazione in una sola transazione.
+ */
+export async function sincronizzaMercati(
+  companyId: string,
+  marketIds: string[],
+): Promise<void> {
+  const { error } = await supabase.rpc('sincronizza_mercati_azienda', {
+    p_company_id: companyId,
+    p_market_ids: marketIds,
+  })
+  if (error) throw error
+}

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/api/client';
-import { getMyCompany, createCompany, updateCompany } from '@/api/companies';
-import { getMarkets, updateMarket } from '@/api/markets';
+import { getMyCompany, createCompany, updateCompany, sincronizzaMercati } from '@/api/companies';
+import { getMarkets } from '@/api/markets';
 import { uploadFile } from '@/api/storage';
 import { invokeLLM } from '@/api/ai';
 import { useAuth } from '@/lib/AuthContext';
@@ -73,22 +73,10 @@ export default function ProducerCompany() {
         companyId = created?.id;
       }
 
-      // 2. Sincronizza company_ids nei mercati
-      const newMarketIds = data.market_ids || [];
-      const allMarkets = await getMarkets();
-      await Promise.all(allMarkets.map(async (market) => {
-        const hasCompany = (market.company_ids || []).includes(companyId);
-        const shouldHave = newMarketIds.includes(market.id);
-        if (shouldHave && !hasCompany) {
-          await updateMarket(market.id, {
-            company_ids: [...(market.company_ids || []), companyId]
-          });
-        } else if (!shouldHave && hasCompany) {
-          await updateMarket(market.id, {
-            company_ids: (market.company_ids || []).filter(id => id !== companyId)
-          });
-        }
-      }));
+      // 2. Mercati in cui l'azienda e' presente.
+      // Una sola chiamata: la funzione del database verifica i permessi
+      // e tiene allineate le due tabelle.
+      await sincronizzaMercati(companyId, data.market_ids || []);
     },
     onSuccess: () => {
       qc.invalidateQueries(['my-company']);

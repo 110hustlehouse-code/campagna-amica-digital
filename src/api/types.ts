@@ -1779,9 +1779,25 @@ export type Database = {
         Args: Record<string, unknown>   // nessuno
         Returns: boolean
       }
+      is_staff_of_market: {
+        Args: Record<string, unknown>   // p_market_id uuid
+        Returns: boolean
+      }
+      my_markets: {
+        Args: Record<string, unknown>   // nessuno
+        Returns: Json
+      }
       next_ddt_number: {
         Args: Record<string, unknown>   // p_company_id uuid, p_anno integer
         Returns: number
+      }
+      owns_company: {
+        Args: Record<string, unknown>   // p_company_id uuid
+        Returns: boolean
+      }
+      sincronizza_mercati_azienda: {
+        Args: Record<string, unknown>   // p_company_id uuid, p_market_ids uuid[]
+        Returns: Json
       }
       user_role: {
         Args: Record<string, unknown>   // nessuno
