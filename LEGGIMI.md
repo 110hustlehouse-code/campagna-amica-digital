@@ -1,55 +1,64 @@
-# DDT — documento di trasporto
+# Area amministrazione
 
-## File
+## 1. SQL — per primo
 
-- `src/pages/producer/ProducerDDT.jsx` — NUOVO, emissione lato produttore
-- `src/pages/staff/StaffDDT.jsx` — NUOVO, documenti in arrivo al mercato
-- `src/components/layout/ProducerLayout.jsx` — voce DDT nella barra
-- `src/components/layout/StaffLayout.jsx` — voce DDT nella barra
-- `src/App.jsx` — le due rotte
+`8_admin.sql` nel SQL Editor. Crea tre funzioni:
+
+- `metriche_territorio` — aggrega a qualsiasi livello: Italia, regione,
+  provincia, comune, quartiere
+- `riepilogo_nazionale` — i numeri di testa della dashboard
+- `ddt_nazionali` — il registro completo con il territorio risolto
+
+Le aggregazioni girano nel database. Sommare l'archivio DDT nazionale nel
+browser significherebbe scaricarlo tutto a ogni apertura della pagina.
+
+Le tre funzioni sono revocate a `anon`: le puo' eseguire solo un utente
+autenticato, e le policy filtrano comunque cio' che vede.
+
+## 2. File dell'app
 
 ```
 npm run build
 ```
 
-Non serve SQL: le tabelle ci sono dal primo giorno.
+## 3. Come si entra
 
-## Come funziona per il produttore
+Chi ha ruolo `admin` viene portato in `/admin` appena accede, senza
+passare dalla scelta del ruolo. Gli altri, se provano ad andarci, vengono
+rimandati indietro.
 
-1. **Nuovo** → sceglie il mercato di destinazione e la causale
-2. Aggiunge la merce, prendendola dal proprio catalogo o scrivendola
-3. **Crea bozza** — modificabile quanto si vuole, nessun numero assegnato
-4. **Emetti** — il documento riceve il numero progressivo e diventa
-   immutabile
-5. **Consegnato** quando la merce arriva
-6. **Annulla** se c'è un errore: il documento resta negli archivi con il
-   motivo, e se ne emette uno nuovo
+Il controllo nel browser serve solo a nascondere il menu: la protezione
+vera e' nel database.
 
-## Perche' la bozza non ha numero
+## Panoramica
 
-Il progressivo dei DDT non puo' avere buchi. Se il numero venisse
-assegnato alla creazione, ogni bozza abbandonata brucerebbe un numero
-della serie. Viene assegnato all'emissione, quando il documento diventa
-reale.
+Quattro numeri in testa — mercati attivi, aziende, DDT del periodo, merce
+tracciata — e sotto la tabella territoriale.
 
-## Come funziona per lo staff
+Si parte dalle regioni. Toccando una riga si scende: regione → province →
+comuni → quartieri → mercati. Il percorso in alto riporta indietro a
+qualsiasi livello.
 
-Vede i documenti in arrivo al proprio mercato dall'inizio del mese, con
-il conteggio di documenti, aziende coinvolte e consegne. Puo' cercare per
-azienda o numero e aprire il dettaglio della merce.
+Nella colonna DDT il secondo numero e' quello dei documenti gia'
+consegnati: la distanza fra i due dice quanto la rete chiude il ciclo.
 
-Non puo' modificarli: il DDT appartiene a chi lo emette.
+## Registro DDT
 
-## Nella barra di navigazione
+Tutti i documenti nazionali, filtrabili per periodo, regione e stato,
+con ricerca per azienda o mercato.
 
-Lato produttore, DDT prende il posto di "AI", che resta raggiungibile
-dalla home. Lato staff prende il posto di "Affitti", raggiungibile dalla
-dashboard. Le barre hanno cinque posti e il DDT e' la funzione che vale
-di piu' mostrare.
+- **CSV** esporta quello che si sta guardando, per Excel
+- **Analizza** manda al modello i totali per regione e chiede una lettura
+  in cinque frasi. Al modello vanno solo gli aggregati, mai i documenti:
+  i dati delle singole aziende non escono dal database.
 
-## Cosa manca ancora
+"Analizza" richiede la chiave Anthropic e la funzione `invokeLLM`
+pubblicata. Senza, il resto della pagina funziona lo stesso.
 
-- **PDF stampabile**: ora la stampa usa quella del browser. Un PDF
-  formale con logo e firma va fatto in una Edge Function.
-- **Firma di ricezione**: la tabella ha i campi, l'interfaccia no.
-- **Vista admin nazionale**: e' la fase successiva.
+## Diagnostica
+
+Ora copre anche admin e le nuove pagine:
+
+```
+RUOLO=admin node strumenti/diagnostica.mjs
+```

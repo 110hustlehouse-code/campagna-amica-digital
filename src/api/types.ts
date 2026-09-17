@@ -1767,6 +1767,10 @@ export type Database = {
       }
     }
     Functions: {
+      ddt_nazionali: {
+        Args: Record<string, unknown>   // p_dal date DEFAULT NULL::date, p_al date DEFAULT NULL::date, p_regione text DEFAULT NULL::text, p_stato text DEFAULT NULL::text, p_limite integer DEFAULT 100
+        Returns: Json
+      }
       emetti_ddt: {
         Args: Record<string, unknown>   // p_ddt_id uuid
         Returns: Json
@@ -1783,6 +1787,10 @@ export type Database = {
         Args: Record<string, unknown>   // p_market_id uuid
         Returns: boolean
       }
+      metriche_territorio: {
+        Args: Record<string, unknown>   // p_livello text, p_ambito text DEFAULT NULL::text, p_dal date DEFAULT NULL::date, p_al date DEFAULT NULL::date
+        Returns: Json
+      }
       my_markets: {
         Args: Record<string, unknown>   // nessuno
         Returns: Json
@@ -1794,6 +1802,10 @@ export type Database = {
       owns_company: {
         Args: Record<string, unknown>   // p_company_id uuid
         Returns: boolean
+      }
+      riepilogo_nazionale: {
+        Args: Record<string, unknown>   // p_dal date DEFAULT NULL::date, p_al date DEFAULT NULL::date
+        Returns: Json
       }
       sincronizza_mercati_azienda: {
         Args: Record<string, unknown>   // p_company_id uuid, p_market_ids uuid[]

@@ -21,6 +21,7 @@ const UTENTI = {
   cliente:    'cliente@test.local',
   produttore: 'produttore@test.local',
   staff:      'staff@test.local',
+  admin:      '110hustlehouse@gmail.com',
 }
 const ruolo = process.env.RUOLO ?? 'cliente'
 const email = UTENTI[ruolo] ?? ruolo
@@ -28,9 +29,11 @@ const email = UTENTI[ruolo] ?? ruolo
 const PERCORSI = {
   cliente:    ['/home', '/mercati', '/aziende', '/preferiti', '/ordini', '/stagionalita', '/profilo'],
   produttore: ['/produttore', '/produttore/prodotti', '/produttore/ordini', '/produttore/azienda',
-               '/produttore/mercati', '/produttore/disponibilita', '/produttore/fornitori', '/produttore/ddt'],
+               '/produttore/mercati', '/produttore/disponibilita', '/produttore/fornitori',
+               '/produttore/ddt', '/produttore/listino-ai'],
   staff:      ['/staff', '/staff/bisogni', '/staff/crea-evento', '/staff/affitti',
                '/staff/team', '/staff/assenze', '/staff/profilo', '/staff/ddt'],
+  admin:      ['/admin', '/admin/ddt'],
 }
 
 const browser = await chromium.launch()

@@ -48,7 +48,15 @@ export default function Login() {
       provider: 'google',
       options: { redirectTo: `${window.location.origin}/` },
     })
-    if (error) setErrore(error.message)
+    if (!error) return
+
+    // Finche' Google non e' configurato su Supabase, l'errore che arriva
+    // e' tecnico e incomprensibile: meglio dire cosa fare.
+    setErrore(
+      /provider is not enabled|Unsupported provider/i.test(error.message)
+        ? "L'accesso con Google non e ancora attivo. Usa email e password."
+        : error.message,
+    )
   }
 
   return (
