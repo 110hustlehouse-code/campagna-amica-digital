@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { getMyProfile } from '@/api/auth';
+import { getMyStaffMember } from '@/api/staff';
+import { getNeedsByMarket, updateNeed } from '@/api/needs';
+import { getCompaniesByMarket } from '@/api/companies';
 import { useAuth } from '@/lib/AuthContext';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
@@ -14,12 +17,12 @@ export default function AbsenceCalendar() {
   const qc = useQueryClient();
   const [showHistory, setShowHistory] = useState(false);
 
-  const { data: me } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
+  const { data: me } = useQuery({ queryKey: ['me'], queryFn: getMyProfile });
 
   const { data: staffProfile } = useQuery({
     queryKey: ['staffProfile', me?.email],
     queryFn: async () => {
-      const list = await base44.entities.StaffMember.filter({ email: me.email }, '-updated_date', 1);
+      const list = await getMyStaffMember();
       return list[0] || null;
     },
     enabled: !!me?.email,
@@ -30,7 +33,7 @@ export default function AbsenceCalendar() {
   const { data: companies = [] } = useQuery({
     queryKey: ['dash-companies', staffMarketId],
     queryFn: async () => {
-      const all = await base44.entities.Company.filter({ is_registered: true }, '-updated_date', 500);
+      const all = await getCompaniesByMarket(staffMarketId);
       return all.filter(c => c.market_ids?.includes(staffMarketId));
     },
     enabled: !!staffMarketId,
@@ -38,13 +41,13 @@ export default function AbsenceCalendar() {
 
   const { data: absences = [], isLoading } = useQuery({
     queryKey: ['absences', staffMarketId],
-    queryFn: () => base44.entities.CompanyNeed.filter({ market_id: staffMarketId }, '-created_date', 500),
+    queryFn: () => getNeedsByMarket(staffMarketId),
     enabled: !!staffMarketId,
     select: (data) => data.filter(n => n.title?.includes('Assenza segnalata')),
   });
 
   const resolveMutation = useMutation({
-    mutationFn: (id) => base44.entities.CompanyNeed.update(id, { status: 'resolved' }),
+    mutationFn: (id) => updateNeed(id, { status: 'resolved' }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['absences', staffMarketId] });
       qc.invalidateQueries({ queryKey: ['dash-needs', staffMarketId] });

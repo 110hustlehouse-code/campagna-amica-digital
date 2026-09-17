@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import { useTheme } from '@/lib/ThemeContext';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/api/client';
+import { aggiornaProfilo } from '@/api/auth';
+import { invokeFunction } from '@/api/functions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -30,7 +32,7 @@ export default function ClientProfile() {
   const handleSaveProfile = async () => {
     setIsSaving(true);
     try {
-      await base44.auth.updateMe({ phone, city });
+      await aggiornaProfilo({ phone });
       toast.success('Profilo aggiornato');
     } catch (error) {
       toast.error('Errore nel salvataggio');
@@ -51,9 +53,9 @@ export default function ClientProfile() {
       return;
     }
     try {
-      await base44.functions.invoke('deleteUserAccount', {});
+      await invokeFunction('deleteUserAccount', {});
       toast.success('Account eliminato permanentemente');
-      await base44.auth.logout();
+      await supabase.auth.signOut();
       navigate('/benvenuto');
     } catch (err) {
       toast.error(err.message || 'Errore nell\'eliminazione dell\'account');

@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { subscribeTable } from '@/api/client';
+import { getPublishedMessages } from '@/api/staff';
+import { getRsvpsByMarket } from '@/api/events';
+import { getRegisteredCompanies } from '@/api/companies';
 import { Calendar, MapPin, AlertCircle, Clock, Users, Check, X, ChevronDown, ChevronUp, Zap } from 'lucide-react';
 import { format, isPast, isToday, differenceInDays } from 'date-fns';
 import { it } from 'date-fns/locale';
@@ -26,10 +29,10 @@ export default function MarketEventsSection({ marketId }) {
   const qc = useQueryClient();
 
   useEffect(() => {
-    const unsub1 = base44.entities.ProducerEventRsvp.subscribe(() => {
+    const unsub1 = subscribeTable('producer_event_rsvps', () => {
       qc.invalidateQueries({ queryKey: ['market-rsvps', marketId] });
     });
-    const unsub2 = base44.entities.StaffMessage.subscribe(() => {
+    const unsub2 = subscribeTable('staff_messages', () => {
       qc.invalidateQueries({ queryKey: ['market-staff-events', marketId] });
     });
     return () => { unsub1(); unsub2(); };
@@ -38,7 +41,7 @@ export default function MarketEventsSection({ marketId }) {
   const { data: events = [] } = useQuery({
     queryKey: ['market-staff-events', marketId],
     queryFn: async () => {
-      const all = await base44.entities.StaffMessage.filter({ is_published: true, market_id: marketId });
+      const all = await getPublishedMessages(marketId);
       return all
         .filter(m => m.type === 'event')
         .sort((a, b) => {
@@ -55,14 +58,14 @@ export default function MarketEventsSection({ marketId }) {
 
   const { data: allRsvps = [] } = useQuery({
     queryKey: ['market-rsvps', marketId],
-    queryFn: () => base44.entities.ProducerEventRsvp.filter({ market_id: marketId }),
+    queryFn: () => getRsvpsByMarket(marketId),
     enabled: !!marketId,
     refetchInterval: 30000,
   });
 
   const { data: companies = [] } = useQuery({
     queryKey: ['all-companies-map'],
-    queryFn: () => base44.entities.Company.filter({ is_registered: true }, '-created_date', 500),
+    queryFn: getRegisteredCompanies,
   });
 
   const companyMap = Object.fromEntries(companies.map(c => [c.id, c]));

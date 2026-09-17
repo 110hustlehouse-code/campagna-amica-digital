@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { getMarkets } from '@/api/markets';
+import { getMessagesByType, updateMessage, deleteMessage } from '@/api/staff';
 import { format, isBefore, isAfter, startOfToday, addDays } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { CalendarPlus, Clock, CheckCircle, AlertCircle, ChevronRight, Edit2, Trash2, Loader2 } from 'lucide-react';
@@ -27,12 +28,12 @@ export default function EventsSection({ marketId }) {
 
   const { data: markets = [] } = useQuery({
     queryKey: ['markets-list'],
-    queryFn: () => base44.entities.Market.list('name', 500),
+    queryFn: getMarkets,
   });
 
   const { data: events = [], isLoading } = useQuery({
     queryKey: ['staff-events', marketId],
-    queryFn: () => base44.entities.StaffMessage.filter({ type: 'event' }, '-event_date', 200),
+    queryFn: () => getMessagesByType('event'),
     refetchInterval: 30000,
   });
 
@@ -44,7 +45,7 @@ export default function EventsSection({ marketId }) {
     : events;
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.StaffMessage.update(id, data),
+    mutationFn: ({ id, data }) => updateMessage(id, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['staff-events'] });
       setEditingEvent(null);
@@ -54,7 +55,7 @@ export default function EventsSection({ marketId }) {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.StaffMessage.delete(id),
+    mutationFn: deleteMessage,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['staff-events'] });
       setExpanded(null);

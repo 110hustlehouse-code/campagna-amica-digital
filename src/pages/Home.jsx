@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { subscribeTable } from '@/api/client';
+import { getRegisteredCompanies } from '@/api/companies';
+import { getMarkets } from '@/api/markets';
+import { getMyNotifications } from '@/api/notifications';
 import { useAuth } from '@/lib/AuthContext';
 import { Building2, MapPin, ShoppingBag, Sprout, ArrowRight, Leaf, Bell, Award, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -16,17 +19,17 @@ export default function Home() {
 
   const { data: companies = [] } = useQuery({
     queryKey: ['companies-featured'],
-    queryFn: () => base44.entities.Company.filter({ is_registered: true }, '-created_date', 50),
+    queryFn: getRegisteredCompanies,
   });
 
   const { data: markets = [] } = useQuery({
     queryKey: ['markets-count'],
-    queryFn: () => base44.entities.Market.list('-created_date', 50),
+    queryFn: getMarkets,
   });
 
   const { data: notifications = [] } = useQuery({
     queryKey: ['my-notifications', user?.email],
-    queryFn: () => base44.entities.Notification.filter({ user_email: user?.email }),
+    queryFn: () => getMyNotifications(),
     enabled: !!user?.email,
   });
 
@@ -34,13 +37,13 @@ export default function Home() {
 
   useEffect(() => {
     if (!user?.email) return;
-    const unsub1 = base44.entities.Company.subscribe(() => {
+    const unsub1 = subscribeTable('companies', () => {
       qc.invalidateQueries({ queryKey: ['companies-featured'] });
     });
-    const unsub2 = base44.entities.Market.subscribe(() => {
+    const unsub2 = subscribeTable('markets', () => {
       qc.invalidateQueries({ queryKey: ['markets-count'] });
     });
-    const unsub3 = base44.entities.Notification.subscribe(() => {
+    const unsub3 = subscribeTable('notifications', () => {
       qc.invalidateQueries({ queryKey: ['my-notifications', user?.email] });
     });
     return () => {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { markMessageRead } from '@/api/staff';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -27,14 +27,7 @@ export default function StaffMessageModal({ message, open, onOpenChange, company
 
   const markAsReadMutation = useMutation({
     mutationFn: async () => {
-      const user = await base44.auth.me();
-      return base44.entities.StaffMessageRead.create({
-        message_id: message?.id,
-        producer_email: user.email,
-        company_id: companyId,
-        read_at: new Date().toISOString(),
-        feedback: feedback || null,
-      });
+      return markMessageRead(message.id, companyId ?? null, feedback || undefined);
     },
     onSuccess: () => {
       qc.invalidateQueries(['message-reads']);

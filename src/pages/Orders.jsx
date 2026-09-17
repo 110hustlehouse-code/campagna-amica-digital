@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { getMyOrders, deleteOrder } from '@/api/orders';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ShoppingBag, Loader2, MapPin, Calendar, Pencil, Trash2, Leaf, ArrowRight } from 'lucide-react';
@@ -18,11 +18,11 @@ export default function Orders() {
 
   const { data: orders = [], isLoading, refetch } = useQuery({
     queryKey: ['orders'],
-    queryFn: () => base44.entities.Order.list('-created_date', 100),
+    queryFn: getMyOrders,
   });
 
   const deleteOrder = useMutation({
-    mutationFn: (id) => base44.entities.Order.delete(id),
+    mutationFn: deleteOrder,
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ['orders'] });
       const prev = queryClient.getQueryData(['orders']);

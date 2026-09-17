@@ -62,3 +62,23 @@ export async function segnaPagato(id: string): Promise<SupplierPayment> {
       .eq('id', id).select().single(),
     'Pagamento saldato')
 }
+
+export async function getPaymentsBySupplier(supplierId: string): Promise<SupplierPayment[]> {
+  return unwrapMany(
+    await supabase.from('supplier_payments').select('*')
+      .eq('supplier_id', supplierId).order('due_date'),
+    'Pagamenti del fornitore')
+}
+
+export async function updatePayment(
+  id: string, patch: TablesUpdate<'supplier_payments'>,
+): Promise<SupplierPayment> {
+  return unwrapOne(
+    await supabase.from('supplier_payments').update(patch).eq('id', id).select().single(),
+    'Aggiornamento pagamento')
+}
+
+export async function deletePayment(id: string): Promise<void> {
+  const { error } = await supabase.from('supplier_payments').delete().eq('id', id)
+  if (error) throw error
+}

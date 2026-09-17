@@ -1,6 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { getNews } from '@/api/news';
 import { Newspaper, ExternalLink, Loader2 } from 'lucide-react';
 
 const SOURCE_CONFIG = {
@@ -11,7 +11,7 @@ const SOURCE_CONFIG = {
 export default function ColdirettiNewsSection() {
   const { data: news = [], isLoading } = useQuery({
     queryKey: ['news-cache'],
-    queryFn: () => base44.entities.NewsCache.list('-created_date', 6),
+    queryFn: () => getNews(6),
     staleTime: 10 * 60 * 1000,
   });
 

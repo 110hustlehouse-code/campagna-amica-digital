@@ -1,6 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { getCompany } from '@/api/companies';
+import { getProductsByCompany } from '@/api/products';
+import { getMyFavorites, aggiungiPreferito, rimuoviPreferito } from '@/api/favorites';
+import { getReviews } from '@/api/reviews';
+import { getOrdersByCompany } from '@/api/orders';
+import { getMarkets } from '@/api/markets';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -39,31 +44,31 @@ export default function CompanyDetail() {
   const { data: company, isLoading } = useQuery({
     queryKey: ['company', companyId],
     queryFn: async () => {
-      const list = await base44.entities.Company.filter({ id: companyId });
+      const list = [await getCompany(companyId)].filter(Boolean);
       return list[0];
     },
   });
 
   const { data: products = [] } = useQuery({
     queryKey: ['products', companyId],
-    queryFn: () => base44.entities.Product.filter({ company_id: companyId }),
+    queryFn: () => getProductsByCompany(companyId),
     enabled: !!companyId,
   });
 
   const { data: favorites = [] } = useQuery({
     queryKey: ['favorites'],
-    queryFn: () => base44.entities.Favorite.list(),
+    queryFn: getMyFavorites,
   });
 
   const { data: reviews = [] } = useQuery({
     queryKey: ['reviews', companyId],
-    queryFn: () => base44.entities.Review.filter({ company_id: companyId }, '-created_date', 100),
+    queryFn: () => getReviews(companyId),
     enabled: !!companyId,
   });
 
   const { data: myOrders = [] } = useQuery({
     queryKey: ['my-orders-company', companyId],
-    queryFn: () => base44.entities.Order.filter({ company_id: companyId }),
+    queryFn: () => getOrdersByCompany(companyId),
     enabled: !!companyId,
   });
 
@@ -71,7 +76,7 @@ export default function CompanyDetail() {
     queryKey: ['company-markets', companyId],
     queryFn: async () => {
       if (!company?.market_ids?.length) return [];
-      const all = await base44.entities.Market.list();
+      const all = await getMarkets();
       return all.filter(m => company.market_ids.includes(m.id));
     },
     enabled: !!company,
@@ -93,9 +98,9 @@ export default function CompanyDetail() {
     mutationFn: async () => {
       if (isFav) {
         const fav = favorites.find(f => f.company_id === companyId && !f.product_id);
-        await base44.entities.Favorite.delete(fav.id);
+        await rimuoviPreferito(fav.id);
       } else {
-        await base44.entities.Favorite.create({ company_id: companyId });
+        await aggiungiPreferito({ company_id: companyId });
       }
     },
     onSuccess: () => {
@@ -108,9 +113,9 @@ export default function CompanyDetail() {
     mutationFn: async (product) => {
       const existing = favorites.find(f => f.product_id === product.id && f.company_id === companyId);
       if (existing) {
-        await base44.entities.Favorite.delete(existing.id);
+        await rimuoviPreferito(existing.id);
       } else {
-        await base44.entities.Favorite.create({ company_id: companyId, product_id: product.id });
+        await aggiungiPreferito({ product_id: product.id });
       }
     },
     onSuccess: () => {

@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/api/client';
+import { getMyProfile } from '@/api/auth';
+import { getMyStaffMember, updateStaffMember } from '@/api/staff';
+import { getMarkets, updateMarket } from '@/api/markets';
+import { uploadFile } from '@/api/storage';
+import { invokeFunction } from '@/api/functions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -56,7 +61,7 @@ export default function StaffProfile() {
 
   const { data: markets = [] } = useQuery({
     queryKey: ['markets-list'],
-    queryFn: () => base44.entities.Market.list('name', 500),
+    queryFn: getMarkets,
   });
 
   // GPS detection
@@ -83,7 +88,7 @@ export default function StaffProfile() {
 
   const updateMarketMutation = useMutation({
     mutationFn: (marketId) =>
-      base44.entities.StaffMember.update(staffMember.id, { market_id: marketId }),
+      updateStaffMember(staffMember.id, { market_id: marketId }),
     onSuccess: (data) => {
       setStaffMember(data);
       qc.invalidateQueries({ queryKey: ['staff-profile'] });
@@ -94,7 +99,7 @@ export default function StaffProfile() {
 
   const updatePositionMutation = useMutation({
     mutationFn: (position) =>
-      base44.entities.StaffMember.update(staffMember.id, { position }),
+      updateStaffMember(staffMember.id, { position }),
     onSuccess: (data) => {
       setStaffMember(data);
       setEditPosition(false);
@@ -105,7 +110,7 @@ export default function StaffProfile() {
 
   const updatePhoneMutation = useMutation({
     mutationFn: (phone) =>
-      base44.entities.StaffMember.update(staffMember.id, { phone }),
+      updateStaffMember(staffMember.id, { phone }),
     onSuccess: (data) => {
       setStaffMember(data);
       setEditPhone(false);
@@ -117,9 +122,9 @@ export default function StaffProfile() {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const userData = await base44.auth.me();
+        const userData = await getMyProfile();
         setUser(userData);
-        const staff = await base44.entities.StaffMember.filter({ email: userData.email }, '-updated_date', 1);
+        const staff = await getMyStaffMember();
         if (staff.length > 0) {
           setStaffMember(staff[0]);
           setSelectedMarket(staff[0].market_id || '');
@@ -142,7 +147,7 @@ export default function StaffProfile() {
   };
 
   const handleLogout = async () => {
-    await base44.auth.logout();
+    await supabase.auth.signOut();
     navigate('/benvenuto');
   };
 
@@ -153,9 +158,9 @@ export default function StaffProfile() {
     }
     try {
       // Delete user via backend (requires a function)
-      await base44.functions.invoke('deleteUserAccount', {});
+      await invokeFunction('deleteUserAccount', {});
       toast({ title: 'Account eliminato', description: 'Il tuo account è stato eliminato permanentemente' });
-      await base44.auth.logout();
+      await supabase.auth.signOut();
       navigate('/benvenuto');
     } catch (err) {
       toast({ title: 'Errore', description: err.message, variant: 'destructive' });
@@ -176,8 +181,8 @@ export default function StaffProfile() {
   const handleMarketPhotoUpload = async (file) => {
     if (!currentMarket) return;
     setUploadingMarketPhoto(true);
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    await base44.entities.Market.update(currentMarket.id, { image_url: file_url });
+    const { file_url } = await uploadFile(file, 'mercati');
+    await updateMarket(currentMarket.id, { image_url: file_url });
     qc.invalidateQueries({ queryKey: ['markets-list'] });
     qc.invalidateQueries({ queryKey: ['markets-count'] });
     qc.invalidateQueries({ queryKey: ['market', currentMarket.id] });

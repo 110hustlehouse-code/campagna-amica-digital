@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { getMessageReads, markMessageRead } from '@/api/staff';
+import { getRegisteredCompanies } from '@/api/companies';
+import { getMyProfile } from '@/api/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -15,36 +17,20 @@ export default function StaffMessageDetails({ message, open, onOpenChange }) {
 
   const { data: reads = [] } = useQuery({
     queryKey: ['message-reads', message?.id],
-    queryFn: () => base44.entities.StaffMessageRead.filter({ message_id: message?.id }),
+    queryFn: () => getMessageReads(message.id),
     enabled: !!message?.id,
   });
 
   const { data: companies = [] } = useQuery({
     queryKey: ['companies-registered'],
-    queryFn: () => base44.entities.Company.filter({ is_registered: true }),
+    queryFn: getRegisteredCompanies,
   });
 
   const markAsReadMutation = useMutation({
     mutationFn: async (feedback) => {
-      const user = await base44.auth.me();
+      const user = await getMyProfile();
       const userCompany = companies.find(c => c.created_by === user.email);
-      
-      const existingRead = reads.find(r => r.producer_email === user.email && r.message_id === message.id);
-      
-      if (existingRead) {
-        return base44.entities.StaffMessageRead.update(existingRead.id, {
-          feedback: feedback,
-          read_at: new Date().toISOString(),
-        });
-      } else {
-        return base44.entities.StaffMessageRead.create({
-          message_id: message.id,
-          producer_email: user.email,
-          company_id: userCompany?.id,
-          read_at: new Date().toISOString(),
-          feedback: feedback,
-        });
-      }
+      return markMessageRead(message.id, userCompany?.id ?? null, feedback);
     },
     onSuccess: () => {
       qc.invalidateQueries(['message-reads']);

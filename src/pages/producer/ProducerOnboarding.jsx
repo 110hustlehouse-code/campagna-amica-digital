@@ -49,7 +49,7 @@ export default function ProducerOnboarding() {
   const handleStart = async () => {
     try {
       setLoading(true);
-      await base44.auth.updateMe({ producer_onboarded: true });
+      // l'onboarding del produttore non richiede piu' un flag sul profilo
       await refreshUser();
       navigate('/produttore');
     } catch (error) {

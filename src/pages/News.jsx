@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { invokeLLM } from '@/api/ai';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,7 +38,7 @@ export default function News() {
     queryKey: ['coldiretti-news', city],
     queryFn: async () => {
       const cityContext = city ? `Includi anche notizie specifiche per la città di ${city} e la sua provincia/regione.` : '';
-      const result = await base44.integrations.Core.InvokeLLM({
+      const result = await invokeLLM({
         prompt: `Vai su www.coldiretti.it e cerca le ultime notizie pubblicate. 
         Restituisci esattamente le 10 notizie più recenti trovate su coldiretti.it.
         ${cityContext}

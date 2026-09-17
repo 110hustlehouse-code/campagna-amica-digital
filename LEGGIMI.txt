@@ -1,21 +1,34 @@
-BLOCCO 2 — data layer completo + accesso
+MIGRAZIONE COMPLETA A SUPABASE — 77 file
 
-NUOVI moduli in src/api/:
-  staff.ts          staff, comunicazioni, letture
-  events.ts         eventi di mercato e adesioni
-  needs.ts          bisogni delle aziende
-  rentals.ts        affitti banchi e pagamenti
-  suppliers.ts      fornitori e scadenze
-  notifications.ts  notifiche
-  favorites.ts      preferiti
-  reviews.ts        recensioni
+Tutte le 241 chiamate a Base44 sono state convertite. Il progetto
+compila (npm run build) senza alcuna dipendenza da Base44.
 
-SOSTITUISCE:
-  src/lib/AuthContext.jsx   <-- ATTENZIONE: rimpiazza il file esistente.
-                                La versione Base44 viene sovrascritta.
+CONTENUTO
+  src/api/          22 moduli del data layer (nuovi o aggiornati)
+  src/pages/        tutte le pagine migrate
+  src/components/   tutti i componenti migrati
+  src/lib/          AuthContext e PageNotFound
 
-NUOVO:
-  src/pages/Login.jsx       schermata di accesso
+I file sostituiscono quelli esistenti: e' previsto. Il design,
+i colori e il layout NON sono stati toccati: cambia solo da dove
+arrivano i dati.
 
-Dopo l'estrazione servono due modifiche a mano in src/App.jsx:
-vedi PASSI_APP.md
+DOPO L'ESTRAZIONE
+  npx tsc --noEmit    deve passare senza errori
+  npm run build       deve completare
+  npm run dev         per provare
+
+COSA NON FUNZIONA ANCORA (previsto)
+  - le funzionalita' che passano da Edge Functions: notifiche via
+    email, export PDF ordini, analisi listino con AI, sincronizzazione
+    mercati, news Coldiretti. Le 16 functions vanno ancora portate su
+    Deno: e' la prossima fase.
+  - il caricamento di immagini richiede che i bucket di Supabase Storage
+    siano creati (vedi BUCKET.md)
+
+DA SISTEMARE PRIMA DEL PILOT
+  - i loghi Coldiretti e Campagna Amica sono ancora immagini ospitate su
+    media.base44.com: vanno spostate su Supabase Storage, altrimenti
+    l'app dipende da Base44 anche dopo la migrazione
+  - i codici di accesso staff e produttore sono scritti nel frontend e
+    leggibili da chiunque: servono inviti veri

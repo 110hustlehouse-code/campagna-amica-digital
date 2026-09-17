@@ -1,7 +1,7 @@
 import React from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/api/client';
 import { useAuth } from '@/lib/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingBag, Heart, MapPin, Building2, Newspaper, LogOut, ChevronRight, User, X, Leaf } from 'lucide-react';
@@ -108,7 +108,7 @@ export default function ProfileDrawer({ open, onClose }) {
           <Button
             variant="outline"
             className="w-full gap-2 text-destructive border-destructive/30 hover:bg-destructive/5"
-            onClick={() => base44.auth.logout()}
+            onClick={() => supabase.auth.signOut()}
           >
             <LogOut className="w-4 h-4" />
             Esci dall'account

@@ -62,3 +62,16 @@ export async function registraPagamento(p: TablesInsert<'rental_payments'>): Pro
     }).select().single(),
     'Registrazione pagamento')
 }
+
+/** Affitti di tutti i mercati visibili all'utente. */
+export async function getAllRentals(): Promise<StallRental[]> {
+  return unwrapMany(
+    await supabase.from('stall_rentals').select('*, companies(name)')
+      .order('rental_start_date', { ascending: false }),
+    'Tutti gli affitti') as unknown as StallRental[]
+}
+
+export async function deleteRental(id: string): Promise<void> {
+  const { error } = await supabase.from('stall_rentals').delete().eq('id', id)
+  if (error) throw error
+}

@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { getMyCompany } from '@/api/companies';
+import { getMarkets } from '@/api/markets';
+import { getAllMarketEvents, getAssignmentsByCompany, getMyRsvps, assignStand } from '@/api/events';
+import { getProductsByCompany } from '@/api/products';
+import { getPublishedMessagesAll } from '@/api/staff';
+import { invokeFunction } from '@/api/functions';
 import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,42 +35,42 @@ export default function ProducerMarkets() {
 
   const { data: myCompany } = useQuery({
     queryKey: ['my-company', user?.email],
-    queryFn: () => base44.entities.Company.filter({ created_by: user?.email }),
+    queryFn: getMyCompany,
     enabled: !!user?.email,
     select: d => d[0],
   });
 
   const { data: markets = [] } = useQuery({
     queryKey: ['all-markets'],
-    queryFn: () => base44.entities.Market.list('-created_date', 500),
+    queryFn: getMarkets,
   });
 
   const { data: marketEvents = [], isLoadingEvents } = useQuery({
     queryKey: ['market-events'],
-    queryFn: () => base44.entities.MarketEvent.list('-event_date', 500),
+    queryFn: getAllMarketEvents,
   });
 
   const { data: products = [] } = useQuery({
     queryKey: ['my-products', myCompany?.id],
-    queryFn: () => base44.entities.Product.filter({ company_id: myCompany?.id }),
+    queryFn: () => getProductsByCompany(myCompany.id),
     enabled: !!myCompany?.id,
   });
 
   const { data: assignments = [] } = useQuery({
     queryKey: ['my-assignments', myCompany?.id],
-    queryFn: () => base44.entities.CompanyMarketAssignment.filter({ company_id: myCompany?.id }),
+    queryFn: () => getAssignmentsByCompany(myCompany.id),
     enabled: !!myCompany?.id,
   });
 
   const { data: staffMessages = [] } = useQuery({
     queryKey: ['staff-messages-published'],
-    queryFn: () => base44.entities.StaffMessage.filter({ is_published: true }),
+    queryFn: () => getPublishedMessagesAll(200),
   });
 
   // Load my RSVP records from DB
   const { data: myRsvps = [], refetch: refetchRsvps } = useQuery({
     queryKey: ['my-rsvps', myCompany?.id],
-    queryFn: () => base44.entities.ProducerEventRsvp.filter({ company_id: myCompany?.id }),
+    queryFn: () => getMyRsvps(myCompany.id),
     enabled: !!myCompany?.id,
   });
 
@@ -85,7 +90,7 @@ export default function ProducerMarkets() {
         assigned_product_ids: selectedProducts,
         status: 'pending',
       };
-      return base44.entities.CompanyMarketAssignment.create(data);
+      return assignStand(data);
     },
     onSuccess: () => {
       qc.invalidateQueries(['my-assignments']);
@@ -104,7 +109,7 @@ export default function ProducerMarkets() {
 
   const rsvpMutation = useMutation({
     mutationFn: async ({ messageId, status }) => {
-      await base44.functions.invoke('rsvpProducerEvent', {
+      await invokeFunction('rsvpProducerEvent', {
         message_id: messageId,
         company_id: myCompany.id,
         status,

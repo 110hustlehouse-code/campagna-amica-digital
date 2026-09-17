@@ -70,3 +70,19 @@ export function onAuthChange(cb: (signedIn: boolean) => void): () => void {
   const { data } = supabase.auth.onAuthStateChange((_e, session) => cb(!!session))
   return () => data.subscription.unsubscribe()
 }
+
+/**
+ * Aggiorna i dati del proprio profilo.
+ * Ruolo e conferma ruolo non passano da qui: hanno funzioni dedicate e
+ * regole proprie.
+ */
+export async function aggiornaProfilo(
+  patch: { full_name?: string; phone?: string; avatar_url?: string },
+): Promise<Profile> {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new DataError('Nessun utente collegato')
+  const { data, error } = await supabase
+    .from('profiles').update(patch).eq('id', user.id).select().single()
+  if (error) throw new DataError(`Aggiornamento profilo: ${error.message}`)
+  return data
+}

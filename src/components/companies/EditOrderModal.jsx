@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { getAvailableProducts } from '@/api/products';
+import { updateOrder } from '@/api/orders';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,7 +18,7 @@ export default function EditOrderModal({ open, onClose, order }) {
   // Load products for this company
   const { data: products = [] } = useQuery({
     queryKey: ['products-for-edit', order?.company_id],
-    queryFn: () => base44.entities.Product.filter({ company_id: order.company_id, available: true }),
+    queryFn: () => getAvailableProducts(order.company_id),
     enabled: !!order?.company_id && open,
   });
 
@@ -51,7 +52,7 @@ export default function EditOrderModal({ open, onClose, order }) {
   const cartTotal = cart.reduce((sum, i) => sum + i.total, 0);
 
   const updateOrder = useMutation({
-    mutationFn: (data) => base44.entities.Order.update(order.id, data),
+    mutationFn: (data) => updateOrder(order.id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       onClose();

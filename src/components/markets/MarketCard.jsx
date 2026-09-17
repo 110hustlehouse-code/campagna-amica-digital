@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { getMyFavorites, aggiungiPreferito, rimuoviPreferito } from '@/api/favorites';
 import { Card, CardContent } from '@/components/ui/card';
 import { MapPin, Clock, Building2, Heart } from 'lucide-react';
 import { toast } from 'sonner';
@@ -11,7 +11,7 @@ export default function MarketCard({ market, distance, registeredCompanyCount })
 
   const { data: favorites = [] } = useQuery({
     queryKey: ['favorites'],
-    queryFn: () => base44.entities.Favorite.list(),
+    queryFn: getMyFavorites,
   });
 
   const isFav = favorites.some(f => f.market_id === market.id && !f.company_id && !f.product_id);
@@ -20,9 +20,9 @@ export default function MarketCard({ market, distance, registeredCompanyCount })
     mutationFn: async () => {
       if (isFav) {
         const fav = favorites.find(f => f.market_id === market.id && !f.company_id && !f.product_id);
-        await base44.entities.Favorite.delete(fav.id);
+        await rimuoviPreferito(fav.id);
       } else {
-        await base44.entities.Favorite.create({ market_id: market.id, company_id: '' });
+        await aggiungiPreferito({ market_id: market.id });
       }
     },
     onSuccess: () => {

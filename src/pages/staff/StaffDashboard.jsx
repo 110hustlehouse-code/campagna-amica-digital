@@ -1,7 +1,13 @@
 // v8
 import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { subscribeTable } from '@/api/client';
+import { getMyProfile } from '@/api/auth';
+import { getMyStaffMember } from '@/api/staff';
+import { getNeedsByMarket } from '@/api/needs';
+import { getRentalsByMarket } from '@/api/rentals';
+import { getCompaniesByMarket } from '@/api/companies';
+import { getMyNotifications, segnaLetta } from '@/api/notifications';
 import { format, startOfToday } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { AlertCircle, TrendingUp, Clock, CalendarPlus, ChevronDown, Users, CalendarOff, Leaf } from 'lucide-react';
@@ -42,16 +48,13 @@ export default function StaffDashboard() {
   // 1. Carica l'utente corrente
   const { data: me } = useQuery({
     queryKey: ['me'],
-    queryFn: () => base44.auth.me(),
+    queryFn: getMyProfile,
   });
 
   // 2. Carica il profilo staff per ottenere il market_id
   const { data: staffProfile } = useQuery({
     queryKey: ['staffProfile', me?.email],
-    queryFn: async () => {
-      const list = await base44.entities.StaffMember.filter({ email: me.email }, '-updated_date', 1);
-      return list[0] || null;
-    },
+    queryFn: getMyStaffMember,
     enabled: !!me?.email,
   });
 
@@ -61,45 +64,45 @@ export default function StaffDashboard() {
   // 3. Real-time subscriptions (solo quando il marketId è noto)
   useEffect(() => {
     if (!staffReady) return;
-    const u1 = base44.entities.CompanyNeed.subscribe(() => {
+    const u1 = subscribeTable('company_needs', () => {
       qc.invalidateQueries({ queryKey: ['dash-needs', staffMarketId] });
-    });
-    const u2 = base44.entities.StallRental.subscribe(() => {
+    }, { filtro: `market_id=eq.${staffMarketId}` });
+    const u2 = subscribeTable('stall_rentals', () => {
       qc.invalidateQueries({ queryKey: ['dash-rentals', staffMarketId] });
-    });
-    const u3 = base44.entities.Company.subscribe(() => {
+    }, { filtro: `market_id=eq.${staffMarketId}` });
+    const u3 = subscribeTable('companies', () => {
       qc.invalidateQueries({ queryKey: ['dash-companies', staffMarketId] });
     });
-    const u4 = base44.entities.StaffMessage.subscribe(() => {
+    const u4 = subscribeTable('staff_messages', () => {
       qc.invalidateQueries({ queryKey: ['dash-events', staffMarketId] });
-    });
+    }, { filtro: `market_id=eq.${staffMarketId}` });
     return () => { u1(); u2(); u3(); u4(); };
   }, [staffReady, staffMarketId, qc]);
 
   // Notifiche fuori stagione non lette per questo staff
   const { data: seasonalAlerts = [] } = useQuery({
     queryKey: ['seasonal-alerts', me?.email],
-    queryFn: () => base44.entities.Notification.filter({ user_email: me.email, read: false }, '-created_date', 50),
+    queryFn: () => getMyNotifications(true),
     enabled: !!me?.email,
     select: (data) => data.filter(n => n.title?.includes('fuori stagione')),
   });
 
   const markAlertRead = async (id) => {
-    await base44.entities.Notification.update(id, { read: true });
+    await segnaLetta(id);
     qc.invalidateQueries({ queryKey: ['seasonal-alerts', me?.email] });
   };
 
   // 4. Bisogni filtrati per mercato (tutti gli stati per la dashboard)
   const { data: needs = [] } = useQuery({
     queryKey: ['dash-needs', staffMarketId],
-    queryFn: () => base44.entities.CompanyNeed.filter({ market_id: staffMarketId }, '-updated_date', 200),
+    queryFn: () => getNeedsByMarket(staffMarketId),
     enabled: staffReady,
   });
 
   // 5. Affitti del mercato (tutti gli stati)
   const { data: rentals = [] } = useQuery({
     queryKey: ['dash-rentals', staffMarketId],
-    queryFn: () => base44.entities.StallRental.filter({ market_id: staffMarketId }, '-updated_date', 200),
+    queryFn: () => getRentalsByMarket(staffMarketId),
     enabled: staffReady,
   });
 
@@ -107,8 +110,8 @@ export default function StaffDashboard() {
   const { data: companies = [] } = useQuery({
     queryKey: ['dash-companies', staffMarketId],
     queryFn: async () => {
-      const all = await base44.entities.Company.filter({ is_registered: true }, '-updated_date', 500);
-      return all.filter(c => c.market_ids?.includes(staffMarketId));
+      const aziende = await getCompaniesByMarket(staffMarketId);
+      return aziende.filter(c => c.is_registered);
     },
     enabled: staffReady,
   });

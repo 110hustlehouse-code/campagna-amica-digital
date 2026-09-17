@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { getMyCompany } from '@/api/companies';
+import { uploadFile } from '@/api/storage';
+import { invokeFunction } from '@/api/functions';
 import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Sparkles, Upload, CheckCircle2, Package, AlertCircle, FileText, Image, Wand2, ArrowRight, Award, Leaf } from 'lucide-react';
@@ -28,7 +30,7 @@ export default function ProducerListinoAI() {
 
   const { data: myCompany } = useQuery({
     queryKey: ['my-company', user?.email],
-    queryFn: () => base44.entities.Company.filter({ created_by: user?.email }),
+    queryFn: getMyCompany,
     enabled: !!user?.email,
     select: d => d[0],
   });
@@ -85,13 +87,13 @@ export default function ProducerListinoAI() {
     setStatus('analyzing');
     setResult(null);
     setErrorMsg('');
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    const { file_url } = await uploadFile(file, 'allegati');
     
     // Retry logic per gestire timeout (504)
     let res, retries = 0;
     while (retries < 3) {
       try {
-        res = await base44.functions.invoke('analyzeListino', { file_url, company_id: myCompany.id });
+        res = await invokeFunction('analyzeListino', { file_url, company_id: myCompany.id });
         break;
       } catch (err) {
         if (err.response?.status === 504 && retries < 2) {

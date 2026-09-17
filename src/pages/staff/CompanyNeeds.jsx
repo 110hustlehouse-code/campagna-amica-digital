@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { getMyStaffMember } from '@/api/staff';
+import { getNeedsByMarket, getAllNeeds, createNeed, updateNeed, deleteNeed } from '@/api/needs';
+import { getRegisteredCompanies } from '@/api/companies';
+import { getMarkets } from '@/api/markets';
+import { invokeFunction } from '@/api/functions';
 import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -64,11 +68,7 @@ export default function CompanyNeeds() {
   useEffect(() => {
     const fetchStaff = async () => {
       try {
-        const staff = await base44.entities.StaffMember.filter(
-          { email: user?.email },
-          '-updated_date',
-          1
-        );
+        const staff = await getMyStaffMember();
         if (staff.length > 0) {
           setStaffMember(staff[0]);
           // Auto-set the market from staff member
@@ -85,26 +85,26 @@ export default function CompanyNeeds() {
 
   const { data: needs = [], isLoading } = useQuery({
     queryKey: ['company-needs', staffMember?.market_id],
-    queryFn: () => base44.entities.CompanyNeed.filter({ market_id: staffMember.market_id }, '-created_date', 500),
+    queryFn: () => getNeedsByMarket(staffMember.market_id),
     enabled: !!staffMember?.market_id,
   });
 
   const { data: companies = [] } = useQuery({
     queryKey: ['companies-list'],
-    queryFn: () => base44.entities.Company.filter({ is_registered: true }, 'name', 500),
+    queryFn: getRegisteredCompanies,
   });
 
   const { data: markets = [] } = useQuery({
     queryKey: ['markets-list'],
-    queryFn: () => base44.entities.Market.list('name', 500),
+    queryFn: getMarkets,
   });
 
   const createMutation = useMutation({
     mutationFn: (data) => {
       if (editingId) {
-        return base44.entities.CompanyNeed.update(editingId, data);
+        return updateNeed(editingId, data);
       }
-      return base44.entities.CompanyNeed.create(data);
+      return createNeed(data);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['company-needs'] });
@@ -118,7 +118,7 @@ export default function CompanyNeeds() {
 
   const updatePaymentMutation = useMutation({
     mutationFn: ({ id, payment_status }) =>
-      base44.entities.CompanyNeed.update(id, { payment_status }),
+      updateNeed(id, { payment_status }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['company-needs'] });
       toast({ title: 'Stato pagamento aggiornato' });
@@ -127,7 +127,7 @@ export default function CompanyNeeds() {
 
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, status }) =>
-      base44.entities.CompanyNeed.update(id, { status }),
+      updateNeed(id, { status }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['company-needs'] });
       toast({ title: 'Stato aggiornato' });
@@ -135,7 +135,7 @@ export default function CompanyNeeds() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.CompanyNeed.delete(id),
+    mutationFn: deleteNeed,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['company-needs'] });
       toast({ title: 'Bisogno eliminato' });
@@ -144,12 +144,12 @@ export default function CompanyNeeds() {
 
   const quickReplyMutation = useMutation({
     mutationFn: async ({ id, message }) => {
-      await base44.entities.CompanyNeed.update(id, { notes: message, status: 'in_progress' });
+      await updateNeed(id, { notes: message, status: 'in_progress' });
       // Find the need to get company_id
-      const allNeeds = await base44.entities.CompanyNeed.list();
+      const allNeeds = await getAllNeeds();
       const need = allNeeds.find(n => n.id === id);
       if (need) {
-        await base44.functions.invoke('notifyProducerNeedResponse', {
+        await invokeFunction('notifyProducerNeedResponse', {
           need_id: id,
           message: message,
           company_id: need.company_id

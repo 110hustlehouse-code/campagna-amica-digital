@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { getMarket } from '@/api/markets';
+import { getRegisteredCompanies } from '@/api/companies';
+import { getAllAvailableProducts } from '@/api/products';
+import { getMyFavorites, aggiungiPreferito, rimuoviPreferito } from '@/api/favorites';
+import { createOrder } from '@/api/orders';
+import { getPublishedMessages } from '@/api/staff';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -25,24 +30,24 @@ export default function MarketDetail() {
   const { data: market, isLoading } = useQuery({
     queryKey: ['market', marketId],
     queryFn: async () => {
-      const list = await base44.entities.Market.filter({ id: marketId });
+      const list = [await getMarket(marketId)].filter(Boolean);
       return list[0];
     },
   });
 
   const { data: allCompanies = [] } = useQuery({
     queryKey: ['all-companies'],
-    queryFn: () => base44.entities.Company.filter({ is_registered: true }, '-created_date', 200),
+    queryFn: getRegisteredCompanies,
   });
 
   const { data: allProducts = [] } = useQuery({
     queryKey: ['all-products'],
-    queryFn: () => base44.entities.Product.list('-created_date', 500),
+    queryFn: getAllAvailableProducts,
   });
 
   const { data: favorites = [] } = useQuery({
     queryKey: ['favorites'],
-    queryFn: () => base44.entities.Favorite.list(),
+    queryFn: getMyFavorites,
   });
 
   const companies = allCompanies.filter(c => market?.company_ids?.includes(c.id));
@@ -51,16 +56,16 @@ export default function MarketDetail() {
     mutationFn: async (companyId) => {
       const existing = favorites.find(f => f.company_id === companyId && f.market_id === marketId);
       if (existing) {
-        await base44.entities.Favorite.delete(existing.id);
+        await rimuoviPreferito(existing.id);
       } else {
-        await base44.entities.Favorite.create({ company_id: companyId, market_id: marketId });
+        await aggiungiPreferito({ company_id: companyId });
       }
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['favorites'] }),
   });
 
   const createOrder = useMutation({
-    mutationFn: (orderData) => base44.entities.Order.create(orderData),
+    mutationFn: createOrder,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       setOrderDialog(false);
@@ -115,7 +120,7 @@ export default function MarketDetail() {
   const { data: eventsCount = 0 } = useQuery({
     queryKey: ['market-events-count', marketId],
     queryFn: async () => {
-      const all = await base44.entities.StaffMessage.filter({ is_published: true, market_id: marketId });
+      const all = await getPublishedMessages(marketId);
       return all.filter(m => m.type === 'event').length;
     },
     enabled: !!marketId,

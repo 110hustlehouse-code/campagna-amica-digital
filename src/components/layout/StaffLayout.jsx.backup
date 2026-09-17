@@ -3,7 +3,7 @@ import { Outlet, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { Bell, AlertCircle, DollarSign, CalendarPlus, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { getMyStaffMember, contaBisogniAperti } from '@/api/staff';
+import { base44 } from '@/api/base44Client';
 import PageTransition from '../shared/PageTransition';
 import UnifiedBottomNav from './UnifiedBottomNav';
 import Footer from '../shared/Footer';
@@ -30,23 +30,19 @@ export default function StaffLayout() {
     profilo: ['/staff/profilo'],
   });
 
-  const [myMarketId, setMyMarketId] = useState(null);
-
   useEffect(() => {
-    getMyStaffMember()
-      .then((staff) => {
-        setMarketConfirmed(!!staff && staff.market_confirmed === true);
-        setMyMarketId(staff?.market_id ?? null);
-      })
-      .catch(() => setMarketConfirmed(false));
+    base44.auth.me().then(async (me) => {
+      const staff = await base44.entities.StaffMember.filter({ email: me.email }, '-updated_date', 1);
+      setMarketConfirmed(staff.length > 0 && staff[0].market_confirmed === true);
+    }).catch(() => setMarketConfirmed(false));
   }, []);
 
   useEffect(() => {
-    if (marketConfirmed !== true || !myMarketId) return;
-    contaBisogniAperti(myMarketId)
-      .then(setOpenNeedsCount)
+    if (marketConfirmed !== true) return;
+    base44.entities.CompanyNeed.filter({ status: 'open' }, '-updated_date', 100)
+      .then(needs => setOpenNeedsCount(needs.length))
       .catch(() => {});
-  }, [marketConfirmed, myMarketId]);
+  }, [marketConfirmed]);
 
   useEffect(() => {
     const section = navItems.find(n => location.pathname === n.path)?.section || 'dashboard';

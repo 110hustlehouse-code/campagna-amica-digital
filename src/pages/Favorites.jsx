@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { getMyFavorites, rimuoviPreferito } from '@/api/favorites';
+import { getCompanies } from '@/api/companies';
+import { getMarkets } from '@/api/markets';
 import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -122,21 +124,21 @@ export default function Favorites() {
 
   const { data: favorites = [], isLoading } = useQuery({
     queryKey: ['favorites'],
-    queryFn: () => base44.entities.Favorite.list(),
+    queryFn: getMyFavorites,
   });
 
   const { data: companies = [] } = useQuery({
     queryKey: ['all-companies'],
-    queryFn: () => base44.entities.Company.list('-created_date', 500),
+    queryFn: getCompanies,
   });
 
   const { data: markets = [] } = useQuery({
     queryKey: ['markets'],
-    queryFn: () => base44.entities.Market.list('-created_date', 200),
+    queryFn: getMarkets,
   });
 
   const removeFav = useMutation({
-    mutationFn: (id) => base44.entities.Favorite.delete(id),
+    mutationFn: rimuoviPreferito,
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ['favorites'] });
       const prev = queryClient.getQueryData(['favorites']);

@@ -1,6 +1,6 @@
 /** Ordini dei clienti ai produttori. */
 import { supabase, unwrapMany, unwrapOne } from './client'
-import type { Tables, TablesInsert } from './types'
+import type { Tables, TablesInsert, TablesUpdate } from './types'
 
 export type Order = Tables<'orders'>
 export type OrderStatus = Order['status']
@@ -69,4 +69,17 @@ export function subscribeOrders(companyId: string, onChange: () => void): () => 
         onChange)
     .subscribe()
   return () => { void supabase.removeChannel(ch) }
+}
+
+export async function deleteOrder(id: string): Promise<void> {
+  const { error } = await supabase.from('orders').delete().eq('id', id)
+  if (error) throw error
+}
+
+export async function updateOrder(
+  id: string, patch: TablesUpdate<'orders'>,
+): Promise<Order> {
+  return unwrapOne(
+    await supabase.from('orders').update(patch).eq('id', id).select().single(),
+    'Aggiornamento ordine')
 }

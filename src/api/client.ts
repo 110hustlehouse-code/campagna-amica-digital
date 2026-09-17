@@ -61,3 +61,35 @@ export function unwrapMany<T>(res: PostgrestResponse<T>, contesto: string): T[] 
   if (res.error) throw new DataError(`${contesto}: ${res.error.message}`, res.error)
   return res.data ?? []
 }
+
+/**
+ * Sottoscrizione realtime a una tabella.
+ *
+ * Sostituisce entities.X.subscribe() di Base44, che serviva solo a
+ * invalidare la cache di react-query quando i dati cambiavano.
+ *
+ * Il nome del canale deve essere univoco: due sottoscrizioni con lo
+ * stesso nome si sovrascrivono a vicenda e una delle due smette di
+ * ricevere eventi.
+ */
+export function subscribeTable(
+  table: string,
+  onChange: () => void,
+  opzioni?: { filtro?: string; canale?: string },
+): () => void {
+  const nome = opzioni?.canale ?? `${table}:${opzioni?.filtro ?? 'all'}:${Math.random().toString(36).slice(2, 8)}`
+  const ch = supabase
+    .channel(nome)
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table,
+        ...(opzioni?.filtro ? { filter: opzioni.filtro } : {}),
+      } as never,
+      onChange,
+    )
+    .subscribe()
+  return () => { void supabase.removeChannel(ch) }
+}

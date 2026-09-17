@@ -74,7 +74,9 @@ export async function deleteMessage(id: string): Promise<void> {
 
 /** Segna una comunicazione come letta dal produttore collegato. */
 export async function markMessageRead(
-  messageId: string, companyId: string | null,
+  messageId: string,
+  companyId: string | null,
+  feedback?: string,
 ): Promise<void> {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user?.email) return
@@ -83,6 +85,7 @@ export async function markMessageRead(
     producer_email: user.email,
     company_id: companyId,
     read_at: new Date().toISOString(),
+    ...(feedback !== undefined ? { feedback } : {}),
   }, { onConflict: 'message_id,producer_email' })
   if (error) throw error
 }
@@ -101,6 +104,72 @@ export function subscribeMessages(marketId: string, onChange: () => void): () =>
           filter: `market_id=eq.${marketId}` }, onChange)
     .subscribe()
   return () => { void supabase.removeChannel(ch) }
+}
+
+/** Tutti i membri dello staff visibili all'utente (RLS limita al proprio mercato). */
+export async function getAllStaffMembers(): Promise<StaffMember[]> {
+  return unwrapMany(
+    await supabase.from('staff_members').select('*').order('full_name'),
+    'Elenco staff')
+}
+
+export async function deleteStaffMember(id: string): Promise<void> {
+  const { error } = await supabase.from('staff_members').delete().eq('id', id)
+  if (error) throw error
+}
+
+/** Comunicazioni di tutti i mercati visibili (per la pagina redazionale). */
+export async function getAllStaffMessages(): Promise<StaffMessage[]> {
+  return unwrapMany(
+    await supabase.from('staff_messages').select('*')
+      .order('created_date', { ascending: false }),
+    'Comunicazioni')
+}
+
+export async function updateMessage(
+  id: string, patch: TablesUpdate<'staff_messages'>,
+): Promise<StaffMessage> {
+  return unwrapOne(
+    await supabase.from('staff_messages').update(patch).eq('id', id).select().single(),
+    'Aggiornamento comunicazione')
+}
+
+/** Comunicazioni pubblicate di tutti i mercati (bacheca generale). */
+export async function getPublishedMessagesAll(limite = 20): Promise<StaffMessage[]> {
+  return unwrapMany(
+    await supabase.from('staff_messages').select('*')
+      .eq('is_published', true).order('created_date', { ascending: false }).limit(limite),
+    'Bacheca')
+}
+
+/** Comunicazioni per tipo (eventi, chiusure, aperture straordinarie). */
+export async function getMessagesByType(tipo: StaffMessage['type']): Promise<StaffMessage[]> {
+  return unwrapMany(
+    await supabase.from('staff_messages').select('*')
+      .eq('type', tipo).order('event_date', { ascending: false }),
+    'Comunicazioni per tipo')
+}
+
+/** Record staff dell'utente collegato, o null se non e' staff. */
+export async function getMyStaffMember(): Promise<StaffMember | null> {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user?.email) return null
+  const { data, error } = await supabase
+    .from('staff_members').select('*')
+    .ilike('email', user.email).eq('is_active', true)
+    .order('updated_date', { ascending: false }).limit(1).maybeSingle()
+  if (error) throw error
+  return data
+}
+
+/** Numero di bisogni ancora aperti in un mercato (per il badge). */
+export async function contaBisogniAperti(marketId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from('company_needs')
+    .select('*', { count: 'exact', head: true })
+    .eq('market_id', marketId).eq('status', 'open')
+  if (error) throw error
+  return count ?? 0
 }
 
 /**

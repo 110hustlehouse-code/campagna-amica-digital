@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { getMyStaffMember, getAllStaffMessages, createMessage, updateMessage, deleteMessage } from '@/api/staff';
+import { getMarkets } from '@/api/markets';
+import { uploadFile } from '@/api/storage';
 import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -53,11 +55,7 @@ export default function StaffHome() {
   useEffect(() => {
     const fetchStaff = async () => {
       try {
-        const staff = await base44.entities.StaffMember.filter(
-          { email: user?.email },
-          '-updated_date',
-          1
-        );
+        const staff = await getMyStaffMember();
         if (staff.length > 0) {
           setStaffMember(staff[0]);
         }
@@ -72,20 +70,20 @@ export default function StaffHome() {
 
   const { data: messages = [], isLoading } = useQuery({
     queryKey: ['staff-messages'],
-    queryFn: () => base44.entities.StaffMessage.list('-created_date', 500),
+    queryFn: getAllStaffMessages,
   });
 
   const { data: markets = [] } = useQuery({
     queryKey: ['markets-list'],
-    queryFn: () => base44.entities.Market.list('name', 500),
+    queryFn: getMarkets,
   });
 
   const createMutation = useMutation({
     mutationFn: (data) => {
       if (editingId) {
-        return base44.entities.StaffMessage.update(editingId, data);
+        return updateMessage(editingId, data);
       }
-      return base44.entities.StaffMessage.create(data);
+      return createMessage(data);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['staff-messages'] });
@@ -98,7 +96,7 @@ export default function StaffHome() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.StaffMessage.delete(id),
+    mutationFn: deleteMessage,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['staff-messages'] });
       toast({ title: 'Comunicazione eliminata' });
@@ -109,7 +107,7 @@ export default function StaffHome() {
   });
 
   const togglePublishMutation = useMutation({
-    mutationFn: (msg) => base44.entities.StaffMessage.update(msg.id, { is_published: !msg.is_published }),
+    mutationFn: (msg) => updateMessage(msg.id, { is_published: !msg.is_published }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['staff-messages'] });
     },
@@ -139,7 +137,7 @@ export default function StaffHome() {
 
     setIsUploading(true);
     try {
-      const uploadRes = await base44.integrations.Core.UploadFile({ file });
+      const uploadRes = await uploadFile(file, 'allegati');
       const newAttachment = {
         name: file.name,
         url: uploadRes.file_url,

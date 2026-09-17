@@ -1,7 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { subscribeTable } from '@/api/client';
+import { getMyCompany } from '@/api/companies';
+import { getProductsByCompany } from '@/api/products';
+import { getOrdersByCompany } from '@/api/orders';
+import { getMyNotifications, segnaLetta } from '@/api/notifications';
+import { getReviews } from '@/api/reviews';
+import { isPreferito } from '@/api/favorites';
+import { getAllMarketEvents, getAssignmentsByCompany } from '@/api/events';
+import { getMarkets } from '@/api/markets';
+import { createNeed } from '@/api/needs';
 import { useAuth } from '@/lib/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -39,54 +48,54 @@ export default function ProducerHome() {
 
   const { data: myCompany } = useQuery({
     queryKey: ['my-company', user?.email],
-    queryFn: () => base44.entities.Company.filter({ created_by: user?.email }),
+    queryFn: getMyCompany,
     enabled: !!user?.email,
     select: (data) => data[0],
   });
 
   const { data: products = [] } = useQuery({
     queryKey: ['my-products', myCompany?.id],
-    queryFn: () => base44.entities.Product.filter({ company_id: myCompany?.id }),
+    queryFn: () => getProductsByCompany(myCompany.id),
     enabled: !!myCompany?.id,
   });
 
   const { data: orders = [] } = useQuery({
     queryKey: ['my-orders', myCompany?.id],
-    queryFn: () => base44.entities.Order.filter({ company_id: myCompany?.id }),
+    queryFn: () => getOrdersByCompany(myCompany.id),
     enabled: !!myCompany?.id,
   });
 
   const { data: notifications = [] } = useQuery({
     queryKey: ['producer-notifications', user?.email],
-    queryFn: () => base44.entities.Notification.filter({ user_email: user?.email }),
+    queryFn: () => getMyNotifications(),
     enabled: !!user?.email,
   });
 
   const { data: reviews = [] } = useQuery({
     queryKey: ['my-reviews', myCompany?.id],
-    queryFn: () => base44.entities.Review.filter({ company_id: myCompany?.id }, '-created_date', 100),
+    queryFn: () => getReviews(myCompany.id),
     enabled: !!myCompany?.id,
   });
 
   const { data: favorites = [] } = useQuery({
     queryKey: ['my-favorites', myCompany?.id],
-    queryFn: () => base44.entities.Favorite.filter({ company_id: myCompany?.id, product_id: { $exists: false } }),
+    queryFn: () => isPreferito({ company_id: myCompany.id }).then(f => (f ? [f] : [])),
     enabled: !!myCompany?.id,
   });
 
   const { data: marketEvents = [] } = useQuery({
     queryKey: ['market-events'],
-    queryFn: () => base44.entities.MarketEvent.list('-event_date', 500),
+    queryFn: getAllMarketEvents,
   });
 
   const { data: markets = [] } = useQuery({
     queryKey: ['all-markets'],
-    queryFn: () => base44.entities.Market.list('-created_date', 500),
+    queryFn: getMarkets,
   });
 
   const { data: assignments = [] } = useQuery({
     queryKey: ['my-assignments', myCompany?.id],
-    queryFn: () => base44.entities.CompanyMarketAssignment.filter({ company_id: myCompany?.id }),
+    queryFn: () => getAssignmentsByCompany(myCompany.id),
     enabled: !!myCompany?.id,
   });
 
@@ -96,14 +105,14 @@ export default function ProducerHome() {
     : 0;
 
   useEffect(() => {
-    const unsub = base44.entities.Notification.subscribe(() => {
+    const unsub = subscribeTable('notifications', () => {
       qc.invalidateQueries({ queryKey: ['producer-notifications', user?.email] });
     });
     return unsub;
   }, [qc, user?.email]);
 
   const absenceMutation = useMutation({
-    mutationFn: (data) => base44.entities.CompanyNeed.create(data),
+    mutationFn: createNeed,
     onSuccess: () => {
       setAbsenceDialog(false);
       setAbsenceNote('');
@@ -453,11 +462,11 @@ export default function ProducerHome() {
         isProducer={true}
         notifications={notifications}
         onRead={(id) => {
-          base44.entities.Notification.update(id, { read: true });
+          segnaLetta(id);
           qc.invalidateQueries({ queryKey: ['producer-notifications', user?.email] });
         }}
         onReadAll={() => {
-          notifications.filter(n => !n.read).forEach(n => base44.entities.Notification.update(n.id, { read: true }));
+          notifications.filter(n => !n.read).forEach(n => segnaLetta(n.id));
           qc.invalidateQueries({ queryKey: ['producer-notifications', user?.email] });
         }}
       />

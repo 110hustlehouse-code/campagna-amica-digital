@@ -60,3 +60,26 @@ export async function assignStand(a: TablesInsert<'company_market_assignments'>)
     }).select().single(),
     'Assegnazione banco')
 }
+
+/** Comunicazioni facoltative di un mercato: quelle che richiedono adesione. */
+export async function getOptionalMessages(marketId: string) {
+  return unwrapMany(
+    await supabase.from('staff_messages').select('*')
+      .eq('market_id', marketId).eq('is_mandatory', false)
+      .order('event_date', { ascending: false }).limit(50),
+    'Eventi facoltativi')
+}
+
+/** Tutti gli eventi di mercato visibili. */
+export async function getAllMarketEvents(): Promise<MarketEvent[]> {
+  return unwrapMany(
+    await supabase.from('market_events').select('*')
+      .order('event_date', { ascending: false }),
+    'Tutti gli eventi')
+}
+
+export async function getAssignmentsByCompany(companyId: string): Promise<Assignment[]> {
+  return unwrapMany(
+    await supabase.from('company_market_assignments').select('*').eq('company_id', companyId),
+    'Assegnazioni azienda')
+}

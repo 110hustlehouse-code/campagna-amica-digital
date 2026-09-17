@@ -1,7 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { getReviews } from '@/api/reviews';
+import { isPreferito } from '@/api/favorites';
 import { Card, CardContent } from '@/components/ui/card';
 import { MapPin, ExternalLink, Award } from 'lucide-react';
 import CategoryBadge from '../shared/CategoryBadge';
@@ -10,12 +11,12 @@ import RatingDisplay from '../shared/RatingDisplay';
 export default function CompanyCard({ company }) {
   const { data: reviews = [] } = useQuery({
     queryKey: ['reviews', company.id],
-    queryFn: () => base44.entities.Review.filter({ company_id: company.id }, '-created_date', 100),
+    queryFn: () => getReviews(company.id),
   });
 
   const { data: favorites = [] } = useQuery({
     queryKey: ['favorites', company.id],
-    queryFn: () => base44.entities.Favorite.filter({ company_id: company.id, product_id: { $exists: false } }),
+    queryFn: () => isPreferito({ company_id: company.id }).then(f => (f ? [f] : [])),
   });
 
   const avgRating = reviews.length > 0

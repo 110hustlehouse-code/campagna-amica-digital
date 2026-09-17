@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { getMarkets } from '@/api/markets';
+import { getAllAvailableProducts } from '@/api/products';
+import { getRegisteredCompanies } from '@/api/companies';
 import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -120,14 +122,14 @@ function CercaAlMercato() {
 
   const { data: markets = [] } = useQuery({
     queryKey: ['all-markets'],
-    queryFn: () => base44.entities.Market.list('-created_date', 200),
+    queryFn: getMarkets,
   });
 
   const { data: products = [], isFetching: loadingProducts } = useQuery({
     queryKey: ['spesa-search', selectedMarketId, searchQuery],
     queryFn: async () => {
       if (!searchQuery.trim() || !selectedMarketId) return [];
-      const allProducts = await base44.entities.Product.filter({ available: true }, '-created_date', 500);
+      const allProducts = await getAllAvailableProducts();
       return allProducts.filter(p =>
         p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.description?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -138,7 +140,7 @@ function CercaAlMercato() {
 
   const { data: companies = [] } = useQuery({
     queryKey: ['all-companies'],
-    queryFn: () => base44.entities.Company.filter({ is_registered: true }, '-created_date', 200),
+    queryFn: getRegisteredCompanies,
   });
 
   const selectedMarket = markets.find(m => m.id === selectedMarketId);

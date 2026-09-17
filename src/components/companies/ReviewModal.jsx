@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { scriviRecensione } from '@/api/reviews';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -14,7 +14,7 @@ export default function ReviewModal({ open, onClose, company }) {
 
   const submitReview = useMutation({
     mutationFn: async () => {
-      await base44.entities.Review.create({
+      await scriviRecensione({
         company_id: company.id,
         rating,
         message: text,

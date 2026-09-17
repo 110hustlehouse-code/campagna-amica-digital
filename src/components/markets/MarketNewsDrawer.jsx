@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { invokeLLM } from '@/api/ai';
+import { getPublishedMessagesAll } from '@/api/staff';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Loader2, ExternalLink, RefreshCw, Newspaper, MapPin, Leaf, X, Calendar, Clock } from 'lucide-react';
@@ -30,7 +31,7 @@ export default function MarketNewsDrawer({ open, onClose, userLocation, nearestC
       const cityContext = nearestCity
         ? `Includi notizie sui mercati Campagna Amica vicini a ${nearestCity} e nella sua provincia/regione.`
         : '';
-      const result = await base44.integrations.Core.InvokeLLM({
+      const result = await invokeLLM({
         prompt: `Vai su www.coldiretti.it e cerca le ultime notizie sui MERCATI Campagna Amica di Coldiretti.
         Restituisci esattamente le 10 notizie più recenti che riguardano i mercati contadini, mercati Campagna Amica, fiere, eventi mercato, aperture di nuovi mercati, iniziative nei mercati.
         ${cityContext}
@@ -64,7 +65,7 @@ export default function MarketNewsDrawer({ open, onClose, userLocation, nearestC
 
   const { data: staffMessages = [], isLoading: messagesLoading } = useQuery({
     queryKey: ['staff-messages'],
-    queryFn: () => base44.entities.StaffMessage.filter({ is_published: true }, '-created_date', 20),
+    queryFn: () => getPublishedMessagesAll(20),
     staleTime: 1000 * 60 * 5,
     enabled: open && activeTab === 'events',
   });

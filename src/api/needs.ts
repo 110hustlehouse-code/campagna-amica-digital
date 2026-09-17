@@ -57,3 +57,16 @@ export const ETICHETTE_PRIORITA: Record<NeedPriority, string> = {
   medium: 'Media',
   high: 'Alta',
 }
+
+/** Bisogni di tutti i mercati visibili all'utente. */
+export async function getAllNeeds(): Promise<CompanyNeed[]> {
+  return unwrapMany(
+    await supabase.from('company_needs').select('*')
+      .order('created_date', { ascending: false }),
+    'Tutti i bisogni')
+}
+
+export async function deleteNeed(id: string): Promise<void> {
+  const { error } = await supabase.from('company_needs').delete().eq('id', id)
+  if (error) throw error
+}

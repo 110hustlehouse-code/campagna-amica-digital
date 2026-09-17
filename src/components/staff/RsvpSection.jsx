@@ -1,6 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { getOptionalMessages, getRsvpsByMarket } from '@/api/events';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { CheckCircle2, XCircle, Clock } from 'lucide-react';
@@ -15,13 +15,13 @@ const statusConfig = {
 export default function RsvpSection({ marketId }) {
   const { data: events = [] } = useQuery({
     queryKey: ['rsvp-events', marketId],
-    queryFn: () => base44.entities.StaffMessage.filter({ market_id: marketId, is_mandatory: false }, '-event_date', 50),
+    queryFn: () => getOptionalMessages(marketId),
     enabled: !!marketId,
   });
 
   const { data: rsvps = [] } = useQuery({
     queryKey: ['rsvp-list', marketId],
-    queryFn: () => base44.entities.ProducerEventRsvp.filter({ market_id: marketId }, '-created_date', 200),
+    queryFn: () => getRsvpsByMarket(marketId),
     enabled: !!marketId,
   });
 

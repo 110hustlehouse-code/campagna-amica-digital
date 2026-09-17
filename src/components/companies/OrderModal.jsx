@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { getMarkets } from '@/api/markets';
+import { createOrder } from '@/api/orders';
+import { invokeLLM } from '@/api/ai';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -40,7 +42,7 @@ export default function OrderModal({ open, onClose, company, products }) {
 
   const { data: markets = [] } = useQuery({
     queryKey: ['markets'],
-    queryFn: () => base44.entities.Market.list('-created_date', 200),
+    queryFn: getMarkets,
     enabled: open,
   });
 
@@ -55,7 +57,7 @@ export default function OrderModal({ open, onClose, company, products }) {
 
   useEffect(() => {
     if (!open || !products?.length || Object.keys(aiLabels).length > 0) return;
-    base44.integrations.Core.InvokeLLM({
+    invokeLLM({
       prompt: `Sei un esperto di prodotti alimentari italiani venduti al mercato contadino.
 Per ciascun prodotto, restituisci l'etichetta dell'unità di misura più appropriata per il cliente (es: "kg", "etto", "lt", "pz", "mazzo", "conf.", "bottiglia", "barattolo", "vaschetta").
 Considera nome, categoria e unità del produttore.
@@ -103,7 +105,7 @@ Prodotti: ${JSON.stringify(products.map(p => ({ id: p.id, name: p.name, unit: p.
   };
 
   const createOrder = useMutation({
-    mutationFn: (data) => base44.entities.Order.create(data),
+    mutationFn: createOrder,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       handleClose();

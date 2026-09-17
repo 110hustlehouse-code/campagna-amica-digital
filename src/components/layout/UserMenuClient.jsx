@@ -1,5 +1,5 @@
 import React from 'react';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/api/client';
 import { useAuth } from '@/lib/AuthContext';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { LogOut, Building2, MapPin, ShoppingBag, Newspaper, ChevronDown } from 'lucide-react';
@@ -60,7 +60,7 @@ export default function UserMenuClient() {
         </div>
         
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => base44.auth.logout()} className="gap-2 text-destructive focus:text-destructive">
+        <DropdownMenuItem onClick={() => supabase.auth.signOut()} className="gap-2 text-destructive focus:text-destructive">
           <LogOut className="w-4 h-4" />
           Esci
         </DropdownMenuItem>

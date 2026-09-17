@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { createNeed } from '@/api/needs';
 import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -28,7 +28,7 @@ export default function ProducerSessionPanel({ myCompany, marketId }) {
 
   const createNeedMutation = useMutation({
     mutationFn: async (needData) => {
-      return base44.entities.CompanyNeed.create(needData);
+      return createNeed(needData);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['companyNeeds'] });

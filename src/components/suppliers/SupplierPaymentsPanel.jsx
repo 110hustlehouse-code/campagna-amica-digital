@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { getPaymentsBySupplier, createPayment, updatePayment, deletePayment } from '@/api/suppliers';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -32,14 +32,14 @@ export default function SupplierPaymentsPanel({ supplierId, companyId }) {
 
   const { data: payments = [], isLoading } = useQuery({
     queryKey: ['supplier-payments', supplierId],
-    queryFn: () => base44.entities.SupplierPayment.filter({ supplier_id: supplierId }, 'due_date', 100),
+    queryFn: () => getPaymentsBySupplier(supplierId),
     enabled: !!supplierId,
   });
 
   const saveMutation = useMutation({
     mutationFn: (p) => {
       const data = { ...p, supplier_id: supplierId, company_id: companyId, amount: parseFloat(p.amount) || 0 };
-      return p.id ? base44.entities.SupplierPayment.update(p.id, data) : base44.entities.SupplierPayment.create(data);
+      return p.id ? updatePayment(p.id, data) : createPayment(data);
     },
     onSuccess: () => {
       qc.invalidateQueries(['supplier-payments', supplierId]);
@@ -49,13 +49,13 @@ export default function SupplierPaymentsPanel({ supplierId, companyId }) {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.SupplierPayment.delete(id),
+    mutationFn: deletePayment,
     onSuccess: () => qc.invalidateQueries(['supplier-payments', supplierId]),
   });
 
   const togglePaid = (p) => {
     const newStatus = p.status === 'pagato' ? 'da_pagare' : 'pagato';
-    base44.entities.SupplierPayment.update(p.id, { status: newStatus })
+    updatePayment(p.id, { status: newStatus })
       .then(() => qc.invalidateQueries(['supplier-payments', supplierId]));
   };
 

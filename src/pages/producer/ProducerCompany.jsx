@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/api/client';
+import { getMyCompany, createCompany, updateCompany } from '@/api/companies';
+import { getMarkets, updateMarket } from '@/api/markets';
+import { uploadFile } from '@/api/storage';
+import { invokeLLM } from '@/api/ai';
 import { useAuth } from '@/lib/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -36,14 +40,14 @@ export default function ProducerCompany() {
 
   const { data: myCompany, isLoading } = useQuery({
     queryKey: ['my-company', user?.email],
-    queryFn: () => base44.entities.Company.filter({ created_by: user?.email }),
+    queryFn: getMyCompany,
     enabled: !!user?.email,
     select: d => d[0],
   });
 
   const { data: markets = [] } = useQuery({
     queryKey: ['all-markets'],
-    queryFn: () => base44.entities.Market.list('-created_date', 1000),
+    queryFn: getMarkets,
   });
 
   useEffect(() => {
@@ -63,24 +67,24 @@ export default function ProducerCompany() {
       // 1. Salva l'azienda
       let companyId = myCompany?.id;
       if (companyId) {
-        await base44.entities.Company.update(companyId, { ...data, is_registered: true });
+        await updateCompany(companyId, { ...data, is_registered: true });
       } else {
-        const created = await base44.entities.Company.create({ ...data, is_registered: true });
+        const created = await createCompany({ ...data, is_registered: true });
         companyId = created?.id;
       }
 
       // 2. Sincronizza company_ids nei mercati
       const newMarketIds = data.market_ids || [];
-      const allMarkets = await base44.entities.Market.list();
+      const allMarkets = await getMarkets();
       await Promise.all(allMarkets.map(async (market) => {
         const hasCompany = (market.company_ids || []).includes(companyId);
         const shouldHave = newMarketIds.includes(market.id);
         if (shouldHave && !hasCompany) {
-          await base44.entities.Market.update(market.id, {
+          await updateMarket(market.id, {
             company_ids: [...(market.company_ids || []), companyId]
           });
         } else if (!shouldHave && hasCompany) {
-          await base44.entities.Market.update(market.id, {
+          await updateMarket(market.id, {
             company_ids: (market.company_ids || []).filter(id => id !== companyId)
           });
         }
@@ -97,12 +101,12 @@ export default function ProducerCompany() {
 
   const handleUpload = async (file, field) => {
     if (field === 'logo_url') setUploadingLogo(true); else setUploadingCover(true);
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    const { file_url } = await uploadFile(file, 'aziende');
     // Aggiorna stato locale
     setForm(f => ({ ...f, [field]: file_url }));
     // Salva immediatamente nel DB se l'azienda esiste già
     if (myCompany?.id) {
-      await base44.entities.Company.update(myCompany.id, { [field]: file_url });
+      await updateCompany(myCompany.id, { [field]: file_url });
       qc.invalidateQueries(['my-company']);
       qc.invalidateQueries(['companies']);
       qc.invalidateQueries(['company', myCompany.id]);
@@ -117,7 +121,7 @@ export default function ProducerCompany() {
   const improveDescription = async () => {
     if (!form.description) return;
     setImprovingDescription(true);
-    const res = await base44.integrations.Core.InvokeLLM({
+    const res = await invokeLLM({
       prompt: `Sei un copywriter specializzato in aziende agricole italiane. Migliora questa descrizione per renderla più professionale, accattivante e persuasiva. 
 
   Descrizione originale: "${form.description}"
@@ -406,7 +410,7 @@ export default function ProducerCompany() {
           variant="destructive"
           className="w-full rounded-2xl h-12 text-base font-semibold gap-2"
           size="lg"
-          onClick={() => base44.auth.logout()}
+          onClick={() => supabase.auth.signOut()}
         >
           <LogOut className="w-5 h-5" />
           Esci

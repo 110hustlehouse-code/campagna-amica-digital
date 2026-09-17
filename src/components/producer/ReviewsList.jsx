@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { getReviews } from '@/api/reviews';
+import { invokeFunction } from '@/api/functions';
 import { Star, MessageSquare, Send, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -15,7 +16,7 @@ export default function ReviewsList({ companyId }) {
 
   const { data: reviews = [], isLoading } = useQuery({
     queryKey: ['company-reviews', companyId],
-    queryFn: () => base44.entities.Review.filter({ company_id: companyId }),
+    queryFn: () => getReviews(companyId),
     enabled: !!companyId,
   });
 
@@ -27,7 +28,7 @@ export default function ReviewsList({ companyId }) {
 
     setSendingReply(true);
     try {
-      await base44.functions.invoke('replyToReview', {
+      await invokeFunction('replyToReview', {
         review_id: replyingTo,
         reply_text: replyText.trim()
       });

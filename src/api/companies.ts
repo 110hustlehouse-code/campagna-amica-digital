@@ -45,3 +45,10 @@ export async function updateCompany(id: string, patch: TablesUpdate<'companies'>
     await supabase.from('companies').update(patch).eq('id', id).select().single(),
     'Aggiornamento azienda')
 }
+
+/** Aziende registrate, in ordine alfabetico. */
+export async function getRegisteredCompanies(): Promise<Company[]> {
+  return unwrapMany(
+    await supabase.from('companies').select('*').eq('is_registered', true).order('name'),
+    'Aziende registrate')
+}

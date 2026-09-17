@@ -2,7 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { getRegisteredCompanies } from '@/api/companies';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Search, Loader2, ShoppingBag, Building2, Leaf } from 'lucide-react';
@@ -30,7 +30,7 @@ export default function Companies() {
 
   const { data: companies = [], isLoading, refetch } = useQuery({
     queryKey: ['companies'],
-    queryFn: () => base44.entities.Company.filter({ is_registered: true }, '-created_date', 500),
+    queryFn: getRegisteredCompanies,
     staleTime: 5 * 60 * 1000,
   });
 

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { getMyStaffMember, createMessage } from '@/api/staff';
+import { getMarkets } from '@/api/markets';
+import { invokeFunction } from '@/api/functions';
 import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,7 +54,7 @@ export default function CreateEvent() {
   useEffect(() => {
     const fetchStaff = async () => {
       if (!user?.email) return;
-      const staff = await base44.entities.StaffMember.filter({ email: user.email }, '-updated_date', 1);
+      const staff = await getMyStaffMember();
       if (staff.length > 0) {
         setStaffMember(staff[0]);
         setFormData(prev => ({ ...prev, market_id: staff[0].market_id || '' }));
@@ -63,7 +65,7 @@ export default function CreateEvent() {
 
   const { data: markets = [] } = useQuery({
     queryKey: ['markets-list'],
-    queryFn: () => base44.entities.Market.list('name', 500),
+    queryFn: getMarkets,
   });
 
   const marketItems = markets.map(m => ({
@@ -74,7 +76,7 @@ export default function CreateEvent() {
     mutationFn: async (data) => {
       // 1. Save StaffMessage as event (with market_id for filtering)
       const market = markets.find(m => m.id === data.market_id);
-      const msg = await base44.entities.StaffMessage.create({
+      const msg = await createMessage({
         title: data.title,
         description: data.description,
         type: 'event',
@@ -88,7 +90,7 @@ export default function CreateEvent() {
       });
 
       // 2. Trigger notifications via backend function
-      await base44.functions.invoke('notifyProducersNewCommunication', {
+      await invokeFunction('notifyProducersNewCommunication', {
         message_id: msg.id,
         market_id: data.market_id,
         is_mandatory: data.is_mandatory,

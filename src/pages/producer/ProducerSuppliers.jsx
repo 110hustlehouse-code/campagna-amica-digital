@@ -1,7 +1,8 @@
 // v2
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { getMyCompany, getRegisteredCompanies } from '@/api/companies';
+import { getSuppliers, createSupplier, updateSupplier, deleteSupplier } from '@/api/suppliers';
 import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -46,26 +47,26 @@ export default function ProducerSuppliers() {
 
   const { data: allCompanies = [] } = useQuery({
     queryKey: ['all-companies-suppliers'],
-    queryFn: () => base44.entities.Company.filter({ is_registered: true }, 'name', 500),
+    queryFn: getRegisteredCompanies,
   });
 
   const { data: myCompany } = useQuery({
     queryKey: ['my-company', user?.email],
-    queryFn: () => base44.entities.Company.filter({ created_by: user?.email }),
+    queryFn: getMyCompany,
     enabled: !!user?.email,
     select: d => d[0],
   });
 
   const { data: suppliers = [], isLoading } = useQuery({
     queryKey: ['my-suppliers', myCompany?.id],
-    queryFn: () => base44.entities.Supplier.filter({ company_id: myCompany?.id }, 'name', 200),
+    queryFn: () => getSuppliers(myCompany.id),
     enabled: !!myCompany?.id,
   });
 
   const saveMutation = useMutation({
     mutationFn: (s) => {
       const data = { ...s, company_id: myCompany.id };
-      return s.id ? base44.entities.Supplier.update(s.id, data) : base44.entities.Supplier.create(data);
+      return s.id ? updateSupplier(s.id, data) : createSupplier(data);
     },
     onSuccess: () => {
       qc.invalidateQueries(['my-suppliers']);
@@ -75,7 +76,7 @@ export default function ProducerSuppliers() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Supplier.delete(id),
+    mutationFn: deleteSupplier,
     onSuccess: () => {
       qc.invalidateQueries(['my-suppliers']);
       toast({ title: 'Fornitore eliminato' });

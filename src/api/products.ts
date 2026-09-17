@@ -60,3 +60,17 @@ export function subscribeProducts(companyId: string, onChange: () => void): () =
     .subscribe()
   return () => { void supabase.removeChannel(ch) }
 }
+
+/** Tutti i prodotti disponibili, di ogni azienda (per la lista della spesa). */
+export async function getAllAvailableProducts(): Promise<Product[]> {
+  return unwrapMany(
+    await supabase.from('products').select('*').eq('available', true).order('name'),
+    'Prodotti disponibili')
+}
+
+/** Svuota il catalogo di un'azienda in una sola operazione. */
+export async function deleteProducts(ids: string[]): Promise<void> {
+  if (ids.length === 0) return
+  const { error } = await supabase.from('products').delete().in('id', ids)
+  if (error) throw error
+}

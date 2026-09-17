@@ -1,6 +1,9 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { getMyStaffMember } from '@/api/staff';
+import { getRentalsByMarket, getAllRentals, createRental, updateRental, deleteRental } from '@/api/rentals';
+import { getRegisteredCompanies } from '@/api/companies';
+import { getMarkets } from '@/api/markets';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -48,7 +51,7 @@ export default function StallRentals() {
   const { data: staffProfile } = useQuery({
     queryKey: ['staffProfile', user?.email],
     queryFn: async () => {
-      const list = await base44.entities.StaffMember.filter({ email: user.email }, '-updated_date', 1);
+      const list = await getMyStaffMember();
       return list[0] || null;
     },
     enabled: !!user?.email,
@@ -59,19 +62,19 @@ export default function StallRentals() {
   const { data: rentals = [], isLoading } = useQuery({
     queryKey: ['stall-rentals', staffMarketId],
     queryFn: () => staffMarketId
-      ? base44.entities.StallRental.filter({ market_id: staffMarketId }, '-rental_start_date', 500)
-      : base44.entities.StallRental.list('-rental_start_date', 500),
+      ? getRentalsByMarket(staffMarketId)
+      : getAllRentals(),
     enabled: !!staffProfile,
   });
 
   const { data: companies = [] } = useQuery({
     queryKey: ['companies-list'],
-    queryFn: () => base44.entities.Company.filter({ is_registered: true }, 'name', 500),
+    queryFn: getRegisteredCompanies,
   });
 
   const { data: markets = [] } = useQuery({
     queryKey: ['markets-list'],
-    queryFn: () => base44.entities.Market.list('name', 500),
+    queryFn: getMarkets,
   });
 
   const now = new Date();
@@ -99,8 +102,8 @@ export default function StallRentals() {
   const saveMutation = useMutation({
     mutationFn: (data) =>
       editingId
-        ? base44.entities.StallRental.update(editingId, data)
-        : base44.entities.StallRental.create(data),
+        ? updateRental(editingId, data)
+        : createRental(data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['stall-rentals'] });
       resetForm();
@@ -110,7 +113,7 @@ export default function StallRentals() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.StallRental.delete(id),
+    mutationFn: deleteRental,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['stall-rentals'] });
       setSelectedRental(null);

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { getMyCompany } from '@/api/companies';
+import { getProductsByCompany, createProduct, updateProduct, deleteProduct, deleteProducts } from '@/api/products';
+import { uploadFile } from '@/api/storage';
 import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,32 +33,32 @@ export default function ProducerProducts() {
 
   const { data: myCompany } = useQuery({
     queryKey: ['my-company', user?.email],
-    queryFn: () => base44.entities.Company.filter({ created_by: user?.email }),
+    queryFn: getMyCompany,
     enabled: !!user?.email,
     select: d => d[0],
   });
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['my-products', myCompany?.id],
-    queryFn: () => base44.entities.Product.filter({ company_id: myCompany?.id }),
+    queryFn: () => getProductsByCompany(myCompany.id),
     enabled: !!myCompany?.id,
   });
 
   const saveMutation = useMutation({
     mutationFn: async (p) => {
       const data = { ...p, price: parseFloat(p.price) || 0, company_id: myCompany.id };
-      return p.id ? base44.entities.Product.update(p.id, data) : base44.entities.Product.create(data);
+      return p.id ? updateProduct(p.id, data) : createProduct(data);
     },
     onSuccess: () => { qc.invalidateQueries(['my-products']); setEditProduct(null); toast({ title: 'Salvato!' }); },
   });
 
   const toggleMutation = useMutation({
-    mutationFn: (p) => base44.entities.Product.update(p.id, { available: !p.available }),
+    mutationFn: (p) => updateProduct(p.id, { available: !p.available }),
     onSuccess: () => qc.invalidateQueries(['my-products']),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Product.delete(id),
+    mutationFn: deleteProduct,
     onSuccess: () => qc.invalidateQueries(['my-products']),
     onError: (err) => {
       if (err.message.includes('not found')) {
@@ -67,7 +69,7 @@ export default function ProducerProducts() {
   });
 
   const clearAll = async () => {
-    for (const p of products) await base44.entities.Product.delete(p.id);
+    await deleteProducts(products.map(p => p.id));
     qc.invalidateQueries(['my-products']);
     setShowConfirmClear(false);
     toast({ title: 'Listino svuotato' });
@@ -75,7 +77,7 @@ export default function ProducerProducts() {
 
   const handleImageUpload = async (file) => {
     setUploading(true);
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    const { file_url } = await uploadFile(file, 'prodotti');
     setEditProduct(prev => ({ ...prev, image_url: file_url }));
     setUploading(false);
   };

@@ -1,7 +1,8 @@
 // v2
 import React, { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { getAllStaffMembers, addStaffMember, updateStaffMember, deleteStaffMember } from '@/api/staff';
+import { getMarkets } from '@/api/markets';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -37,12 +38,12 @@ export default function StaffMembers() {
 
   const { data: staffMembers = [], isLoading } = useQuery({
     queryKey: ['staff-members'],
-    queryFn: () => base44.entities.StaffMember.list('-created_date', 500),
+    queryFn: getAllStaffMembers,
   });
 
   const { data: markets = [] } = useQuery({
     queryKey: ['markets-list'],
-    queryFn: () => base44.entities.Market.list('name', 500),
+    queryFn: getMarkets,
   });
 
   const marketItems = markets.map(m => ({
@@ -52,8 +53,8 @@ export default function StaffMembers() {
   const saveMutation = useMutation({
     mutationFn: (data) =>
       editingId
-        ? base44.entities.StaffMember.update(editingId, data)
-        : base44.entities.StaffMember.create(data),
+        ? updateStaffMember(editingId, data)
+        : addStaffMember(data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['staff-members'] });
       resetForm();
@@ -63,7 +64,7 @@ export default function StaffMembers() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.StaffMember.delete(id),
+    mutationFn: deleteStaffMember,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['staff-members'] });
       setSelectedMember(null);

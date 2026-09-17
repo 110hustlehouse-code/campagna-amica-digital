@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { getMarkets } from '@/api/markets';
+import { getRegisteredCompanies } from '@/api/companies';
 import { Button } from '@/components/ui/button';
 import { Search, MapPin, Loader2, LocateFixed, Leaf, Newspaper, LayoutGrid, Map, ArrowRight } from 'lucide-react';
 import MarketCard from '../components/markets/MarketCard';
@@ -32,13 +33,13 @@ export default function Markets() {
 
   const { data: markets = [], isLoading, refetch } = useQuery({
     queryKey: ['markets'],
-    queryFn: () => base44.entities.Market.list('-created_date', 500),
+    queryFn: getMarkets,
     staleTime: 5 * 60 * 1000,
   });
 
   const { data: registeredCompanies = [] } = useQuery({
     queryKey: ['registered-companies'],
-    queryFn: () => base44.entities.Company.filter({ is_registered: true }, '-created_date', 500),
+    queryFn: getRegisteredCompanies,
     staleTime: 5 * 60 * 1000,
   });
 

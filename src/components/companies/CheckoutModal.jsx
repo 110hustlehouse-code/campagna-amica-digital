@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { getMarkets } from '@/api/markets';
+import { createOrder } from '@/api/orders';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,7 +40,7 @@ export default function CheckoutModal({ open, onClose, company, cart, onSuccess 
 
   const { data: markets = [] } = useQuery({
     queryKey: ['markets'],
-    queryFn: () => base44.entities.Market.list('-created_date', 200),
+    queryFn: getMarkets,
     enabled: open,
   });
 
@@ -69,7 +70,7 @@ export default function CheckoutModal({ open, onClose, company, cart, onSuccess 
     });
 
   const createOrder = useMutation({
-    mutationFn: (data) => base44.entities.Order.create(data),
+    mutationFn: createOrder,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       handleClose();

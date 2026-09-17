@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
+import { aggiornaProfilo } from '@/api/auth';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,7 +20,7 @@ export default function ProfileSection() {
   const handleSaveProfile = async () => {
     setIsSaving(true);
     try {
-      await base44.auth.updateMe({
+      await aggiornaProfilo({
         full_name: formData.full_name,
       });
       setIsEditing(false);

@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { subscribeTable } from '@/api/client';
+import { getMyCompany } from '@/api/companies';
+import { getOrdersByCompany, updateOrderStatus } from '@/api/orders';
+import { getReviews } from '@/api/reviews';
+import { invokeFunction } from '@/api/functions';
 import { useAuth } from '@/lib/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -101,26 +105,26 @@ export default function ProducerOrders() {
 
   const { data: myCompany } = useQuery({
     queryKey: ['my-company', user?.email],
-    queryFn: () => base44.entities.Company.filter({ created_by: user?.email }),
+    queryFn: getMyCompany,
     enabled: !!user?.email,
     select: d => d[0],
   });
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['my-orders', myCompany?.id],
-    queryFn: () => base44.entities.Order.filter({ company_id: myCompany?.id }),
+    queryFn: () => getOrdersByCompany(myCompany.id),
     enabled: !!myCompany?.id,
     refetchInterval: 30000,
   });
 
   const { data: reviews = [] } = useQuery({
     queryKey: ['my-reviews', myCompany?.id],
-    queryFn: () => base44.entities.Review.filter({ company_id: myCompany?.id }, '-created_date', 100),
+    queryFn: () => getReviews(myCompany.id),
     enabled: !!myCompany?.id,
   });
 
   useEffect(() => {
-    const unsubOrders = base44.entities.Order.subscribe((event) => {
+    const unsubOrders = subscribeTable('orders', (event) => {
       if (event.type === 'create' && event.data?.company_id === myCompany?.id) {
         setNewOrdersCount(prev => prev + 1);
         toast({
@@ -131,7 +135,7 @@ export default function ProducerOrders() {
       }
     });
 
-    const unsubReviews = base44.entities.Review.subscribe((event) => {
+    const unsubReviews = subscribeTable('reviews', (event) => {
       if (event.type === 'create' && event.data?.company_id === myCompany?.id) {
         setNewReviewsCount(prev => prev + 1);
         toast({
@@ -149,13 +153,13 @@ export default function ProducerOrders() {
   }, [qc, myCompany?.id, toast]);
 
   const updateStatus = useMutation({
-    mutationFn: ({ id, status }) => base44.entities.Order.update(id, { status }),
+    mutationFn: ({ id, status }) => updateOrderStatus(id, status),
     onSuccess: () => qc.invalidateQueries(['my-orders']),
   });
 
   const exportPDF = async () => {
     try {
-      const response = await base44.functions.invoke('exportOrdersPDF', {
+      const response = await invokeFunction('exportOrdersPDF', {
         orders,
         companyName: myCompany?.name || 'La mia azienda'
       });

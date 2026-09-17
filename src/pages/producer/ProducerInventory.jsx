@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { getMyCompany } from '@/api/companies';
+import { getProductsByCompany } from '@/api/products';
+import { getStocks, createStock, updateStock, deleteStock } from '@/api/stocks';
 import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,20 +21,20 @@ export default function ProducerInventory() {
 
   const { data: myCompany } = useQuery({
     queryKey: ['my-company', user?.email],
-    queryFn: () => base44.entities.Company.filter({ created_by: user?.email }),
+    queryFn: getMyCompany,
     enabled: !!user?.email,
     select: d => d[0],
   });
 
   const { data: products = [] } = useQuery({
     queryKey: ['my-products', myCompany?.id],
-    queryFn: () => base44.entities.Product.filter({ company_id: myCompany?.id }),
+    queryFn: () => getProductsByCompany(myCompany.id),
     enabled: !!myCompany?.id,
   });
 
   const { data: stocks = [], isLoading } = useQuery({
     queryKey: ['product-stocks', myCompany?.id],
-    queryFn: () => base44.entities.ProductStock?.filter({ company_id: myCompany?.id }) || [],
+    queryFn: () => getStocks(myCompany.id),
     enabled: !!myCompany?.id,
   });
 
@@ -47,9 +49,9 @@ export default function ProducerInventory() {
       };
 
       if (data.id) {
-        return base44.entities.ProductStock.update(data.id, stockData);
+        return updateStock(data.id, stockData);
       } else {
-        return base44.entities.ProductStock.create(stockData);
+        return createStock(stockData);
       }
     },
     onSuccess: () => {
@@ -60,7 +62,7 @@ export default function ProducerInventory() {
   });
 
   const deleteStockMutation = useMutation({
-    mutationFn: (id) => base44.entities.ProductStock.delete(id),
+    mutationFn: deleteStock,
     onSuccess: () => {
       qc.invalidateQueries(['product-stocks']);
       toast({ title: 'Eliminato' });

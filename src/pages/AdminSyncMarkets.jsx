@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { invokeFunction } from '@/api/functions';
 import { Button } from '@/components/ui/button';
 import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
@@ -23,7 +23,7 @@ export default function AdminSyncMarkets() {
     setError('');
     setResult(null);
     try {
-      const response = await base44.functions.invoke('fetchCampagnaAmicaMarkets', {});
+      const response = await invokeFunction('fetchCampagnaAmicaMarkets', {});
       setResult(response.data);
     } catch (err) {
       setError(err.message || 'Errore durante la sincronizzazione');
