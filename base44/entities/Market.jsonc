@@ -1,0 +1,49 @@
+{
+  "name": "Market",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Nome del mercato"
+    },
+    "address": {
+      "type": "string",
+      "description": "Indirizzo del mercato"
+    },
+    "city": {
+      "type": "string",
+      "description": "Citt\u00e0"
+    },
+    "region": {
+      "type": "string",
+      "description": "Regione"
+    },
+    "latitude": {
+      "type": "number",
+      "description": "Latitudine"
+    },
+    "longitude": {
+      "type": "number",
+      "description": "Longitudine"
+    },
+    "schedule": {
+      "type": "string",
+      "description": "Orari e giorni di apertura"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Immagine del mercato"
+    },
+    "company_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "ID delle aziende presenti nel mercato"
+    }
+  },
+  "required": [
+    "name",
+    "city"
+  ]
+}

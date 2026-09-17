@@ -1,0 +1,46 @@
+{
+  "name": "Supplier",
+  "type": "object",
+  "properties": {
+    "company_id": {
+      "type": "string",
+      "description": "ID dell'azienda produttrice proprietaria"
+    },
+    "name": {
+      "type": "string",
+      "description": "Nome del fornitore"
+    },
+    "contact_name": {
+      "type": "string",
+      "description": "Nome del referente"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Telefono"
+    },
+    "email": {
+      "type": "string",
+      "description": "Email del fornitore"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "materie_prime",
+        "packaging",
+        "attrezzature",
+        "servizi",
+        "trasporti",
+        "altro"
+      ],
+      "description": "Categoria fornitore"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Note aggiuntive"
+    }
+  },
+  "required": [
+    "company_id",
+    "name"
+  ]
+}

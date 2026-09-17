@@ -1,0 +1,19 @@
+{
+  "name": "Favorite",
+  "type": "object",
+  "properties": {
+    "company_id": {
+      "type": "string",
+      "description": "ID dell'azienda preferita"
+    },
+    "market_id": {
+      "type": "string",
+      "description": "ID del mercato preferito"
+    },
+    "product_id": {
+      "type": "string",
+      "description": "ID del prodotto preferito (se presente, \u00e8 un prodotto preferito, non un'azienda)"
+    }
+  },
+  "required": []
+}

@@ -1,0 +1,99 @@
+{
+  "name": "Company",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Nome dell'azienda"
+    },
+    "description": {
+      "type": "string",
+      "description": "Descrizione dell'azienda"
+    },
+    "website": {
+      "type": "string",
+      "description": "Sito web dell'azienda"
+    },
+    "logo_url": {
+      "type": "string",
+      "description": "URL del logo dell'azienda"
+    },
+    "cover_image_url": {
+      "type": "string",
+      "description": "URL immagine di copertina"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "ortofrutticola",
+        "lattiero_casearia",
+        "vinicola",
+        "olearia",
+        "cerealicola",
+        "zootecnica",
+        "apicoltura",
+        "altro"
+      ],
+      "description": "Categoria dell'azienda"
+    },
+    "region": {
+      "type": "string",
+      "description": "Regione dell'azienda"
+    },
+    "city": {
+      "type": "string",
+      "description": "Citt\u00e0 dell'azienda"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Telefono"
+    },
+    "email": {
+      "type": "string",
+      "description": "Email dell'azienda"
+    },
+    "market_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "ID dei mercati dove vende l'azienda"
+    },
+    "market_schedules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "market_id": {
+            "type": "string"
+          },
+          "days": {
+            "type": "string",
+            "description": "Es: Sabato, Domenica"
+          },
+          "time_start": {
+            "type": "string",
+            "description": "Es: 08:00"
+          },
+          "time_end": {
+            "type": "string",
+            "description": "Es: 15:00"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Note stagionali o particolari"
+          }
+        }
+      },
+      "description": "Orari e giorni di vendita dichiarati dal produttore per ogni mercato"
+    },
+    "is_registered": {
+      "type": "boolean",
+      "default": false,
+      "description": "true se l'azienda \u00e8 registrata da un account produttore reale"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

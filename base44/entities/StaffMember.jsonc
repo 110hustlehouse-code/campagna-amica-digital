@@ -1,0 +1,46 @@
+{
+  "name": "StaffMember",
+  "type": "object",
+  "properties": {
+    "market_id": {
+      "type": "string",
+      "description": "ID del mercato dove lavora il responsabile"
+    },
+    "full_name": {
+      "type": "string",
+      "description": "Nome completo del responsabile"
+    },
+    "email": {
+      "type": "string",
+      "description": "Email del responsabile"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Numero di telefono"
+    },
+    "position": {
+      "type": "string",
+      "enum": [
+        "market_manager",
+        "coordinator",
+        "administrator"
+      ],
+      "description": "Ruolo dello staff"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se il responsabile \u00e8 attivo"
+    },
+    "market_confirmed": {
+      "type": "boolean",
+      "default": false,
+      "description": "true se lo staff ha confermato il proprio mercato di riferimento"
+    }
+  },
+  "required": [
+    "market_id",
+    "email",
+    "full_name"
+  ]
+}

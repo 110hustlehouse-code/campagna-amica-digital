@@ -1,0 +1,33 @@
+{
+  "name": "Review",
+  "type": "object",
+  "properties": {
+    "company_id": {
+      "type": "string",
+      "description": "ID dell'azienda recensita"
+    },
+    "rating": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 5,
+      "description": "Voto da 1 a 5 stelle"
+    },
+    "message": {
+      "type": "string",
+      "description": "Commento privato dell'utente"
+    },
+    "reply": {
+      "type": "string",
+      "description": "Risposta del produttore alla recensione"
+    },
+    "reply_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data della risposta del produttore"
+    }
+  },
+  "required": [
+    "company_id",
+    "rating"
+  ]
+}

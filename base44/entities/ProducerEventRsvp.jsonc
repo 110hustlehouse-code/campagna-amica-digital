@@ -1,0 +1,38 @@
+{
+  "name": "ProducerEventRsvp",
+  "type": "object",
+  "properties": {
+    "message_id": {
+      "type": "string",
+      "description": "ID della StaffMessage (evento)"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "ID dell'azienda produttrice"
+    },
+    "producer_email": {
+      "type": "string",
+      "description": "Email del produttore"
+    },
+    "market_id": {
+      "type": "string",
+      "description": "ID del mercato dell'evento"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "accepted",
+        "declined"
+      ],
+      "default": "pending",
+      "description": "Risposta del produttore all'evento"
+    }
+  },
+  "required": [
+    "message_id",
+    "company_id",
+    "producer_email",
+    "market_id"
+  ]
+}

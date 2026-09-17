@@ -1,0 +1,62 @@
+{
+  "name": "Product",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Nome del prodotto"
+    },
+    "description": {
+      "type": "string",
+      "description": "Descrizione del prodotto"
+    },
+    "price": {
+      "type": "number",
+      "description": "Prezzo del prodotto in euro"
+    },
+    "unit": {
+      "type": "string",
+      "enum": [
+        "kg",
+        "lt",
+        "pz",
+        "confezione"
+      ],
+      "description": "Unit\u00e0 di misura"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Immagine del prodotto"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "frutta",
+        "verdura",
+        "formaggi",
+        "salumi",
+        "olio",
+        "vino",
+        "miele",
+        "pane_pasta",
+        "conserve",
+        "altro"
+      ],
+      "description": "Categoria prodotto"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "ID dell'azienda proprietaria"
+    },
+    "available": {
+      "type": "boolean",
+      "default": true,
+      "description": "Disponibilit\u00e0 del prodotto"
+    }
+  },
+  "required": [
+    "name",
+    "company_id",
+    "price"
+  ]
+}

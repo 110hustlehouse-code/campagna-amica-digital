@@ -1,0 +1,42 @@
+{
+  "name": "MarketEvent",
+  "type": "object",
+  "properties": {
+    "market_id": {
+      "type": "string",
+      "description": "ID del mercato"
+    },
+    "event_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data dell'evento"
+    },
+    "time_start": {
+      "type": "string",
+      "description": "Orario inizio (HH:MM)"
+    },
+    "time_end": {
+      "type": "string",
+      "description": "Orario fine (HH:MM)"
+    },
+    "title": {
+      "type": "string",
+      "description": "Titolo/tema dell'evento"
+    },
+    "capacity": {
+      "type": "number",
+      "description": "Numero massimo di espositori"
+    },
+    "registered_company_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "ID aziende iscritte"
+    }
+  },
+  "required": [
+    "market_id",
+    "event_date"
+  ]
+}

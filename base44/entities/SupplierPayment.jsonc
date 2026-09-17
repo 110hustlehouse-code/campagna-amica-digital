@@ -1,0 +1,58 @@
+{
+  "name": "SupplierPayment",
+  "type": "object",
+  "properties": {
+    "supplier_id": {
+      "type": "string",
+      "description": "ID del fornitore"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "ID dell'azienda produttrice"
+    },
+    "description": {
+      "type": "string",
+      "description": "Descrizione del pagamento o scadenza"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Importo in euro"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data di scadenza"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "da_pagare",
+        "pagato",
+        "scaduto"
+      ],
+      "default": "da_pagare",
+      "description": "Stato del pagamento"
+    },
+    "payment_method": {
+      "type": "string",
+      "enum": [
+        "bonifico",
+        "contanti",
+        "assegno",
+        "altro"
+      ],
+      "description": "Metodo di pagamento"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Note aggiuntive"
+    }
+  },
+  "required": [
+    "supplier_id",
+    "company_id",
+    "description",
+    "amount",
+    "due_date"
+  ]
+}

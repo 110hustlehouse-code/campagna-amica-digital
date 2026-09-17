@@ -1,0 +1,30 @@
+{
+  "name": "NewsCache",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Titolo della notizia"
+    },
+    "description": {
+      "type": "string",
+      "description": "Descrizione breve"
+    },
+    "date": {
+      "type": "string",
+      "description": "Data di pubblicazione"
+    },
+    "url": {
+      "type": "string",
+      "description": "URL articolo"
+    },
+    "source": {
+      "type": "string",
+      "description": "Coldiretti o Campagna Amica"
+    }
+  },
+  "required": [
+    "title",
+    "source"
+  ]
+}

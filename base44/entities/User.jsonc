@@ -1,0 +1,21 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "role": {
+      "type": "string",
+      "enum": [
+        "admin",
+        "client",
+        "producer",
+        "staff"
+      ],
+      "description": "Ruolo dell'utente nell'app"
+    },
+    "role_confirmed": {
+      "type": "boolean",
+      "default": false,
+      "description": "true se l'utente ha completato la selezione del ruolo in /benvenuto"
+    }
+  }
+}

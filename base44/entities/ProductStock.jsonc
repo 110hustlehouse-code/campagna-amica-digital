@@ -1,0 +1,31 @@
+{
+  "name": "ProductStock",
+  "type": "object",
+  "properties": {
+    "company_id": {
+      "type": "string",
+      "description": "ID dell'azienda proprietaria"
+    },
+    "product_id": {
+      "type": "string",
+      "description": "ID del prodotto"
+    },
+    "quantity": {
+      "type": "number",
+      "description": "Quantit\u00e0 disponibile attualmente"
+    },
+    "min_threshold": {
+      "type": "number",
+      "description": "Quantit\u00e0 minima prima di alert"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Note sulla disponibilit\u00e0 (es. stagionalit\u00e0, localizzazione)"
+    }
+  },
+  "required": [
+    "company_id",
+    "product_id",
+    "quantity"
+  ]
+}

@@ -1,0 +1,90 @@
+{
+  "name": "CompanyNeed",
+  "type": "object",
+  "properties": {
+    "company_id": {
+      "type": "string",
+      "description": "ID dell'azienda"
+    },
+    "market_id": {
+      "type": "string",
+      "description": "ID del mercato"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "bags",
+        "materials",
+        "urgent",
+        "maintenance",
+        "other"
+      ],
+      "description": "Categoria del bisogno"
+    },
+    "title": {
+      "type": "string",
+      "description": "Titolo del bisogno"
+    },
+    "description": {
+      "type": "string",
+      "description": "Descrizione dettagliata"
+    },
+    "size": {
+      "type": "string",
+      "description": "Dimensione o specifiche (es. piccola, media, grande, 30x40cm)"
+    },
+    "price": {
+      "type": "number",
+      "description": "Prezzo unitario in euro"
+    },
+    "quantity": {
+      "type": "number",
+      "description": "Quantit\u00e0 richiesta"
+    },
+    "payment_status": {
+      "type": "string",
+      "enum": [
+        "unpaid",
+        "paid"
+      ],
+      "default": "unpaid",
+      "description": "Stato del pagamento (solo per bisogni a pagamento)"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "default": "medium",
+      "description": "Livello di priorit\u00e0"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "open",
+        "in_progress",
+        "resolved",
+        "closed"
+      ],
+      "default": "open",
+      "description": "Stato del bisogno"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data prevista di risoluzione"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Note dello staff"
+    }
+  },
+  "required": [
+    "company_id",
+    "market_id",
+    "category",
+    "title"
+  ]
+}

@@ -1,0 +1,85 @@
+{
+  "name": "StaffMessage",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Titolo della comunicazione"
+    },
+    "description": {
+      "type": "string",
+      "description": "Descrizione dettagliata della comunicazione"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "closure",
+        "special_opening",
+        "event"
+      ],
+      "description": "Tipo di comunicazione"
+    },
+    "is_mandatory": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se \u00e8 obbligatorio partecipare o ricevere la comunicazione"
+    },
+    "market_id": {
+      "type": "string",
+      "description": "ID del mercato a cui si riferisce la comunicazione"
+    },
+    "location": {
+      "type": "string",
+      "description": "Luogo dove si svolge la comunicazione/evento"
+    },
+    "event_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data dell'evento o della comunicazione"
+    },
+    "time_start": {
+      "type": "string",
+      "description": "Ora inizio (HH:MM)"
+    },
+    "time_end": {
+      "type": "string",
+      "description": "Ora fine (HH:MM)"
+    },
+    "details": {
+      "type": "string",
+      "description": "Dettagli aggiuntivi"
+    },
+    "is_published": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se \u00e8 pubblicato e visibile ai produttori"
+    },
+    "attachments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Nome del file"
+          },
+          "url": {
+            "type": "string",
+            "description": "URL del file"
+          },
+          "type": {
+            "type": "string",
+            "description": "Tipo MIME del file"
+          }
+        }
+      },
+      "description": "File allegati (PDF, immagini, documenti)"
+    }
+  },
+  "required": [
+    "title",
+    "type",
+    "location",
+    "event_date"
+  ]
+}

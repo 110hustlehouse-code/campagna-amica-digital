@@ -1,0 +1,52 @@
+{
+  "name": "Notification",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Email del destinatario"
+    },
+    "title": {
+      "type": "string",
+      "description": "Titolo della notifica"
+    },
+    "message": {
+      "type": "string",
+      "description": "Testo della notifica"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "new_product",
+        "order_update",
+        "generic"
+      ],
+      "default": "generic"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "ID azienda correlata"
+    },
+    "product_id": {
+      "type": "string",
+      "description": "ID prodotto correlato"
+    },
+    "order_id": {
+      "type": "string",
+      "description": "ID ordine correlato"
+    },
+    "message_id": {
+      "type": "string",
+      "description": "ID della StaffMessage correlata (per eventi facoltativi con RSVP)"
+    },
+    "read": {
+      "type": "boolean",
+      "default": false,
+      "description": "Letta o no"
+    }
+  },
+  "required": [
+    "user_email",
+    "title"
+  ]
+}

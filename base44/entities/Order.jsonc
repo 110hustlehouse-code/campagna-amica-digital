@@ -1,0 +1,75 @@
+{
+  "name": "Order",
+  "type": "object",
+  "properties": {
+    "company_id": {
+      "type": "string",
+      "description": "ID dell'azienda"
+    },
+    "company_name": {
+      "type": "string",
+      "description": "Nome dell'azienda"
+    },
+    "market_id": {
+      "type": "string",
+      "description": "ID del mercato"
+    },
+    "market_name": {
+      "type": "string",
+      "description": "Nome del mercato"
+    },
+    "items": {
+      "type": "array",
+      "description": "Prodotti ordinati",
+      "items": {
+        "type": "object",
+        "properties": {
+          "product_id": {
+            "type": "string"
+          },
+          "product_name": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "unit_price": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "total_amount": {
+      "type": "number",
+      "description": "Totale dell'ordine"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "in_attesa",
+        "confermato",
+        "pronto",
+        "ritirato",
+        "annullato"
+      ],
+      "default": "in_attesa",
+      "description": "Stato dell'ordine"
+    },
+    "pickup_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data di ritiro"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Note aggiuntive"
+    }
+  },
+  "required": [
+    "company_id",
+    "market_id"
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "name": "Market",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Nome del mercato"
+    },
+    "city": {
+      "type": "string",
+      "description": "Città del mercato"
+    },
+    "region": {
+      "type": "string",
+      "description": "Regione del mercato"
+    },
+    "address": {
+      "type": "string",
+      "description": "Indirizzo del mercato"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Numero di telefono"
+    },
+    "email": {
+      "type": "string",
+      "description": "Email del mercato"
+    },
+    "opening_days": {
+      "type": "string",
+      "description": "Giorni di apertura (es: Sabato e Domenica)"
+    },
+    "opening_hours": {
+      "type": "string",
+      "description": "Orari di apertura (es: 08:00 - 14:00)"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "URL immagine del mercato"
+    },
+    "latitude": {
+      "type": "number",
+      "description": "Latitudine per la mappa"
+    },
+    "longitude": {
+      "type": "number",
+      "description": "Longitudine per la mappa"
+    },
+    "company_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "ID delle aziende presenti al mercato"
+    },
+    "schedule": {
+      "type": "string",
+      "description": "Schedule testuale"
+    }
+  },
+  "required": ["name"]
+}

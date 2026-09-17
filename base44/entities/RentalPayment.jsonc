@@ -1,0 +1,67 @@
+{
+  "name": "RentalPayment",
+  "type": "object",
+  "properties": {
+    "stall_rental_id": {
+      "type": "string",
+      "description": "ID dell'affitto banco"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "ID dell'azienda"
+    },
+    "market_id": {
+      "type": "string",
+      "description": "ID del mercato"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Importo pagato"
+    },
+    "payment_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data del pagamento"
+    },
+    "period_month": {
+      "type": "integer",
+      "description": "Mese di riferimento (1-12)"
+    },
+    "period_year": {
+      "type": "integer",
+      "description": "Anno di riferimento"
+    },
+    "payment_method": {
+      "type": "string",
+      "enum": [
+        "bank_transfer",
+        "cash",
+        "check",
+        "stripe"
+      ],
+      "description": "Metodo di pagamento"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "paid",
+        "pending",
+        "overdue"
+      ],
+      "default": "pending",
+      "description": "Stato del pagamento"
+    },
+    "receipt_url": {
+      "type": "string",
+      "description": "URL della ricevuta"
+    }
+  },
+  "required": [
+    "stall_rental_id",
+    "company_id",
+    "market_id",
+    "amount",
+    "period_month",
+    "period_year"
+  ]
+}

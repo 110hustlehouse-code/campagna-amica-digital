@@ -1,0 +1,58 @@
+{
+  "name": "StallRental",
+  "type": "object",
+  "properties": {
+    "company_id": {
+      "type": "string",
+      "description": "ID dell'azienda che affitta il banco"
+    },
+    "market_id": {
+      "type": "string",
+      "description": "ID del mercato"
+    },
+    "stall_number": {
+      "type": "string",
+      "description": "Numero o identificativo del banco"
+    },
+    "monthly_rent": {
+      "type": "number",
+      "description": "Canone d'affitto mensile in euro"
+    },
+    "rental_start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data inizio affitto"
+    },
+    "rental_end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data fine affitto (null se continuo)"
+    },
+    "payment_method": {
+      "type": "string",
+      "enum": [
+        "bank_transfer",
+        "cash",
+        "check",
+        "stripe"
+      ],
+      "description": "Metodo di pagamento"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "suspended",
+        "terminated"
+      ],
+      "default": "active",
+      "description": "Stato dell'affitto"
+    }
+  },
+  "required": [
+    "company_id",
+    "market_id",
+    "monthly_rent",
+    "rental_start_date"
+  ]
+}

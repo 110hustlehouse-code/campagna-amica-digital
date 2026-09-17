@@ -1,0 +1,44 @@
+{
+  "name": "CompanyMarketAssignment",
+  "type": "object",
+  "properties": {
+    "company_id": {
+      "type": "string",
+      "description": "ID dell'azienda"
+    },
+    "market_event_id": {
+      "type": "string",
+      "description": "ID dell'evento di mercato"
+    },
+    "assigned_product_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "ID dei prodotti assegnati"
+    },
+    "stand_number": {
+      "type": "string",
+      "description": "Numero dello stand assegnato"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "confirmed",
+        "completed",
+        "cancelled"
+      ],
+      "default": "pending",
+      "description": "Stato dell'iscrizione"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Note particolari per l'evento"
+    }
+  },
+  "required": [
+    "company_id",
+    "market_event_id"
+  ]
+}

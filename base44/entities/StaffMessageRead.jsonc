@@ -1,0 +1,31 @@
+{
+  "name": "StaffMessageRead",
+  "type": "object",
+  "properties": {
+    "message_id": {
+      "type": "string",
+      "description": "ID della comunicazione staff"
+    },
+    "producer_email": {
+      "type": "string",
+      "description": "Email del produttore che ha letto"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "ID dell'azienda del produttore"
+    },
+    "read_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data e ora della lettura"
+    },
+    "feedback": {
+      "type": "string",
+      "description": "Feedback facoltativo dal produttore"
+    }
+  },
+  "required": [
+    "message_id",
+    "producer_email"
+  ]
+}
