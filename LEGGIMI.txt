@@ -1,0 +1,18 @@
+PACCHETTO DATA LAYER SUPABASE — Campagna Amica Digital
+
+Contenuto:
+  src/api/client.ts      connessione a Supabase
+  src/api/types.ts       tipi generati dal database
+  src/api/auth.ts        accesso Google e ruoli
+  src/api/markets.ts     mercati e territorio
+  src/api/companies.ts   aziende
+  src/api/products.ts    catalogo prodotti
+  src/api/orders.ts      ordini
+  src/api/ddt.ts         documenti di trasporto
+  src/vite-env.d.ts      dichiarazioni variabili d'ambiente
+  tsconfig.json          configurazione TypeScript
+  .env.example           modello per .env.local
+  scripts/gen-types.py   rigenerazione tipi (uso avanzato)
+
+Questi file si AGGIUNGONO al progetto: non sostituiscono nulla.
+src/api/base44Client.js resta dov'e' finche' le pagine non sono migrate.
