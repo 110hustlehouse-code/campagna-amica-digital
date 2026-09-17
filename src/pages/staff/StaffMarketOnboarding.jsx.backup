@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { getMarkets } from '@/api/markets';
-import { confermaMercatoStaff } from '@/api/staff';
+import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { MapPin, Search, Loader2, CheckCircle, Navigation } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
@@ -31,7 +30,7 @@ export default function StaffMarketOnboarding() {
 
   const { data: markets = [], isLoading } = useQuery({
     queryKey: ['markets-active'],
-    queryFn: getMarkets,
+    queryFn: () => base44.entities.Market.list('name', 500),
   });
 
   // Try GPS on mount
@@ -88,7 +87,25 @@ export default function StaffMarketOnboarding() {
     }
     setSaving(true);
     try {
-      await confermaMercatoStaff(selectedMarketId);
+      const me = await base44.auth.me();
+      // Find or create StaffMember record
+      let staff = await base44.entities.StaffMember.filter({ email: me.email }, '-updated_date', 1);
+      if (staff.length > 0) {
+        await base44.entities.StaffMember.update(staff[0].id, {
+          market_id: selectedMarketId,
+          market_confirmed: true,
+          full_name: me.full_name,
+        });
+      } else {
+        await base44.entities.StaffMember.create({
+          email: me.email,
+          full_name: me.full_name,
+          market_id: selectedMarketId,
+          market_confirmed: true,
+          position: 'market_manager',
+          is_active: true,
+        });
+      }
       navigate('/staff');
     } catch (err) {
       toast({ title: 'Errore', description: err.message, variant: 'destructive' });

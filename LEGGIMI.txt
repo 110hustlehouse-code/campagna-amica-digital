@@ -1,18 +1,21 @@
-PACCHETTO DATA LAYER SUPABASE — Campagna Amica Digital
+BLOCCO 2 — data layer completo + accesso
 
-Contenuto:
-  src/api/client.ts      connessione a Supabase
-  src/api/types.ts       tipi generati dal database
-  src/api/auth.ts        accesso Google e ruoli
-  src/api/markets.ts     mercati e territorio
-  src/api/companies.ts   aziende
-  src/api/products.ts    catalogo prodotti
-  src/api/orders.ts      ordini
-  src/api/ddt.ts         documenti di trasporto
-  src/vite-env.d.ts      dichiarazioni variabili d'ambiente
-  tsconfig.json          configurazione TypeScript
-  .env.example           modello per .env.local
-  scripts/gen-types.py   rigenerazione tipi (uso avanzato)
+NUOVI moduli in src/api/:
+  staff.ts          staff, comunicazioni, letture
+  events.ts         eventi di mercato e adesioni
+  needs.ts          bisogni delle aziende
+  rentals.ts        affitti banchi e pagamenti
+  suppliers.ts      fornitori e scadenze
+  notifications.ts  notifiche
+  favorites.ts      preferiti
+  reviews.ts        recensioni
 
-Questi file si AGGIUNGONO al progetto: non sostituiscono nulla.
-src/api/base44Client.js resta dov'e' finche' le pagine non sono migrate.
+SOSTITUISCE:
+  src/lib/AuthContext.jsx   <-- ATTENZIONE: rimpiazza il file esistente.
+                                La versione Base44 viene sovrascritta.
+
+NUOVO:
+  src/pages/Login.jsx       schermata di accesso
+
+Dopo l'estrazione servono due modifiche a mano in src/App.jsx:
+vedi PASSI_APP.md

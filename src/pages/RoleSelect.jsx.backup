@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Sprout, ShoppingBasket, ChevronRight, X, Shield, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { confirmRole } from '@/api/auth';
+import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
 
 const PRODUCER_ACCESS_CODE = 'CAMPAGNA2025';
@@ -60,7 +60,7 @@ export default function RoleSelect() {
   const handleClientClick = async () => {
     try {
       setLoading(true);
-      await confirmRole('client');
+      await base44.auth.updateMe({ role: 'client', role_confirmed: true });
       await refreshUser();
       navigate('/home');
     } catch (error) {
@@ -74,12 +74,12 @@ export default function RoleSelect() {
       const trimmed = codeInput.trim();
       if (codeType === 'producer' && trimmed === PRODUCER_ACCESS_CODE) {
         setLoading(true);
-        await confirmRole('producer');
+        await base44.auth.updateMe({ role: 'producer', role_confirmed: true });
         await refreshUser();
         navigate('/produttore/onboarding');
       } else if (codeType === 'staff' && trimmed === STAFF_ACCESS_CODE) {
         setLoading(true);
-        await confirmRole('staff');
+        await base44.auth.updateMe({ role: 'staff', role_confirmed: true });
         await refreshUser();
         navigate('/staff-onboarding');
       } else {

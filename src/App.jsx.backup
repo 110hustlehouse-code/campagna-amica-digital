@@ -13,7 +13,6 @@ import ProducerLayout from './components/layout/ProducerLayout.jsx';
 import StaffLayout from './components/layout/StaffLayout.jsx';
 import PageTransition from './components/shared/PageTransition';
 import RoleSelect from './pages/RoleSelect';
-import Login from './pages/Login';
 import StaffMarketOnboarding from './pages/staff/StaffMarketOnboarding.jsx';
 
 // Lazy load pages
@@ -63,13 +62,21 @@ const AuthenticatedApp = () => {
     );
   }
 
-  // Non autenticato: si mostra la schermata di accesso.
-  if (!isAuthenticated || !user) {
-    return <Login />;
+  // Handle authentication errors - if auth_required, user will be redirected by navigateToLogin
+  if (authError) {
+    if (authError.type === 'user_not_registered') {
+      return <UserNotRegisteredError />;
+    } else if (authError.type === 'auth_required') {
+      // Will trigger redirect to login
+      navigateToLogin();
+      return null;
+    }
   }
 
-  if (authError && authError.type === 'user_not_registered') {
-    return <UserNotRegisteredError />;
+  // If not authenticated and no auth_required error, still redirect to login
+  if (!isAuthenticated || !user) {
+    navigateToLogin();
+    return null;
   }
 
   // Gate: if user is authenticated, force /benvenuto if role_confirmed is false or missing
