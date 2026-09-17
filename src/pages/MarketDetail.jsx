@@ -4,7 +4,7 @@ import { getMarket } from '@/api/markets';
 import { getRegisteredCompanies } from '@/api/companies';
 import { getAllAvailableProducts } from '@/api/products';
 import { getMyFavorites, aggiungiPreferito, rimuoviPreferito } from '@/api/favorites';
-import { createOrder } from '@/api/orders';
+import { createOrder as apiCreateOrder } from '@/api/orders';
 import { getPublishedMessages } from '@/api/staff';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -65,7 +65,7 @@ export default function MarketDetail() {
   });
 
   const createOrder = useMutation({
-    mutationFn: createOrder,
+    mutationFn: apiCreateOrder,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       setOrderDialog(false);

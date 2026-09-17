@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Leaf, ArrowRight, Check, Package, Users, TrendingUp, Zap, X, Loader2 } from 'lucide-react';

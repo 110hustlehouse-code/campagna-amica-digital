@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getMarkets } from '@/api/markets';
-import { createOrder } from '@/api/orders';
+import { createOrder as apiCreateOrder } from '@/api/orders';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -70,7 +70,7 @@ export default function CheckoutModal({ open, onClose, company, cart, onSuccess 
     });
 
   const createOrder = useMutation({
-    mutationFn: createOrder,
+    mutationFn: apiCreateOrder,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       handleClose();

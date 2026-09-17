@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getMyOrders, deleteOrder } from '@/api/orders';
+import { getMyOrders, deleteOrder as apiDeleteOrder } from '@/api/orders';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ShoppingBag, Loader2, MapPin, Calendar, Pencil, Trash2, Leaf, ArrowRight } from 'lucide-react';
@@ -22,7 +22,7 @@ export default function Orders() {
   });
 
   const deleteOrder = useMutation({
-    mutationFn: deleteOrder,
+    mutationFn: apiDeleteOrder,
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ['orders'] });
       const prev = queryClient.getQueryData(['orders']);

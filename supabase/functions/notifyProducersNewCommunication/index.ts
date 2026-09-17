@@ -1,6 +1,15 @@
 /**
- * Avvisa i produttori di un mercato quando viene pubblicata una
- * comunicazione (chiusura, apertura straordinaria, evento).
+ * Avvisa chi di dovere quando lo staff pubblica una comunicazione.
+ *
+ * CHI RICEVE COSA
+ *   Produttori del mercato: tutto. Chiusure, aperture straordinarie ed
+ *   eventi li riguardano direttamente, devono organizzarsi.
+ *
+ *   Clienti che seguono il mercato: solo chiusure e aperture
+ *   straordinarie, cioe' le informazioni che cambiano i loro piani.
+ *   Gli eventi rivolti ai produttori non li riguardano: notificarli
+ *   otterrebbe solo che disattivino le notifiche, e a quel punto non
+ *   leggerebbero piu' nemmeno l'avviso di chiusura.
  *
  * Per gli eventi facoltativi crea anche le richieste di adesione in
  * stato "in attesa", una per azienda del mercato.
@@ -67,7 +76,42 @@ Deno.serve(async (req) => {
       if (!error) adesioni = righe.length
     }
 
-    return ok({ success: true, avvisati: aziendeAttive.length, adesioni })
+    // Clienti che seguono questo mercato: solo per cio' che li riguarda.
+    let clientiAvvisati = 0
+    if (msg.type === 'closure' || msg.type === 'special_opening') {
+      const { data: seguaci } = await db
+        .from('favorites').select('created_by').eq('market_id', msg.market_id)
+
+      const emailProduttori = new Set(aziendeAttive.map((c) => c.created_by!.toLowerCase()))
+      const destinatari = [...new Set(
+        (seguaci ?? [])
+          .map((f) => f.created_by)
+          .filter((e): e is string => !!e && !emailProduttori.has(e.toLowerCase())),
+      )]
+
+      if (destinatari.length > 0) {
+        const titoloCliente = msg.type === 'closure'
+          ? 'Mercato chiuso'
+          : 'Apertura straordinaria'
+        await db.from('notifications').insert(
+          destinatari.map((email) => ({
+            user_email: email,
+            title: titoloCliente,
+            message: testo,
+            type: 'generic',
+            message_id: msg.id,
+          })),
+        )
+        clientiAvvisati = destinatari.length
+      }
+    }
+
+    return ok({
+      success: true,
+      produttori: aziendeAttive.length,
+      clienti: clientiAvvisati,
+      adesioni,
+    })
   } catch (e) {
     return errore(e instanceof Error ? e.message : 'Errore imprevisto', 500)
   }

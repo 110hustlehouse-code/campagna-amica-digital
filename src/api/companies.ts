@@ -28,11 +28,16 @@ export async function getCompaniesByMarket(marketId: string): Promise<Company[]>
 export async function getMyCompany(): Promise<Company | null> {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user?.email) return null
+  // limit(1) e non maybeSingle(): se per qualsiasi ragione esistessero
+  // due righe, maybeSingle fallirebbe e porterebbe giu' l'intera area
+  // produttore. Qui si prende la piu' recente e si va avanti.
   const { data, error } = await supabase
     .from('companies').select('*')
-    .ilike('created_by', user.email).maybeSingle()
+    .ilike('created_by', user.email)
+    .order('updated_date', { ascending: false })
+    .limit(1)
   if (error) throw error
-  return data
+  return data?.[0] ?? null
 }
 
 export async function createCompany(c: TablesInsert<'companies'>): Promise<Company> {

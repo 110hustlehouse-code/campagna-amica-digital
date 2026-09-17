@@ -14,6 +14,7 @@ import StaffLayout from './components/layout/StaffLayout.jsx';
 import PageTransition from './components/shared/PageTransition';
 import RoleSelect from './pages/RoleSelect';
 import Login from './pages/Login';
+import ErrorBoundary from './components/shared/ErrorBoundary';
 import StaffMarketOnboarding from './pages/staff/StaffMarketOnboarding.jsx';
 
 // Lazy load pages
@@ -52,7 +53,7 @@ const PageLoader = () => (
 );
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user, isAuthenticated } = useAuth();
+  const { isLoadingAuth, isLoadingPublicSettings, authError, user, isAuthenticated } = useAuth();
 
   // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth) {
@@ -80,6 +81,7 @@ const AuthenticatedApp = () => {
 
   // Render the main app
   return (
+    <ErrorBoundary>
     <AnimatePresence mode="wait">
       <Routes>
       {/* Force to role selection if role not confirmed */}
@@ -123,6 +125,7 @@ const AuthenticatedApp = () => {
       </Route>
     </Routes>
     </AnimatePresence>
+    </ErrorBoundary>
   );
 };
 

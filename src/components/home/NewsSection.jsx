@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { invokeLLM } from '@/api/ai';
+import { getNews } from '@/api/news';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ExternalLink, Newspaper } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,48 +10,25 @@ export default function NewsSection() {
   const [activeTab, setActiveTab] = useState('all');
 
   useEffect(() => {
-    const fetchNews = async () => {
-      try {
-        const response = await invokeLLM({
-          prompt: `Fetcha le ultime 6 notizie da www.campagnamica.it e 6 notizie da www.coldiretti.it.
-          Per ogni notizia restituisci: titolo, descrizione breve (max 150 caratteri), link alla notizia, fonte (campagnamica o coldiretti), data pubblicazione se disponibile.
-          Restituisci il risultato come JSON array di oggetti con: title, description, url, source, date.`,
-          add_context_from_internet: true,
-          response_json_schema: {
-            type: 'object',
-            properties: {
-              articles: {
-                type: 'array',
-                items: {
-                  type: 'object',
-                  properties: {
-                    title: { type: 'string' },
-                    description: { type: 'string' },
-                    url: { type: 'string' },
-                    source: { type: 'string' },
-                    date: { type: 'string' }
-                  }
-                }
-              }
-            }
-          }
-        });
-        
-        setNews(response.articles || []);
-      } catch (error) {
-        console.error('Errore nel fetching notizie:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchNews();
+    // Le notizie si leggono dalla cache, non si cercano a ogni visita.
+    // La cache viene aggiornata dalla funzione programmata
+    // refreshColdirettiNews: cercarle qui significherebbe una chiamata
+    // AI per ogni apertura della home, con costi e attese inutili per
+    // contenuti che cambiano due volte al giorno.
+    let attivo = true;
+    getNews(12)
+      .then((righe) => { if (attivo) setNews(righe); })
+      .catch(() => { /* senza notizie la sezione resta nascosta */ })
+      .finally(() => { if (attivo) setLoading(false); });
+    return () => { attivo = false; };
   }, []);
 
   const campagnamicaNews = news.filter(n => n.source?.toLowerCase().includes('campagna'));
   const coldirettiNews = news.filter(n => n.source?.toLowerCase().includes('coldiretti'));
 
   const displayNews = activeTab === 'campagnamica' ? campagnamicaNews : activeTab === 'coldiretti' ? coldirettiNews : news;
+
+  if (!loading && news.length === 0) return null;
 
   return (
     <div className="w-full bg-gradient-to-br from-secondary/5 to-primary/5 border-t border-border/20">

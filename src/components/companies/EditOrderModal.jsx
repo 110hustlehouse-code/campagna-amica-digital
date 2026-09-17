@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { getAvailableProducts } from '@/api/products';
-import { updateOrder } from '@/api/orders';
+import { updateOrder as apiUpdateOrder } from '@/api/orders';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,7 +52,7 @@ export default function EditOrderModal({ open, onClose, order }) {
   const cartTotal = cart.reduce((sum, i) => sum + i.total, 0);
 
   const updateOrder = useMutation({
-    mutationFn: (data) => updateOrder(order.id, data),
+    mutationFn: (data) => apiUpdateOrder(order.id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       onClose();
