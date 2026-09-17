@@ -28,9 +28,9 @@ const email = UTENTI[ruolo] ?? ruolo
 const PERCORSI = {
   cliente:    ['/home', '/mercati', '/aziende', '/preferiti', '/ordini', '/stagionalita', '/profilo'],
   produttore: ['/produttore', '/produttore/prodotti', '/produttore/ordini', '/produttore/azienda',
-               '/produttore/mercati', '/produttore/disponibilita', '/produttore/fornitori'],
+               '/produttore/mercati', '/produttore/disponibilita', '/produttore/fornitori', '/produttore/ddt'],
   staff:      ['/staff', '/staff/bisogni', '/staff/crea-evento', '/staff/affitti',
-               '/staff/team', '/staff/assenze', '/staff/profilo'],
+               '/staff/team', '/staff/assenze', '/staff/profilo', '/staff/ddt'],
 }
 
 const browser = await chromium.launch()

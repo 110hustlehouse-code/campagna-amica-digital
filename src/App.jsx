@@ -28,6 +28,7 @@ const ProducerCompany = lazy(() => import('./pages/producer/ProducerCompany.jsx'
 const ProducerInventory = lazy(() => import('./pages/producer/ProducerInventory.jsx'));
 const ProducerMarkets = lazy(() => import('./pages/producer/ProducerMarkets.jsx'));
 const ProducerSuppliers = lazy(() => import('./pages/producer/ProducerSuppliers.jsx'));
+const ProducerDDT = lazy(() => import('./pages/producer/ProducerDDT.jsx'));
 const StaffDashboard = lazy(() => import('./pages/staff/StaffDashboard.jsx'));
 const StaffProfile = lazy(() => import('./pages/staff/StaffProfile.jsx'));
 const StaffMembers = lazy(() => import('./pages/staff/StaffMembers.jsx'));
@@ -35,6 +36,7 @@ const StallRentals = lazy(() => import('./pages/staff/StallRentals.jsx'));
 const CompanyNeeds = lazy(() => import('./pages/staff/CompanyNeeds.jsx'));
 const AbsenceCalendar = lazy(() => import('./pages/staff/AbsenceCalendar.jsx'));
 const CreateEvent = lazy(() => import('./pages/staff/CreateEvent.jsx'));
+const StaffDDT = lazy(() => import('./pages/staff/StaffDDT.jsx'));
 const Companies = lazy(() => import('./pages/Companies'));
 const CompanyDetail = lazy(() => import('./pages/CompanyDetail'));
 const Markets = lazy(() => import('./pages/Markets'));
@@ -113,6 +115,7 @@ const AuthenticatedApp = () => {
         <Route path="/produttore/mercati" element={<Suspense fallback={<PageLoader />}><ProducerMarkets /></Suspense>} />
         <Route path="/produttore/azienda" element={<Suspense fallback={<PageLoader />}><ProducerCompany /></Suspense>} />
         <Route path="/produttore/fornitori" element={<Suspense fallback={<PageLoader />}><ProducerSuppliers /></Suspense>} />
+        <Route path="/produttore/ddt" element={<Suspense fallback={<PageLoader />}><ProducerDDT /></Suspense>} />
       </Route>
       <Route element={<StaffLayout />}>
         <Route path="/staff" element={<Suspense fallback={<PageLoader />}><StaffDashboard /></Suspense>} />
@@ -122,6 +125,7 @@ const AuthenticatedApp = () => {
         <Route path="/staff/crea-evento" element={<Suspense fallback={<PageLoader />}><CreateEvent /></Suspense>} />
         <Route path="/staff/profilo" element={<Suspense fallback={<PageLoader />}><StaffProfile /></Suspense>} />
         <Route path="/staff/assenze" element={<Suspense fallback={<PageLoader />}><AbsenceCalendar /></Suspense>} />
+        <Route path="/staff/ddt" element={<Suspense fallback={<PageLoader />}><StaffDDT /></Suspense>} />
       </Route>
     </Routes>
     </AnimatePresence>

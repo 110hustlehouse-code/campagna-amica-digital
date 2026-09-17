@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
-import { Bell, AlertCircle, DollarSign, CalendarPlus, User } from 'lucide-react';
+import { Bell, AlertCircle, DollarSign, CalendarPlus, User, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getMyStaffMember, contaBisogniAperti } from '@/api/staff';
 import PageTransition from '../shared/PageTransition';
 import UnifiedBottomNav from './UnifiedBottomNav';
 import Footer from '../shared/Footer';
 
-const ROOT_PATHS = ['/staff', '/staff/bisogni', '/staff/crea-evento', '/staff/affitti', '/staff/profilo'];
+const ROOT_PATHS = ['/staff', '/staff/bisogni', '/staff/crea-evento', '/staff/ddt', '/staff/profilo'];
 const navItems = [
   { path: '/staff', label: 'Dashboard', icon: Bell, section: 'dashboard' },
   { path: '/staff/bisogni', label: 'Bisogni', icon: AlertCircle, section: 'bisogni' },
   { path: '/staff/crea-evento', label: 'Evento', icon: CalendarPlus, section: 'evento' },
-  { path: '/staff/affitti', label: 'Affitti', icon: DollarSign, section: 'affitti' },
+  { path: '/staff/ddt', label: 'DDT', icon: FileText, section: 'ddt' },
   { path: '/staff/profilo', label: 'Profilo', icon: User, section: 'profilo' },
 ];
 
@@ -26,7 +26,7 @@ export default function StaffLayout() {
     dashboard: ['/staff'],
     bisogni: ['/staff/bisogni'],
     evento: ['/staff/crea-evento'],
-    affitti: ['/staff/affitti'],
+    affitti: ['/staff/ddt'],
     profilo: ['/staff/profilo'],
   });
 

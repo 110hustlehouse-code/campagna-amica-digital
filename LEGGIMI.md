@@ -1,49 +1,55 @@
-# Notizie dalla cache invece che da una ricerca a ogni visita
+# DDT — documento di trasporto
 
-## Cosa faceva
+## File
 
-Ogni apertura della home lanciava una ricerca web con AI per recuperare
-le notizie Coldiretti. Con un utente e' un dettaglio. Su 1.000 mercati
-sarebbe una chiamata AI per ogni visita di ogni cliente, per contenuti
-che cambiano due volte al giorno — e la home resterebbe lenta ogni volta.
+- `src/pages/producer/ProducerDDT.jsx` — NUOVO, emissione lato produttore
+- `src/pages/staff/StaffDDT.jsx` — NUOVO, documenti in arrivo al mercato
+- `src/components/layout/ProducerLayout.jsx` — voce DDT nella barra
+- `src/components/layout/StaffLayout.jsx` — voce DDT nella barra
+- `src/App.jsx` — le due rotte
 
-## Cosa fa ora
-
-Legge dalla tabella `news_cache`, che viene aggiornata dalla funzione
-`refreshColdirettiNews`. Se la cache e' vuota la sezione non compare,
-invece di mostrare un riquadro vuoto o un errore.
-
-Il design e' invariato: cambia solo da dove arrivano i dati.
-
-## Perche' questo risolve anche l'errore della home
-
-`invokeLLM` non e' pubblicata, perche' serve la chiave Anthropic. Con
-questa modifica la home non ne ha piu' bisogno: funziona anche senza AI.
-
-## Per avere notizie vere
-
-1. Imposta la chiave vera:
-   `supabase secrets set ANTHROPIC_API_KEY=sk-ant-...`
-
-2. Pubblica le funzioni AI:
-   `supabase functions deploy invokeLLM analyzeListino refreshColdirettiNews --use-api`
-
-3. Programma l'aggiornamento due volte al giorno.
-   Su Supabase -> SQL Editor:
-
-```sql
-select cron.schedule(
-  'notizie-coldiretti',
-  '0 7,19 * * *',
-  $$ select net.http_post(
-       url := 'https://jkrzjlfgchzbuqpfsdoh.supabase.co/functions/v1/refreshColdirettiNews',
-       headers := '{"Content-Type":"application/json"}'::jsonb
-     ) $$
-);
+```
+npm run build
 ```
 
-Richiede le estensioni `pg_cron` e `pg_net`, che si attivano da
-Database -> Extensions.
+Non serve SQL: le tabelle ci sono dal primo giorno.
 
-Senza questo passaggio l'app funziona lo stesso: la sezione notizie
-semplicemente non compare.
+## Come funziona per il produttore
+
+1. **Nuovo** → sceglie il mercato di destinazione e la causale
+2. Aggiunge la merce, prendendola dal proprio catalogo o scrivendola
+3. **Crea bozza** — modificabile quanto si vuole, nessun numero assegnato
+4. **Emetti** — il documento riceve il numero progressivo e diventa
+   immutabile
+5. **Consegnato** quando la merce arriva
+6. **Annulla** se c'è un errore: il documento resta negli archivi con il
+   motivo, e se ne emette uno nuovo
+
+## Perche' la bozza non ha numero
+
+Il progressivo dei DDT non puo' avere buchi. Se il numero venisse
+assegnato alla creazione, ogni bozza abbandonata brucerebbe un numero
+della serie. Viene assegnato all'emissione, quando il documento diventa
+reale.
+
+## Come funziona per lo staff
+
+Vede i documenti in arrivo al proprio mercato dall'inizio del mese, con
+il conteggio di documenti, aziende coinvolte e consegne. Puo' cercare per
+azienda o numero e aprire il dettaglio della merce.
+
+Non puo' modificarli: il DDT appartiene a chi lo emette.
+
+## Nella barra di navigazione
+
+Lato produttore, DDT prende il posto di "AI", che resta raggiungibile
+dalla home. Lato staff prende il posto di "Affitti", raggiungibile dalla
+dashboard. Le barre hanno cinque posti e il DDT e' la funzione che vale
+di piu' mostrare.
+
+## Cosa manca ancora
+
+- **PDF stampabile**: ora la stampa usa quella del browser. Un PDF
+  formale con logo e firma va fatto in una Edge Function.
+- **Firma di ricezione**: la tabella ha i campi, l'interfaccia no.
+- **Vista admin nazionale**: e' la fase successiva.

@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
-import { Home, Package, Sparkles, ShoppingBag, Building2 } from 'lucide-react';
+import { Home, Package, Sparkles, ShoppingBag, Building2, FileText } from 'lucide-react';
 import PageTransition from '../shared/PageTransition';
 import UnifiedBottomNav from './UnifiedBottomNav';
 import Footer from '../shared/Footer';
 import { cn } from '@/lib/utils';
 
-const ROOT_PATHS = ['/produttore', '/produttore/prodotti', '/produttore/listino-ai', '/produttore/ordini', '/produttore/azienda'];
+const ROOT_PATHS = ['/produttore', '/produttore/prodotti', '/produttore/ddt', '/produttore/ordini', '/produttore/azienda'];
 const navItems = [
   { path: '/produttore', label: 'Home', icon: Home, section: 'home' },
   { path: '/produttore/prodotti', label: 'Prodotti', icon: Package, section: 'prodotti' },
-  { path: '/produttore/listino-ai', label: 'AI', icon: Sparkles, section: 'ai' },
+  { path: '/produttore/ddt', label: 'DDT', icon: FileText, section: 'ddt' },
   { path: '/produttore/ordini', label: 'Ordini', icon: ShoppingBag, section: 'ordini' },
   { path: '/produttore/azienda', label: 'Azienda', icon: Building2, section: 'azienda' },
 ];
@@ -22,7 +22,7 @@ export default function ProducerLayout() {
   const [stacks, setStacks] = useState({
     home: ['/produttore'],
     prodotti: ['/produttore/prodotti'],
-    ai: ['/produttore/listino-ai'],
+    ddt: ['/produttore/ddt'],
     ordini: ['/produttore/ordini'],
     azienda: ['/produttore/azienda'],
   });
