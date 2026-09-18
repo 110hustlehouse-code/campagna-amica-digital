@@ -30,3 +30,4 @@ dist-ssr
 .env
 .vite
 *.backup
+credenziali_produttori*.csv
