@@ -1,0 +1,59 @@
+{
+  "$schema": "interno",
+  "estratto_da": "110hustlehouse-code/campagna-amica-digital@97e438a4cf9e70267ed80ebe72feb2a480feb007",
+  "data": "2026-09-18",
+  "colore": {
+    "primary": { "valore": "hsl(145 63% 32%)", "hex_approssimato": "#1e8549", "fonte": "src/index.css:18", "occorrenze": 248 },
+    "secondary": { "valore": "hsl(46 92% 55%)", "fonte": "src/index.css:19", "occorrenze": 44 },
+    "background": { "valore": "hsl(48 33% 97%)", "fonte": "src/index.css:14" },
+    "foreground": { "valore": "hsl(150 25% 10%)", "fonte": "src/index.css:15", "occorrenze": 289 },
+    "card": { "valore": "hsl(0 0% 100%)", "fonte": "src/index.css:16" },
+    "muted_foreground": { "valore": "hsl(150 10% 45%)", "fonte": "src/index.css:22", "occorrenze": 425 },
+    "destructive": { "valore": "hsl(0 84% 60%)", "fonte": "src/index.css:24", "occorrenze": 48 },
+    "sidebar_background": { "valore": "hsl(145 63% 32%)", "fonte": "src/index.css:31" },
+    "stato": {
+      "nota": "sottosistema separato dai token di brand, palette Tailwind di default",
+      "attesa": { "classi": "bg-amber-50 text-amber-800 border-amber-200", "fonte": "src/pages/admin/AdminDDT.jsx:23" },
+      "successo": { "classi": "bg-emerald-50 text-emerald-800 border-emerald-200", "fonte": "src/pages/admin/AdminDDT.jsx:24" },
+      "errore": { "classi": "bg-red-50 text-red-700 border-red-200", "fonte": "src/pages/admin/AdminDDT.jsx:25" }
+    }
+  },
+  "tipografia": {
+    "heading": { "valore": "'Playfair Display', serif", "fonte": "src/index.css:5" },
+    "body": { "valore": "'Inter', sans-serif", "fonte": "src/index.css:6" },
+    "scala_piu_usata": ["text-xs (380x)", "text-sm (379x)", "text-lg (57x)", "text-2xl (44x)"]
+  },
+  "spazio": {
+    "unita_base": "4px (scala Tailwind standard, nessun override)",
+    "gap_piu_usati": ["gap-2 (248x)", "gap-3 (125x)", "gap-1 (112x)"],
+    "padding_piu_usati": ["p-4 (74x)", "p-3 (52x)", "px-4 (51x)"]
+  },
+  "forma": {
+    "radius_base": { "valore": "0.75rem", "fonte": "src/index.css:35" },
+    "raggio_dominante": "rounded-xl (191x)",
+    "ombra_dominante": "shadow-sm (72x)"
+  },
+  "movimento": {
+    "libreria": "framer-motion",
+    "curve_durate_custom": "nessuna dichiarata, default Tailwind/framer-motion",
+    "file_che_usano_animazione": 104
+  },
+  "deriva": [
+    {
+      "valore": "#1E8549",
+      "file": "src/pages/admin/AdminAndamento.jsx:23",
+      "atteso": "primary",
+      "gravita": "nessuna — richiesto da Recharts, documentato nel codice"
+    },
+    {
+      "valore": "#f5c518",
+      "file": "non ancora mappato riga per riga",
+      "atteso": "secondary",
+      "gravita": "da verificare",
+      "occorrenze": 12
+    }
+  ],
+  "asset_esterni": {
+    "media.base44.com": { "occorrenze": 27, "rischio": "dominio terzo, già nel piano di rimozione del progetto" }
+  }
+}
