@@ -7,6 +7,33 @@ const MONTHS = [
   'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'
 ];
 
+// Tema del mese, dal calendario Campagna Amica 2026. Luglio, Agosto e
+// Settembre non hanno un tema nel calendario originale (solo griglia
+// giorni) — restano null di proposito, nessun contenuto inventato.
+const MONTHLY_THEMES = [
+  { theme: 'Radici', quote: 'Il futuro ha un cuore antico', author: 'Carlo Levi',
+    text: 'Le radici affondano nella tradizione per far germogliare il futuro.' },
+  { theme: 'Comunità', quote: "Nessuno può fischiettare una sinfonia: ci vuole un'intera orchestra", author: 'H. E. Luccock',
+    text: "L'unione delle persone crea valore e sostegno reciproco." },
+  { theme: 'Cura', quote: 'Ama la terra: non è un\'eredità dei padri, ma un prestito da restituire ai figli', author: 'Proverbio nativo americano',
+    text: 'Prendersi cura della terra è l\'atto fondante di un\'agricoltura sostenibile.' },
+  { theme: 'Gusto', quote: "Il sapore è l'anima del cibo", author: 'A. Escoffier',
+    text: 'Il cibo è il racconto più vero della nostra terra e di come sappiamo vivere.' },
+  { theme: 'Biodiversità', quote: 'Ogni volta che una specie si estingue, una parte di noi scompare con lei', author: 'E. O. Wilson',
+    text: 'Proteggere la biodiversità significa proteggere la vita sulla Terra.' },
+  { theme: 'Trasparenza', quote: 'La trasparenza è la linfa vitale della fiducia', author: 'Anonimo',
+    text: 'La filiera corta garantisce verità: sai chi produce, dove e come.' },
+  null, // Luglio
+  null, // Agosto
+  null, // Settembre
+  { theme: 'Sostenibilità', quote: 'La cura della casa comune è inseparabile dalla giustizia sociale e dalla pace', author: 'Papa Francesco',
+    text: 'Riduci gli sprechi, scegli prodotti locali e sostenibili.' },
+  { theme: 'Paesaggio', quote: 'La Repubblica tutela il paesaggio e il patrimonio storico e artistico della Nazione', author: 'Costituzione Italiana',
+    text: "Il paesaggio non è solo uno sfondo, ma il volto della nostra civiltà." },
+  { theme: 'Futuro', quote: 'Il futuro appartiene a coloro che credono nella bellezza dei propri sogni', author: 'E. Roosevelt',
+    text: "Ogni acquisto da Campagna Amica è un'azione che trasforma il futuro." },
+];
+
 export default function Stagionalita() {
   const currentMonth = new Date().getMonth(); // 0-indexed
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
@@ -76,6 +103,24 @@ export default function Stagionalita() {
           ))}
         </div>
       </div>
+
+      {/* Tema del mese, dal calendario Campagna Amica */}
+      {MONTHLY_THEMES[selectedMonth] && (
+        <div className="px-6 md:px-12 mb-6">
+          <div className="bg-white rounded-2xl border border-primary/20 shadow-sm p-5">
+            <span className="inline-block bg-secondary/20 text-primary font-heading font-bold text-sm px-3 py-1 rounded-full mb-3">
+              {MONTHLY_THEMES[selectedMonth].theme}
+            </span>
+            <p className="font-heading text-lg text-foreground italic leading-snug mb-1">
+              "{MONTHLY_THEMES[selectedMonth].quote}"
+            </p>
+            <p className="text-xs text-muted-foreground mb-3">— {MONTHLY_THEMES[selectedMonth].author}</p>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {MONTHLY_THEMES[selectedMonth].text}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Griglia prodotti */}
       <div className="px-6 md:px-12">
