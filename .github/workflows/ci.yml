@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  database:
+    name: Lo schema si ricostruisce da zero
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports: [5432:5432]
+    env:
+      PGPASSWORD: postgres
+      PSQL: psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -q
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Impalcatura Supabase (auth, ruoli, estensioni)
+        run: $PSQL -f supabase/prova/00_bootstrap.sql
+
+      - name: Migration, in ordine
+        run: |
+          for f in supabase/migrations/*.sql; do
+            echo "--> $f"
+            $PSQL -f "$f"
+          done
+
+      - name: Dati di riferimento
+        run: $PSQL -f supabase/seed/01_territorio.sql
+
+      - name: Dati di ambiente
+        run: $PSQL -f supabase/seed/02_ambiente.sql
+
+      - name: Le funzioni admin rispondono
+        run: $PSQL -f supabase/prova/99_fumo.sql
+
+      - name: Ogni tabella ha RLS attiva
+        run: |
+          $PSQL -At -c "
+            select 'RLS MANCANTE: '||relname
+              from pg_class c join pg_namespace n on n.oid=c.relnamespace
+             where n.nspname='public' and c.relkind='r' and not c.relrowsecurity
+          " | tee /tmp/rls.txt
+          test ! -s /tmp/rls.txt || { echo 'Tabelle senza RLS, vedi sopra'; exit 1; }
+
+      - name: Nessuna funzione esposta ad anon
+        run: |
+          $PSQL -At -c "
+            select 'ESPOSTA AD ANON: '||p.proname
+              from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+             where n.nspname='public'
+               and p.proname in ('riepilogo_nazionale','metriche_territorio','ddt_nazionali',
+                                 'serie_storica_fatturato','metriche_operative','composizione_fatturato')
+               and has_function_privilege('anon', p.oid, 'execute')
+          " | tee /tmp/anon.txt
+          test ! -s /tmp/anon.txt || { echo 'Funzioni admin raggiungibili da anon'; exit 1; }
+
+  frontend:
+    name: Il frontend compila
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci
+      - name: Tipi
+        run: npx tsc --noEmit
+      - name: Build
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: https://esempio.supabase.co
+          VITE_SUPABASE_ANON_KEY: chiave-finta-per-la-build
+
+      - name: Nessun segreto nel codice
+        run: |
+          if grep -rnE "(service_role|sb_secret_|SUPABASE_SERVICE)" src/ ; then
+            echo 'Possibile chiave di servizio nel frontend'; exit 1
+          fi

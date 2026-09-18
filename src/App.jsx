@@ -40,6 +40,7 @@ const CreateEvent = lazy(() => import('./pages/staff/CreateEvent.jsx'));
 const StaffDDT = lazy(() => import('./pages/staff/StaffDDT.jsx'));
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard.jsx'));
 const AdminDDT = lazy(() => import('./pages/admin/AdminDDT.jsx'));
+const AdminAndamento = lazy(() => import('./pages/admin/AdminAndamento.jsx'));
 const Companies = lazy(() => import('./pages/Companies'));
 const CompanyDetail = lazy(() => import('./pages/CompanyDetail'));
 const Markets = lazy(() => import('./pages/Markets'));
@@ -100,6 +101,7 @@ const AuthenticatedApp = () => {
       <Route element={<AdminLayout />}>
         <Route path="/admin" element={<Suspense fallback={<PageLoader />}><AdminDashboard /></Suspense>} />
         <Route path="/admin/ddt" element={<Suspense fallback={<PageLoader />}><AdminDDT /></Suspense>} />
+        <Route path="/admin/andamento" element={<Suspense fallback={<PageLoader />}><AdminAndamento /></Suspense>} />
       </Route>
       <Route element={<AppLayout />}>
         <Route path="/home" element={<Suspense fallback={<PageLoader />}><Home /></Suspense>} />

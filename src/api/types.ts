@@ -1767,6 +1767,10 @@ export type Database = {
       }
     }
     Functions: {
+      composizione_fatturato: {
+        Args: Record<string, unknown>   // p_livello text, p_ambito text DEFAULT NULL::text, p_dal date DEFAULT NULL::date, p_al date DEFAULT NULL::date, p_limite integer DEFAULT 8
+        Returns: Json
+      }
       ddt_nazionali: {
         Args: Record<string, unknown>   // p_dal date DEFAULT NULL::date, p_al date DEFAULT NULL::date, p_regione text DEFAULT NULL::text, p_stato text DEFAULT NULL::text, p_limite integer DEFAULT 100
         Returns: Json
@@ -1791,6 +1795,10 @@ export type Database = {
         Args: Record<string, unknown>   // p_livello text, p_ambito text DEFAULT NULL::text, p_dal date DEFAULT NULL::date, p_al date DEFAULT NULL::date
         Returns: Json
       }
+      metriche_operative: {
+        Args: Record<string, unknown>   // p_livello text, p_ambito text DEFAULT NULL::text, p_dal date DEFAULT NULL::date, p_al date DEFAULT NULL::date
+        Returns: Json
+      }
       my_markets: {
         Args: Record<string, unknown>   // nessuno
         Returns: Json
@@ -1805,6 +1813,10 @@ export type Database = {
       }
       riepilogo_nazionale: {
         Args: Record<string, unknown>   // p_dal date DEFAULT NULL::date, p_al date DEFAULT NULL::date
+        Returns: Json
+      }
+      serie_storica_fatturato: {
+        Args: Record<string, unknown>   // p_livello text DEFAULT 'italia', p_ambito text DEFAULT NULL::text, p_mesi integer DEFAULT 24
         Returns: Json
       }
       sincronizza_mercati_azienda: {
