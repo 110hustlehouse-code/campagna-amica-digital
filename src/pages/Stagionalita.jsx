@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Leaf, ChevronLeft, ChevronRight } from 'lucide-react';
 import SeasonalGrid from '../components/shared/SeasonalGrid';
+import FarmerIllustration from '../components/shared/FarmerIllustration';
 
 const MONTHS = [
   'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
@@ -49,17 +50,20 @@ export default function Stagionalita() {
           <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-white translate-x-16 -translate-y-16" />
           <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full bg-secondary -translate-x-8 translate-y-8" />
         </div>
-        <div className="relative px-6 md:px-12 pt-10 pb-8">
-          <div className="inline-flex items-center gap-1.5 bg-secondary rounded-full px-3 py-1 mb-3 shadow">
-            <Leaf className="w-3 h-3 text-primary" />
-            <span className="text-primary font-bold text-[10px] tracking-widest uppercase">Campagna Amica · Coldiretti</span>
+        <div className="relative px-6 md:px-12 pt-10 pb-8 flex items-center justify-between gap-4">
+          <div>
+            <div className="inline-flex items-center gap-1.5 bg-secondary rounded-full px-3 py-1 mb-3 shadow">
+              <Leaf className="w-3 h-3 text-primary" />
+              <span className="text-primary font-bold text-[10px] tracking-widest uppercase">Campagna Amica · Coldiretti</span>
+            </div>
+            <h1 className="font-heading text-3xl md:text-4xl font-bold text-white leading-tight">
+              🌿 Stagionalità
+            </h1>
+            <p className="text-white/70 text-sm mt-2 max-w-lg">
+              Scopri frutta e verdura di stagione mese per mese. Mangiare di stagione significa prodotti più freschi, saporiti e sostenibili.
+            </p>
           </div>
-          <h1 className="font-heading text-3xl md:text-4xl font-bold text-white leading-tight">
-            🌿 Stagionalità
-          </h1>
-          <p className="text-white/70 text-sm mt-2 max-w-lg">
-            Scopri frutta e verdura di stagione mese per mese. Mangiare di stagione significa prodotti più freschi, saporiti e sostenibili.
-          </p>
+          <FarmerIllustration className="hidden sm:block w-28 h-28 md:w-36 md:h-36 flex-shrink-0" />
         </div>
       </div>
 
