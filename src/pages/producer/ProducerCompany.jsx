@@ -42,7 +42,6 @@ export default function ProducerCompany() {
     queryKey: ['my-company', user?.email],
     queryFn: getMyCompany,
     enabled: !!user?.email,
-    select: d => d[0],
   });
 
   const { data: markets = [] } = useQuery({
@@ -55,7 +54,7 @@ export default function ProducerCompany() {
       setForm({ ...myCompany });
       setIsEditing(true);
       setShowSaveButton(false);
-    } else if (myCompany === undefined && !isLoading) {
+    } else if (!myCompany && !isLoading) {
       setForm({ name: '', description: '', category: 'altro', region: '', city: '', phone: '', email: '', website: '', market_ids: [], market_schedules: [] });
       setIsEditing(true);
       setShowSaveButton(true);
@@ -84,6 +83,9 @@ export default function ProducerCompany() {
       toast({ title: 'Azienda salvata!' });
       setIsEditing(false);
       setShowSaveButton(false);
+    },
+    onError: (err) => {
+      toast({ title: 'Salvataggio non riuscito', description: err?.message || 'Riprova.', variant: 'destructive' });
     },
   });
 
