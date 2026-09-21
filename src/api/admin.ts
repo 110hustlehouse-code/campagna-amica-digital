@@ -55,6 +55,7 @@ export interface DdtNazionale {
   destinatario: string
   stato: string
   causale: string
+  firmato: boolean
   mercato: string | null
   comune: string | null
   provincia: string | null

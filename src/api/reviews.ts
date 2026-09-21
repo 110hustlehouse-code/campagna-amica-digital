@@ -12,7 +12,7 @@ export type Review = Tables<'reviews'>
 export async function getReviews(companyId: string): Promise<Review[]> {
   return unwrapMany(
     await supabase.from('reviews').select('*')
-      .eq('company_id', companyId).order('created_date', { ascending: false }),
+      .eq('company_id', companyId).order('created_at', { ascending: false }),
     'Recensioni')
 }
 

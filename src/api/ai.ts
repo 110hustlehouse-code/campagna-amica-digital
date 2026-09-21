@@ -21,9 +21,6 @@ export interface RichiestaLLM {
 }
 
 export async function invokeLLM<T = unknown>(req: RichiestaLLM): Promise<T> {
-  return invokeFunction<T>('invokeLLM', req as unknown as Record<string, unknown>)
-}
-
-export async function generateImage(prompt: string): Promise<{ url: string }> {
-  return invokeFunction<{ url: string }>('generateImage', { prompt })
+  // Il nome della funzione su Supabase e' 'invoke-llm', con il trattino.
+  return invokeFunction<T>('invoke-llm', req as unknown as Record<string, unknown>)
 }

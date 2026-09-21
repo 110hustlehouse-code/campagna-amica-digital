@@ -172,6 +172,15 @@ export default function AdminAndamento() {
 
   const haDati = serie.some((r) => Number(r[misuraId]) > 0);
 
+  // Il valore della merce e' stimato al prezzo di catalogo: le righe DDT non
+  // portano un prezzo. Senza dichiarare quante righe hanno un prezzo, un
+  // totale basso non si distingue da un dato mancante.
+  const copertura = useMemo(() => {
+    const tot = serie.reduce((s, r) => s + Number(r.righe_totali || 0), 0);
+    const con = serie.reduce((s, r) => s + Number(r.righe_con_prezzo || 0), 0);
+    return tot > 0 ? Math.round((con / tot) * 100) : null;
+  }, [serie]);
+
   const totaleStorico = serie.reduce((s, r) => s + (Number(r[misuraId]) || 0), 0);
   const totalePrevisto = previsione.punti.reduce((s, p) => s + p.atteso, 0);
 
@@ -270,7 +279,7 @@ Sotto ogni titolo due righe al massimo, ciascuna con una azione concreta e verif
     { v: numero(metriche.aziende_totali), l: 'aziende', sub: `${numero(metriche.aziende_dormienti)} senza attività` },
     { v: numero(metriche.clienti_con_ordini), l: 'clienti con ordini', sub: `${numero(metriche.clienti_ricorrenti)} ricorrenti` },
     { v: euro(metriche.scontrino_medio), l: 'scontrino medio', sub: `${numero(metriche.ordini_totali)} ordini` },
-    { v: metriche.ddt_consegna_media_gg != null ? `${numero(metriche.ddt_consegna_media_gg, 1)} gg` : '—', l: 'consegna media DDT', sub: `${numero(metriche.bisogni_aperti)} richieste aperte` },
+    { v: metriche.ddt_firma_media_gg != null ? `${numero(metriche.ddt_firma_media_gg, 1)} gg` : '—', l: 'firma media DDT', sub: `${numero(metriche.ddt_non_firmati)} non ancora firmati` },
   ] : [];
 
   return (
@@ -434,6 +443,13 @@ Sotto ogni titolo due righe al massimo, ciascuna con una azione concreta e verif
               )}
             </div>
             <p className="text-xs text-muted-foreground">{previsione.spiegazione}</p>
+            {misuraId === 'merce_valore' && copertura !== null && (
+              <p className="text-xs text-muted-foreground">
+                Valore stimato al prezzo di catalogo: le righe dei DDT non portano un prezzo.
+                La stima copre il <strong>{copertura}%</strong> delle righe
+                {copertura < 80 && ' — le righe senza prodotto collegato valgono zero, quindi il totale reale è più alto'}.
+              </p>
+            )}
             {previsione.punti.length > 0 && (
               <p className="text-xs text-muted-foreground">
                 Totale storico {formatta(totaleStorico, misura.unita)} · atteso nei prossimi{' '}

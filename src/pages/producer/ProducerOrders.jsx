@@ -107,6 +107,7 @@ export default function ProducerOrders() {
     queryKey: ['my-company', user?.email],
     queryFn: getMyCompany,
     enabled: !!user?.email,
+    select: d => d[0],
   });
 
   const { data: orders = [], isLoading } = useQuery({
@@ -178,7 +179,7 @@ export default function ProducerOrders() {
   };
 
   const filtered = filter === 'all' ? orders : orders.filter(o => o.status === filter);
-  const sorted = [...filtered].sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+  const sorted = [...filtered].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   const counts = STATUSES.reduce((acc, s) => { acc[s.value] = orders.filter(o => o.status === s.value).length; return acc; }, {});
 
   // Statistiche vendite
@@ -388,7 +389,7 @@ export default function ProducerOrders() {
                       <CardContent className="p-3">
                         <div className="flex items-start justify-between gap-2 mb-2">
                           <p className="text-sm font-bold text-primary">★ {review.rating}/5</p>
-                          <span className="text-[10px] text-muted-foreground">{new Date(review.created_date).toLocaleDateString('it-IT')}</span>
+                          <span className="text-[10px] text-muted-foreground">{new Date(review.created_at).toLocaleDateString('it-IT')}</span>
                         </div>
                         <p className="text-xs text-muted-foreground">{review.message}</p>
                       </CardContent>

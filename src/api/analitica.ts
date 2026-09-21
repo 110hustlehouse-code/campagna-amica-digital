@@ -26,6 +26,9 @@ export interface MeseSerie {
   affitti_valore: number
   aziende_attive: number
   clienti_attivi: number
+  /** Quante righe DDT hanno un prezzo di catalogo: la copertura della stima. */
+  righe_con_prezzo: number
+  righe_totali: number
 }
 
 export interface MetricheOperative {
@@ -39,7 +42,8 @@ export interface MetricheOperative {
   clienti_ricorrenti: number
   ordini_totali: number
   scontrino_medio: number
-  ddt_consegna_media_gg: number
+  ddt_firma_media_gg: number
+  ddt_non_firmati: number
   recensione_media: number
   bisogni_aperti: number
   affitti_non_saldati: number

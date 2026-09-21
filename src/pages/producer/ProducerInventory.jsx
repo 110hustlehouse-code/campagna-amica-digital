@@ -23,6 +23,7 @@ export default function ProducerInventory() {
     queryKey: ['my-company', user?.email],
     queryFn: getMyCompany,
     enabled: !!user?.email,
+    select: d => d[0],
   });
 
   const { data: products = [] } = useQuery({
@@ -199,7 +200,7 @@ export default function ProducerInventory() {
                   )}
 
                   <p className="text-[10px] text-muted-foreground mt-2">
-                    Ultimo aggiornamento: {format(new Date(stock.updated_date), 'd MMM HH:mm', { locale: it })}
+                    Ultimo aggiornamento: {format(new Date(stock.updated_at), 'd MMM HH:mm', { locale: it })}
                   </p>
                 </div>
               </div>

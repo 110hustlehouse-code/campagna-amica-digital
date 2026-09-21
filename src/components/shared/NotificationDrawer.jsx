@@ -61,7 +61,7 @@ function getNotificationUrl(n, isProducer) {
 }
 
 export default function NotificationDrawer({ open, onClose, notifications = [], onRead, onReadAll, isProducer = false }) {
-  const sorted = [...notifications].sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+  const sorted = [...notifications].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   const unread = sorted.filter(n => !n.read);
   const prevUnreadCount = useRef(0);
   const navigate = useNavigate();
@@ -156,7 +156,7 @@ export default function NotificationDrawer({ open, onClose, notifications = [], 
                         <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{n.message}</p>
                       )}
                       <p className="text-[10px] text-muted-foreground/60 mt-1">
-                        {formatDistanceToNow(new Date(n.created_date), { addSuffix: true, locale: it })}
+                        {formatDistanceToNow(new Date(n.created_at), { addSuffix: true, locale: it })}
                       </p>
                     </div>
                     {!n.read && <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-2" />}

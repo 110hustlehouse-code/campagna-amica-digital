@@ -8,12 +8,12 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
 import { getMyStaffMember } from '@/api/staff';
-import { getDdtByMarket, getDdt, ETICHETTE_STATO, ETICHETTE_CAUSALE } from '@/api/ddt';
+import { getDdtByMarket, getDdt, ETICHETTE_STATO, ETICHETTE_CAUSALE , numeroCompleto } from '@/api/ddt';
 
 const COLORI_STATO = {
   bozza:      'bg-slate-100 text-slate-700 border-slate-200',
   emesso:     'bg-amber-50 text-amber-800 border-amber-200',
-  consegnato: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+  cancelled: 'bg-red-50 text-red-800 border-red-200',
   annullato:  'bg-red-50 text-red-700 border-red-200',
 };
 
@@ -38,15 +38,15 @@ export default function StaffDDT() {
     if (!q) return documenti;
     return documenti.filter((d) =>
       d.mittente_ragione_sociale?.toLowerCase().includes(q) ||
-      d.numero_completo?.toLowerCase().includes(q));
+      numeroCompleto(d)?.toLowerCase().includes(q));
   }, [documenti, ricerca]);
 
   const metriche = useMemo(() => {
-    const validi = documenti.filter((d) => d.stato !== 'annullato' && d.stato !== 'bozza');
+    const validi = documenti.filter((d) => d.status !== 'cancelled' && d.status !== 'draft');
     return {
       totale: validi.length,
       aziende: new Set(validi.map((d) => d.company_id)).size,
-      consegnati: validi.filter((d) => d.stato === 'consegnato').length,
+      consegnati: validi.filter((d) => d.signed_at).length,
     };
   }, [documenti]);
 
@@ -77,7 +77,7 @@ export default function StaffDDT() {
         {[
           { valore: metriche.totale, etichetta: 'documenti' },
           { valore: metriche.aziende, etichetta: 'aziende' },
-          { valore: metriche.consegnati, etichetta: 'consegnati' },
+          { valore: metriche.consegnati, etichetta: 'firmati' },
         ].map((m) => (
           <div key={m.etichetta} className="border rounded-xl p-3 bg-card text-center">
             <p className="text-2xl font-bold text-primary">{m.valore}</p>
@@ -109,15 +109,15 @@ export default function StaffDDT() {
                     className="w-full text-left border rounded-xl p-4 bg-card hover:border-primary/40 transition-colors">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-semibold">
-                  {d.numero_completo ? `DDT ${d.numero_completo}` : 'Bozza'}
+                  {numeroCompleto(d) ? `DDT ${numeroCompleto(d)}` : 'Bozza'}
                 </span>
-                <span className={`text-xs px-2 py-0.5 rounded-full border ${COLORI_STATO[d.stato]}`}>
-                  {ETICHETTE_STATO[d.stato]}
+                <span className={`text-xs px-2 py-0.5 rounded-full border ${COLORI_STATO[d.status]}`}>
+                  {ETICHETTE_STATO[d.status]}
                 </span>
               </div>
               <p className="text-sm mt-1">{d.mittente_ragione_sociale}</p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {format(new Date(d.data_documento), 'd MMMM', { locale: it })}
+                {format(new Date(d.issue_date), 'd MMMM', { locale: it })}
                 {' · '}{ETICHETTE_CAUSALE[d.causale]}
                 {d.numero_colli ? ` · ${d.numero_colli} colli` : ''}
                 {d.peso_kg ? ` · ${d.peso_kg} kg` : ''}
@@ -133,7 +133,7 @@ export default function StaffDDT() {
             <>
               <DialogHeader>
                 <DialogTitle>
-                  {dettaglio.numero_completo ? `DDT ${dettaglio.numero_completo}` : 'Bozza'}
+                  {numeroCompleto(dettaglio) ? `DDT ${numeroCompleto(dettaglio)}` : 'Bozza'}
                 </DialogTitle>
               </DialogHeader>
               <div className="space-y-4 text-sm">
@@ -150,7 +150,7 @@ export default function StaffDDT() {
                     {dettaglio.righe.map((r) => (
                       <div key={r.id} className="p-2.5 flex justify-between gap-3">
                         <span className="min-w-0 truncate">{r.descrizione}</span>
-                        <span className="text-muted-foreground shrink-0">{r.quantita} {r.unita}</span>
+                        <span className="text-muted-foreground shrink-0">{r.quantity} {r.unit}</span>
                       </div>
                     ))}
                   </div>

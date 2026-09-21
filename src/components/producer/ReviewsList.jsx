@@ -70,7 +70,7 @@ export default function ReviewsList({ companyId }) {
                 ))}
               </div>
               <span className="text-xs font-medium text-muted-foreground">
-                {new Date(review.created_date).toLocaleDateString('it-IT')}
+                {new Date(review.created_at).toLocaleDateString('it-IT')}
               </span>
             </div>
           </div>

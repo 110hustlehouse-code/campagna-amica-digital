@@ -122,7 +122,7 @@ export async function deleteStaffMember(id: string): Promise<void> {
 export async function getAllStaffMessages(): Promise<StaffMessage[]> {
   return unwrapMany(
     await supabase.from('staff_messages').select('*')
-      .order('created_date', { ascending: false }),
+      .order('created_at', { ascending: false }),
     'Comunicazioni')
 }
 
@@ -138,7 +138,7 @@ export async function updateMessage(
 export async function getPublishedMessagesAll(limite = 20): Promise<StaffMessage[]> {
   return unwrapMany(
     await supabase.from('staff_messages').select('*')
-      .eq('is_published', true).order('created_date', { ascending: false }).limit(limite),
+      .eq('is_published', true).order('created_at', { ascending: false }).limit(limite),
     'Bacheca')
 }
 
@@ -157,7 +157,7 @@ export async function getMyStaffMember(): Promise<StaffMember | null> {
   const { data, error } = await supabase
     .from('staff_members').select('*')
     .ilike('email', user.email).eq('is_active', true)
-    .order('updated_date', { ascending: false }).limit(1).maybeSingle()
+    .order('updated_at', { ascending: false }).limit(1).maybeSingle()
   if (error) throw error
   return data
 }
@@ -165,7 +165,7 @@ export async function getMyStaffMember(): Promise<StaffMember | null> {
 /** Numero di bisogni ancora aperti in un mercato (per il badge). */
 export async function contaBisogniAperti(marketId: string): Promise<number> {
   const { count, error } = await supabase
-    .from('company_needs')
+    .from('producer_needs')
     .select('*', { count: 'exact', head: true })
     .eq('market_id', marketId).eq('status', 'open')
   if (error) throw error
@@ -181,7 +181,7 @@ export async function confermaMercatoStaff(marketId: string): Promise<StaffMembe
   if (!user?.email) throw new DataError('Nessun utente collegato')
 
   const { data: profilo } = await supabase
-    .from('profiles').select('full_name').eq('id', user.id).maybeSingle()
+    .from('users').select('full_name').eq('id', user.id).maybeSingle()
   const nome = profilo?.full_name ?? user.email
 
   const { data: esistente } = await supabase

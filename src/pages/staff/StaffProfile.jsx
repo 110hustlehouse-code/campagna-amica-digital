@@ -215,9 +215,9 @@ export default function StaffProfile() {
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20">
                   {user?.role === 'admin' ? '👑 Amministratore' : '👤 Staff'}
                 </span>
-                {user?.created_date && (
+                {user?.created_at && (
                   <span className="text-xs text-muted-foreground px-2 py-1 bg-muted rounded-full">
-                    Iscritto {formatDistanceToNow(new Date(user.created_date), { locale: it, addSuffix: true })}
+                    Iscritto {formatDistanceToNow(new Date(user.created_at), { locale: it, addSuffix: true })}
                   </span>
                 )}
               </div>
@@ -239,9 +239,9 @@ export default function StaffProfile() {
                 <Calendar className="w-5 h-5 text-secondary flex-shrink-0" />
                 <div>
                   <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Membro dal</p>
-                  {user?.created_date && (
+                  {user?.created_at && (
                     <p className="text-sm font-medium text-foreground">
-                      {format(new Date(user.created_date), 'd MMMM yyyy', { locale: it })}
+                      {format(new Date(user.created_at), 'd MMMM yyyy', { locale: it })}
                     </p>
                   )}
                 </div>

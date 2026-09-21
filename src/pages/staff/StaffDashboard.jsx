@@ -64,7 +64,7 @@ export default function StaffDashboard() {
   // 3. Real-time subscriptions (solo quando il marketId è noto)
   useEffect(() => {
     if (!staffReady) return;
-    const u1 = subscribeTable('company_needs', () => {
+    const u1 = subscribeTable('producer_needs', () => {
       qc.invalidateQueries({ queryKey: ['dash-needs', staffMarketId] });
     }, { filtro: `market_id=eq.${staffMarketId}` });
     const u2 = subscribeTable('stall_rentals', () => {

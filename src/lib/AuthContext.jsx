@@ -32,7 +32,7 @@ export function AuthProvider({ children }) {
       }
 
       const { data: profilo, error } = await supabase
-        .from('profiles').select('*').eq('id', session.user.id).maybeSingle()
+        .from('users').select('*').eq('id', session.user.id).maybeSingle()
 
       if (error) {
         setAuthError({ type: 'profile_error', message: error.message })
@@ -59,7 +59,7 @@ export function AuthProvider({ children }) {
         phone: profilo.phone,
         role: profilo.role,
         role_confirmed: profilo.role_confirmed,
-        created_date: profilo.created_date,
+        created_at: profilo.created_at,
       })
     } catch (e) {
       setAuthError({ type: 'unknown', message: e?.message ?? 'Errore imprevisto' })

@@ -17,9 +17,11 @@ const PERIODI = [
   { id: 'anno', label: 'Anno', dal: () => startOfYear(new Date()) },
 ];
 
+const ETICHETTE_ADMIN = { draft: 'Bozza', issued: 'Emesso', cancelled: 'Annullato' };
+
 const COLORI = {
   emesso:     'bg-amber-50 text-amber-800 border-amber-200',
-  consegnato: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+  cancelled: 'bg-red-50 text-red-800 border-red-200',
   annullato:  'bg-red-50 text-red-700 border-red-200',
 };
 
@@ -70,7 +72,7 @@ export default function AdminDDT() {
     const intestazione = ['Numero', 'Data', 'Mittente', 'Mercato', 'Comune', 'Provincia', 'Regione', 'Stato', 'Quantita', 'Valore'];
     const righe = visibili.map((d) => [
       d.numero_completo, d.data_documento, d.mittente, d.mercato,
-      d.comune, d.provincia, d.regione, d.stato, d.quantita, d.valore,
+      d.comune, d.provincia, d.regione, d.stato, d.firmato ? 'si' : 'no', d.quantita, d.valore,
     ].map((c) => `"${String(c ?? '').replace(/"/g, '""')}"`).join(';'));
     const csv = '﻿' + [intestazione.join(';'), ...righe].join('\n');
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
@@ -91,7 +93,7 @@ export default function AdminDDT() {
     setAnalisi(null);
     try {
       const sintesi = regioni.map((r) =>
-        `${r.nome}: ${r.mercati} mercati, ${r.aziende} aziende, ${r.ddt_emessi} DDT (${r.ddt_consegnati} consegnati), ${Math.round(r.quantita_totale)} kg`
+        `${r.nome}: ${r.mercati} mercati, ${r.aziende} aziende, ${r.ddt_emessi} DDT (${r.ddt_consegnati} firmati), ${Math.round(r.quantita_totale)} kg`
       ).join('\n');
 
       const res = await invokeLLM({
@@ -102,7 +104,7 @@ ${sintesi}
 
 Scrivi al massimo 5 frasi in italiano, per un dirigente. Indica:
 - dove la rete funziona e dove no
-- eventuali anomalie (documenti emessi ma non consegnati, regioni con mercati ma senza DDT)
+- eventuali anomalie (documenti emessi ma non firmati, regioni con mercati ma senza DDT)
 - una cosa concreta da verificare
 
 Niente elenchi puntati, niente premesse. Solo l'analisi.`,
@@ -149,7 +151,7 @@ Niente elenchi puntati, niente premesse. Solo l'analisi.`,
           { v: totali.documenti, l: 'documenti' },
           { v: totali.aziende, l: 'aziende' },
           { v: `${Math.round(totali.quantita)} kg`, l: 'merce' },
-          { v: new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(totali.valore), l: 'valore dichiarato' },
+          { v: new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(totali.valore), l: 'valore stimato' },
         ].map((t) => (
           <div key={t.l} className="border rounded-xl p-3 bg-card">
             <p className="text-xl font-bold">{t.v}</p>
@@ -179,7 +181,7 @@ Niente elenchi puntati, niente premesse. Solo l'analisi.`,
           <SelectContent>
             <SelectItem value="tutti">Tutti gli stati</SelectItem>
             <SelectItem value="emesso">Emessi</SelectItem>
-            <SelectItem value="consegnato">Consegnati</SelectItem>
+            <SelectItem value="cancelled">Annullati</SelectItem>
             <SelectItem value="annullato">Annullati</SelectItem>
           </SelectContent>
         </Select>
@@ -210,7 +212,7 @@ Niente elenchi puntati, niente premesse. Solo l'analisi.`,
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-semibold">{d.numero_completo}</span>
                     <span className={`text-xs px-2 py-0.5 rounded-full border ${COLORI[d.stato] ?? ''}`}>
-                      {d.stato}
+                      {ETICHETTE_ADMIN[d.stato] ?? d.stato}
                     </span>
                   </div>
                   <p className="truncate mt-0.5">{d.mittente}</p>

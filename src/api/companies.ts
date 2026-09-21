@@ -34,7 +34,7 @@ export async function getMyCompany(): Promise<Company | null> {
   const { data, error } = await supabase
     .from('companies').select('*')
     .ilike('created_by', user.email)
-    .order('updated_date', { ascending: false })
+    .order('updated_at', { ascending: false })
     .limit(1)
   if (error) throw error
   return data?.[0] ?? null

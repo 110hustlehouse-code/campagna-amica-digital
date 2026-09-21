@@ -19,21 +19,21 @@ export async function getMyOrders(): Promise<Order[]> {
   if (!user?.email) return []
   return unwrapMany(
     await supabase.from('orders').select('*')
-      .ilike('created_by', user.email).order('created_date', { ascending: false }),
+      .ilike('created_by', user.email).order('created_at', { ascending: false }),
     'I miei ordini')
 }
 
 export async function getOrdersByCompany(companyId: string): Promise<Order[]> {
   return unwrapMany(
     await supabase.from('orders').select('*')
-      .eq('company_id', companyId).order('created_date', { ascending: false }),
+      .eq('company_id', companyId).order('created_at', { ascending: false }),
     'Ordini ricevuti')
 }
 
 export async function getOrdersByMarket(marketId: string): Promise<Order[]> {
   return unwrapMany(
     await supabase.from('orders').select('*')
-      .eq('market_id', marketId).order('created_date', { ascending: false }),
+      .eq('market_id', marketId).order('created_at', { ascending: false }),
     'Ordini del mercato')
 }
 

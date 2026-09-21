@@ -109,7 +109,7 @@ export default function Orders() {
                               </span>
                             )}
                             <span className="text-xs">
-                              {format(new Date(order.created_date), 'dd/MM/yyyy HH:mm')}
+                              {format(new Date(order.created_at), 'dd/MM/yyyy HH:mm')}
                             </span>
                           </div>
                         </div>

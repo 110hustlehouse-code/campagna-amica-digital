@@ -1,140 +1,170 @@
 /**
  * Documento di Trasporto.
  *
- * Regole imposte dal database, non da questo file:
- *  - il numero progressivo si ottiene solo all'emissione (emetti_ddt)
- *  - un DDT emesso non e' piu' modificabile: si annulla e si riemette
- *  - le righe si possono toccare solo finche' il documento e' in bozza
+ * Il ciclo di vita non passa da qui. Emissione, firma e annullamento sono
+ * Edge Function che girano con la service key: il numero progressivo deve
+ * essere assegnato lato server con lock, altrimenti due emissioni simultanee
+ * possono ottenere lo stesso numero — e una numerazione fiscale con un buco
+ * o un duplicato e' un problema che si scopre mesi dopo, in un controllo.
  *
- * Qui non si aggirano quelle regole: le si espone in modo leggibile.
+ * Questo modulo si limita a leggere, a creare bozze e a chiamare quelle
+ * funzioni. Non aggira nessuna regola: le espone in modo leggibile.
  */
 import { supabase, DataError, unwrapMany, unwrapOne } from './client'
+import { invokeFunction } from './functions'
 import type { Tables, TablesInsert, TablesUpdate } from './types'
 
-export type Ddt = Tables<'ddt'>
-export type DdtRiga = Tables<'ddt_righe'>
-export type DdtStato = Ddt['stato']
+export type Ddt = Tables<'delivery_notes'>
+export type DdtRiga = Tables<'delivery_note_items'>
+export type DdtStato = Ddt['status']
 export type DdtCausale = Ddt['causale']
 
 export interface DdtCompleto extends Ddt {
   righe: DdtRiga[]
 }
 
+/** Numero leggibile: progressivo/anno, oppure null finche' e' in bozza. */
+export function numeroCompleto(d: Pick<Ddt, 'progressive_number' | 'progressive_year'>): string | null {
+  return d.progressive_number == null ? null : `${d.progressive_number}/${d.progressive_year}`
+}
+
 export async function getDdtByCompany(companyId: string, anno?: number): Promise<Ddt[]> {
-  let q = supabase.from('ddt').select('*').eq('company_id', companyId)
-  if (anno) q = q.eq('anno', anno)
-  return unwrapMany(await q.order('data_documento', { ascending: false }), 'DDT dell\'azienda')
+  let q = supabase.from('delivery_notes').select('*').eq('company_id', companyId)
+  if (anno) q = q.eq('progressive_year', anno)
+  return unwrapMany(await q.order('issue_date', { ascending: false }), 'DDT azienda')
 }
 
 export async function getDdtByMarket(marketId: string, dal?: string, al?: string): Promise<Ddt[]> {
-  let q = supabase.from('ddt').select('*').eq('market_id', marketId)
-  if (dal) q = q.gte('data_documento', dal)
-  if (al) q = q.lte('data_documento', al)
-  return unwrapMany(await q.order('data_documento', { ascending: false }), 'DDT del mercato')
+  let q = supabase.from('delivery_notes').select('*').eq('market_id', marketId)
+  if (dal) q = q.gte('issue_date', dal)
+  if (al) q = q.lte('issue_date', al)
+  return unwrapMany(await q.order('issue_date', { ascending: false }), 'DDT mercato')
 }
 
 export async function getDdt(id: string): Promise<DdtCompleto | null> {
   const { data, error } = await supabase
-    .from('ddt').select('*, ddt_righe(*)').eq('id', id).maybeSingle()
+    .from('delivery_notes').select('*, delivery_note_items(*)').eq('id', id).maybeSingle()
   if (error) throw error
   if (!data) return null
-  const { ddt_righe, ...testata } = data as Ddt & { ddt_righe: DdtRiga[] }
+  const { delivery_note_items, ...testata } = data as Ddt & { delivery_note_items: DdtRiga[] }
   return {
     ...testata,
-    righe: [...ddt_righe].sort((a, b) => a.riga_numero - b.riga_numero),
+    righe: [...delivery_note_items].sort((a, b) => (a.position ?? 0) - (b.position ?? 0)),
   }
 }
 
 /**
  * Crea una bozza con le sue righe.
  *
- * I dati fiscali del mittente vengono copiati dall'anagrafica azienda e
- * congelati nel documento: se domani l'azienda cambia ragione sociale, i
- * DDT gia' emessi devono restare come erano.
+ * Numero e anno restano nulli: li assegna l'emissione. Una bozza
+ * abbandonata non deve bruciare un numero fiscale.
  */
 export async function creaBozzaDdt(
-  testata: Omit<TablesInsert<'ddt'>, 'numero' | 'anno' | 'stato'>,
-  righe: Omit<TablesInsert<'ddt_righe'>, 'ddt_id' | 'riga_numero'>[],
+  testata: Omit<TablesInsert<'delivery_notes'>, 'progressive_number' | 'progressive_year' | 'status'>,
+  righe: Omit<TablesInsert<'delivery_note_items'>, 'delivery_note_id' | 'position'>[],
 ): Promise<DdtCompleto> {
   if (righe.length === 0) {
     throw new DataError('Un DDT deve contenere almeno una riga')
   }
 
-  const nuova: TablesInsert<'ddt'> = { ...testata, stato: 'bozza' }
+  const nuova: TablesInsert<'delivery_notes'> = { ...testata, status: 'draft' }
   const ddt = unwrapOne(
-    await supabase.from('ddt').insert(nuova).select().single(),
+    await supabase.from('delivery_notes').insert(nuova).select().single(),
     'Creazione bozza DDT')
 
-  const { error } = await supabase.from('ddt_righe').insert(
-    righe.map((r, i) => ({ ...r, ddt_id: ddt.id, riga_numero: i + 1 })))
+  const { error } = await supabase.from('delivery_note_items').insert(
+    righe.map((r, i) => ({ ...r, delivery_note_id: ddt.id, position: i + 1 })))
 
   if (error) {
     // La testata senza righe non serve a nessuno: si rimuove.
-    await supabase.from('ddt').delete().eq('id', ddt.id)
+    await supabase.from('delivery_notes').delete().eq('id', ddt.id)
     throw new DataError(`Righe DDT: ${error.message}`, error)
   }
 
   return (await getDdt(ddt.id))!
 }
 
-export async function aggiornaBozza(id: string, patch: TablesUpdate<'ddt'>): Promise<Ddt> {
+export async function aggiornaBozza(
+  id: string,
+  patch: TablesUpdate<'delivery_notes'>,
+): Promise<Ddt> {
   return unwrapOne(
-    await supabase.from('ddt').update(patch).eq('id', id).select().single(),
+    await supabase.from('delivery_notes').update(patch).eq('id', id).select().single(),
     'Aggiornamento bozza DDT')
 }
 
 /**
  * Emette il documento: assegna il progressivo e lo rende immutabile.
- * La numerazione e' gestita dal database con lock di riga, quindi due
- * emissioni contemporanee non possono ottenere lo stesso numero.
+ * La numerazione e' presa dal database con lock di riga dentro la Edge
+ * Function, quindi due emissioni contemporanee non collidono.
  */
 export async function emettiDdt(id: string): Promise<DdtCompleto> {
-  const { error } = await supabase.rpc('emetti_ddt', { p_ddt_id: id })
-  if (error) throw new DataError(`Emissione DDT: ${error.message}`, error)
+  await invokeFunction('issueDdt', { deliveryNoteId: id })
   return (await getDdt(id))!
 }
 
-export async function segnaConsegnato(id: string, firmatoDa?: string): Promise<Ddt> {
-  return unwrapOne(
-    await supabase.from('ddt')
-      .update({ stato: 'consegnato', data_consegna: new Date().toISOString(),
-                firmato_da: firmatoDa ?? null })
-      .eq('id', id).select().single(),
-    'Consegna DDT')
+/**
+ * Firma di ricevuta del destinatario. Sostituisce il vecchio
+ * "segna consegnato": qui la consegna non e' un flag, e' una firma
+ * con data e autore — che e' cio' che rende il documento una prova.
+ */
+export async function firmaDdt(id: string): Promise<Ddt> {
+  await invokeFunction('signDdt', { deliveryNoteId: id })
+  return (await getDdt(id))! as Ddt
 }
 
 export async function annullaDdt(id: string, motivo: string): Promise<Ddt> {
   if (!motivo.trim()) throw new DataError('Indicare il motivo dell\'annullamento')
-  return unwrapOne(
-    await supabase.from('ddt')
-      .update({ stato: 'annullato', data_annullamento: new Date().toISOString(),
-                motivo_annullamento: motivo })
-      .eq('id', id).select().single(),
-    'Annullamento DDT')
+  await invokeFunction('cancelDdt', { deliveryNoteId: id, reason: motivo })
+  return (await getDdt(id))! as Ddt
 }
 
-/** Totali di un documento, calcolati dal database. */
-export async function totaliDdt(id: string) {
+/** Genera il PDF del documento e restituisce l'URL da cui scaricarlo. */
+export async function pdfDdt(id: string): Promise<{ url: string }> {
+  return invokeFunction<{ url: string }>('exportDdtPDF', { deliveryNoteId: id })
+}
+
+/**
+ * Totali del documento.
+ *
+ * Calcolati qui e non nel database perche' le righe non portano un prezzo:
+ * un DDT non e' una fattura. Quantita' e peso sono dati reali; il valore,
+ * quando serve, si stima altrove sul prezzo di catalogo.
+ */
+export async function totaliDdt(id: string): Promise<{
+  righe: number; quantita: number; peso_kg: number
+}> {
   const { data, error } = await supabase
-    .from('v_ddt_totali').select('*').eq('ddt_id', id).maybeSingle()
+    .from('delivery_note_items').select('quantity, weight_kg').eq('delivery_note_id', id)
   if (error) throw error
-  return data
+  const righe = data ?? []
+  return {
+    righe: righe.length,
+    quantita: righe.reduce((s, r) => s + Number(r.quantity ?? 0), 0),
+    peso_kg: righe.reduce((s, r) => s + Number(r.weight_kg ?? 0), 0),
+  }
 }
 
-export const ETICHETTE_STATO: Record<DdtStato, string> = {
-  bozza: 'Bozza',
-  emesso: 'Emesso',
-  consegnato: 'Consegnato',
-  annullato: 'Annullato',
+export const ETICHETTE_STATO: Record<NonNullable<DdtStato>, string> = {
+  draft: 'Bozza',
+  issued: 'Emesso',
+  cancelled: 'Annullato',
 }
 
-export const ETICHETTE_CAUSALE: Record<DdtCausale, string> = {
+export const ETICHETTE_CAUSALE: Record<NonNullable<DdtCausale>, string> = {
   vendita: 'Vendita',
-  conto_visione: 'Conto visione',
+  conto_vendita: 'Conto vendita',
   conto_deposito: 'Conto deposito',
   reso: 'Reso',
-  trasferimento: 'Trasferimento',
   omaggio: 'Omaggio',
-  riparazione: 'Riparazione',
-  altro: 'Altro',
+  campionatura: 'Campionatura',
+  conto_lavorazione: 'Conto lavorazione',
+  conto_visione: 'Conto visione',
+  trasferimento_interno: 'Trasferimento interno',
+}
+
+export const ETICHETTE_TRASPORTO: Record<string, string> = {
+  mittente: 'A cura del mittente',
+  vettore: 'A cura del vettore',
+  destinatario: 'A cura del destinatario',
 }

@@ -1,5 +1,5 @@
 /** Preferiti del cliente: aziende, mercati o prodotti. */
-import { supabase, unwrapOne, unwrapMany } from './client'
+import { supabase, unwrapOne, unwrapMany, DataError } from './client'
 import type { Tables, TablesInsert } from './types'
 
 export type Favorite = Tables<'favorites'>
@@ -8,7 +8,7 @@ export async function getMyFavorites(): Promise<Favorite[]> {
   return unwrapMany(
     await supabase.from('favorites')
       .select('*, companies(id, name, logo_url), markets(id, name, city), products(id, name, price)')
-      .order('created_date', { ascending: false }),
+      .order('created_at', { ascending: false }),
     'Preferiti') as unknown as Favorite[]
 }
 
@@ -22,7 +22,13 @@ export type Target =
   | { product_id: string }
 
 export async function aggiungiPreferito(t: Target): Promise<Favorite> {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new DataError('Nessun utente collegato')
+
+  // In questo schema user_id e' obbligatorio su favorites: senza, la riga
+  // non appartiene a nessuno e le policy non saprebbero a chi mostrarla.
   const riga: TablesInsert<'favorites'> = {
+    user_id: user.id,
     company_id: 'company_id' in t ? t.company_id : null,
     market_id: 'market_id' in t ? t.market_id : null,
     product_id: 'product_id' in t ? t.product_id : null,

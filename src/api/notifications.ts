@@ -15,7 +15,7 @@ export async function getMyNotifications(soloNonLette = false): Promise<Notifica
   if (!user?.email) return []
   let q = supabase.from('notifications').select('*').ilike('user_email', user.email)
   if (soloNonLette) q = q.eq('read', false)
-  return unwrapMany(await q.order('created_date', { ascending: false }).limit(100),
+  return unwrapMany(await q.order('created_at', { ascending: false }).limit(100),
     'Notifiche')
 }
 

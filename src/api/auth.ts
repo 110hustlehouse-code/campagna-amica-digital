@@ -10,7 +10,7 @@
 import { supabase, DataError } from './client'
 import type { Tables } from './types'
 
-export type Profile = Tables<'profiles'>
+export type Profile = Tables<'users'>
 export type Role = Profile['role']
 
 /** Avvia l'accesso con Google. Al ritorno l'utente e' autenticato. */
@@ -33,7 +33,7 @@ export async function getMyProfile(): Promise<Profile | null> {
   if (!user) return null
 
   const { data, error } = await supabase
-    .from('profiles').select('*').eq('id', user.id).maybeSingle()
+    .from('users').select('*').eq('id', user.id).maybeSingle()
   if (error) throw new DataError(`Lettura profilo: ${error.message}`)
   return data
 }
@@ -50,7 +50,7 @@ export async function confirmRole(role: Exclude<Role, 'admin'>): Promise<Profile
   if (!user) throw new DataError('Nessun utente collegato')
 
   const { data, error } = await supabase
-    .from('profiles')
+    .from('users')
     .update({ role, role_confirmed: true })
     .eq('id', user.id)
     .select()
@@ -82,7 +82,7 @@ export async function aggiornaProfilo(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new DataError('Nessun utente collegato')
   const { data, error } = await supabase
-    .from('profiles').update(patch).eq('id', user.id).select().single()
+    .from('users').update(patch).eq('id', user.id).select().single()
   if (error) throw new DataError(`Aggiornamento profilo: ${error.message}`)
   return data
 }

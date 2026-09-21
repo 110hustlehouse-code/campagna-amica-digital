@@ -6,39 +6,87 @@ export type Json = string | number | boolean | null | { [k: string]: Json | unde
 export type Database = {
   public: {
     Tables: {
-      admin_whitelist: {
+      absences: {
         Row: {
-          email: string
-          livello: "nazionale" | "regionale" | "provinciale"
-          ambito: string | null
-          note: string | null
-          attivo: boolean
-          created_date: string
-          created_by: string | null
+          id: string
+          company_id: string
+          market_id: string
+          absence_date: string | null
+          reason: string | null
+          status: "reported" | "acknowledged" | "resolved"
+          notes: string | null
+          created_at: string
+          updated_at: string
         }
         Insert: {
-          email: string
-          livello?: "nazionale" | "regionale" | "provinciale"
-          ambito?: string | null
-          note?: string | null
-          attivo?: boolean
-          created_date?: string
-          created_by?: string | null
+          id?: string
+          company_id: string
+          market_id: string
+          absence_date?: string | null
+          reason?: string | null
+          status?: "reported" | "acknowledged" | "resolved"
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
         }
         Update: {
-          email?: string
-          livello?: "nazionale" | "regionale" | "provinciale"
-          ambito?: string | null
-          note?: string | null
-          attivo?: boolean
-          created_date?: string
-          created_by?: string | null
+          id?: string
+          company_id?: string
+          market_id?: string
+          absence_date?: string | null
+          reason?: string | null
+          status?: "reported" | "acknowledged" | "resolved"
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "absences_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "absences_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "markets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      api_rate_limits: {
+        Row: {
+          user_id: string
+          endpoint: string
+          called_at: string
+        }
+        Insert: {
+          user_id: string
+          endpoint: string
+          called_at?: string
+        }
+        Update: {
+          user_id?: string
+          endpoint?: string
+          called_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_rate_limits_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       companies: {
         Row: {
           id: string
+          owner_id: string | null
           name: string
           description: string | null
           website: string | null
@@ -52,17 +100,12 @@ export type Database = {
           market_ids: string[]
           market_schedules: Json
           is_registered: boolean
-          partita_iva: string | null
-          codice_fiscale: string | null
-          ragione_sociale: string | null
-          sede_indirizzo: string | null
-          sede_comune_istat: string | null
-          created_date: string
-          updated_date: string
-          created_by: string | null
+          created_at: string
+          updated_at: string
         }
         Insert: {
           id?: string
+          owner_id?: string | null
           name: string
           description?: string | null
           website?: string | null
@@ -76,17 +119,12 @@ export type Database = {
           market_ids?: string[]
           market_schedules?: Json
           is_registered?: boolean
-          partita_iva?: string | null
-          codice_fiscale?: string | null
-          ragione_sociale?: string | null
-          sede_indirizzo?: string | null
-          sede_comune_istat?: string | null
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
+          created_at?: string
+          updated_at?: string
         }
         Update: {
           id?: string
+          owner_id?: string | null
           name?: string
           description?: string | null
           website?: string | null
@@ -100,22 +138,16 @@ export type Database = {
           market_ids?: string[]
           market_schedules?: Json
           is_registered?: boolean
-          partita_iva?: string | null
-          codice_fiscale?: string | null
-          ragione_sociale?: string | null
-          sede_indirizzo?: string | null
-          sede_comune_istat?: string | null
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
+          created_at?: string
+          updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "companies_sede_comune_istat_fkey"
-            columns: ["sede_comune_istat"]
+            foreignKeyName: "companies_owner_id_fkey"
+            columns: ["owner_id"]
             isOneToOne: false
-            referencedRelation: "comuni"
-            referencedColumns: ["codice_istat"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -128,9 +160,8 @@ export type Database = {
           stand_number: string | null
           status: "pending" | "confirmed" | "completed" | "cancelled"
           notes: string | null
-          created_date: string
-          updated_date: string
-          created_by: string | null
+          created_at: string
+          updated_at: string
         }
         Insert: {
           id?: string
@@ -140,9 +171,8 @@ export type Database = {
           stand_number?: string | null
           status?: "pending" | "confirmed" | "completed" | "cancelled"
           notes?: string | null
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
+          created_at?: string
+          updated_at?: string
         }
         Update: {
           id?: string
@@ -152,9 +182,8 @@ export type Database = {
           stand_number?: string | null
           status?: "pending" | "confirmed" | "completed" | "cancelled"
           notes?: string | null
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
+          created_at?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -169,81 +198,6 @@ export type Database = {
             columns: ["market_event_id"]
             isOneToOne: false
             referencedRelation: "market_events"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      company_needs: {
-        Row: {
-          id: string
-          company_id: string
-          market_id: string
-          category: "bags" | "materials" | "urgent" | "maintenance" | "other"
-          title: string
-          description: string | null
-          size: string | null
-          price: number | null
-          quantity: number | null
-          payment_status: "unpaid" | "paid"
-          priority: "low" | "medium" | "high"
-          status: "open" | "in_progress" | "resolved" | "closed"
-          due_date: string | null
-          notes: string | null
-          created_date: string
-          updated_date: string
-          created_by: string | null
-        }
-        Insert: {
-          id?: string
-          company_id: string
-          market_id: string
-          category: "bags" | "materials" | "urgent" | "maintenance" | "other"
-          title: string
-          description?: string | null
-          size?: string | null
-          price?: number | null
-          quantity?: number | null
-          payment_status?: "unpaid" | "paid"
-          priority?: "low" | "medium" | "high"
-          status?: "open" | "in_progress" | "resolved" | "closed"
-          due_date?: string | null
-          notes?: string | null
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
-        }
-        Update: {
-          id?: string
-          company_id?: string
-          market_id?: string
-          category?: "bags" | "materials" | "urgent" | "maintenance" | "other"
-          title?: string
-          description?: string | null
-          size?: string | null
-          price?: number | null
-          quantity?: number | null
-          payment_status?: "unpaid" | "paid"
-          priority?: "low" | "medium" | "high"
-          status?: "open" | "in_progress" | "resolved" | "closed"
-          due_date?: string | null
-          notes?: string | null
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "company_needs_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "company_needs_market_id_fkey"
-            columns: ["market_id"]
-            isOneToOne: false
-            referencedRelation: "markets"
             referencedColumns: ["id"]
           },
         ]
@@ -277,158 +231,25 @@ export type Database = {
           },
         ]
       }
-      ddt: {
-        Row: {
-          id: string
-          numero: number | null
-          anno: number | null
-          numero_completo: string | null
-          data_documento: string
-          company_id: string
-          mittente_ragione_sociale: string
-          mittente_partita_iva: string | null
-          mittente_codice_fiscale: string | null
-          mittente_indirizzo: string | null
-          destinatario_tipo: "mercato" | "cliente" | "altro"
-          market_id: string | null
-          destinatario_denominazione: string
-          destinatario_indirizzo: string | null
-          destinatario_partita_iva: string | null
-          luogo_destinazione: string | null
-          causale: "vendita" | "conto_visione" | "conto_deposito" | "reso" | "trasferimento" | "omaggio" | "riparazione" | "altro"
-          causale_altro: string | null
-          trasporto_a_cura_di: "mittente" | "destinatario" | "vettore"
-          vettore_denominazione: string | null
-          vettore_partita_iva: string | null
-          data_ora_ritiro: string | null
-          aspetto_beni: string | null
-          numero_colli: number | null
-          peso_kg: number | null
-          stato: "bozza" | "emesso" | "consegnato" | "annullato"
-          data_emissione: string | null
-          data_consegna: string | null
-          data_annullamento: string | null
-          motivo_annullamento: string | null
-          firma_ricezione_url: string | null
-          firmato_da: string | null
-          pdf_url: string | null
-          note: string | null
-          created_date: string
-          updated_date: string
-          created_by: string | null
-        }
-        Insert: {
-          id?: string
-          numero?: number | null
-          anno?: number | null
-          data_documento?: string
-          company_id: string
-          mittente_ragione_sociale: string
-          mittente_partita_iva?: string | null
-          mittente_codice_fiscale?: string | null
-          mittente_indirizzo?: string | null
-          destinatario_tipo?: "mercato" | "cliente" | "altro"
-          market_id?: string | null
-          destinatario_denominazione: string
-          destinatario_indirizzo?: string | null
-          destinatario_partita_iva?: string | null
-          luogo_destinazione?: string | null
-          causale?: "vendita" | "conto_visione" | "conto_deposito" | "reso" | "trasferimento" | "omaggio" | "riparazione" | "altro"
-          causale_altro?: string | null
-          trasporto_a_cura_di?: "mittente" | "destinatario" | "vettore"
-          vettore_denominazione?: string | null
-          vettore_partita_iva?: string | null
-          data_ora_ritiro?: string | null
-          aspetto_beni?: string | null
-          numero_colli?: number | null
-          peso_kg?: number | null
-          stato?: "bozza" | "emesso" | "consegnato" | "annullato"
-          data_emissione?: string | null
-          data_consegna?: string | null
-          data_annullamento?: string | null
-          motivo_annullamento?: string | null
-          firma_ricezione_url?: string | null
-          firmato_da?: string | null
-          pdf_url?: string | null
-          note?: string | null
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
-        }
-        Update: {
-          id?: string
-          numero?: number | null
-          anno?: number | null
-          data_documento?: string
-          company_id?: string
-          mittente_ragione_sociale?: string
-          mittente_partita_iva?: string | null
-          mittente_codice_fiscale?: string | null
-          mittente_indirizzo?: string | null
-          destinatario_tipo?: "mercato" | "cliente" | "altro"
-          market_id?: string | null
-          destinatario_denominazione?: string
-          destinatario_indirizzo?: string | null
-          destinatario_partita_iva?: string | null
-          luogo_destinazione?: string | null
-          causale?: "vendita" | "conto_visione" | "conto_deposito" | "reso" | "trasferimento" | "omaggio" | "riparazione" | "altro"
-          causale_altro?: string | null
-          trasporto_a_cura_di?: "mittente" | "destinatario" | "vettore"
-          vettore_denominazione?: string | null
-          vettore_partita_iva?: string | null
-          data_ora_ritiro?: string | null
-          aspetto_beni?: string | null
-          numero_colli?: number | null
-          peso_kg?: number | null
-          stato?: "bozza" | "emesso" | "consegnato" | "annullato"
-          data_emissione?: string | null
-          data_consegna?: string | null
-          data_annullamento?: string | null
-          motivo_annullamento?: string | null
-          firma_ricezione_url?: string | null
-          firmato_da?: string | null
-          pdf_url?: string | null
-          note?: string | null
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ddt_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ddt_market_id_fkey"
-            columns: ["market_id"]
-            isOneToOne: false
-            referencedRelation: "markets"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      ddt_counters: {
+      ddt_sequences: {
         Row: {
           company_id: string
-          anno: number
-          ultimo_numero: number
+          year: number
+          last_number: number
         }
         Insert: {
           company_id: string
-          anno: number
-          ultimo_numero?: number
+          year: number
+          last_number?: number
         }
         Update: {
           company_id?: string
-          anno?: number
-          ultimo_numero?: number
+          year?: number
+          last_number?: number
         }
         Relationships: [
           {
-            foreignKeyName: "ddt_counters_company_id_fkey"
+            foreignKeyName: "ddt_sequences_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
@@ -436,63 +257,59 @@ export type Database = {
           },
         ]
       }
-      ddt_righe: {
+      delivery_note_items: {
         Row: {
           id: string
-          ddt_id: string
-          riga_numero: number
+          delivery_note_id: string
           product_id: string | null
-          descrizione: string
-          quantita: number
-          unita: string
-          prezzo_unitario: number | null
-          importo: number | null
-          lotto: string | null
-          note: string | null
-          created_date: string
-          updated_date: string
-          created_by: string | null
+          product_name: string
+          unit: string
+          quantity: number
+          lot: string | null
+          expiry_date: string | null
+          weight_kg: number | null
+          notes: string | null
+          position: number
+          created_at: string
         }
         Insert: {
           id?: string
-          ddt_id: string
-          riga_numero: number
+          delivery_note_id: string
           product_id?: string | null
-          descrizione: string
-          quantita: number
-          unita?: string
-          prezzo_unitario?: number | null
-          lotto?: string | null
-          note?: string | null
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
+          product_name: string
+          unit: string
+          quantity: number
+          lot?: string | null
+          expiry_date?: string | null
+          weight_kg?: number | null
+          notes?: string | null
+          position?: number
+          created_at?: string
         }
         Update: {
           id?: string
-          ddt_id?: string
-          riga_numero?: number
+          delivery_note_id?: string
           product_id?: string | null
-          descrizione?: string
-          quantita?: number
-          unita?: string
-          prezzo_unitario?: number | null
-          lotto?: string | null
-          note?: string | null
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
+          product_name?: string
+          unit?: string
+          quantity?: number
+          lot?: string | null
+          expiry_date?: string | null
+          weight_kg?: number | null
+          notes?: string | null
+          position?: number
+          created_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "ddt_righe_ddt_id_fkey"
-            columns: ["ddt_id"]
+            foreignKeyName: "delivery_note_items_delivery_note_id_fkey"
+            columns: ["delivery_note_id"]
             isOneToOne: false
-            referencedRelation: "ddt"
+            referencedRelation: "delivery_notes"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "ddt_righe_product_id_fkey"
+            foreignKeyName: "delivery_note_items_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
@@ -500,35 +317,232 @@ export type Database = {
           },
         ]
       }
-      favorites: {
+      delivery_note_sync_log: {
         Row: {
           id: string
-          company_id: string | null
-          market_id: string | null
+          delivery_note_id: string
+          action: "product_created" | "product_matched" | "stock_incremented" | "stock_reverted"
           product_id: string | null
-          created_date: string
-          updated_date: string
-          created_by: string | null
+          quantity_delta: number | null
+          payload: Json | null
+          created_at: string
         }
         Insert: {
           id?: string
-          company_id?: string | null
-          market_id?: string | null
+          delivery_note_id: string
+          action: "product_created" | "product_matched" | "stock_incremented" | "stock_reverted"
           product_id?: string | null
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
+          quantity_delta?: number | null
+          payload?: Json | null
+          created_at?: string
         }
         Update: {
           id?: string
+          delivery_note_id?: string
+          action?: "product_created" | "product_matched" | "stock_incremented" | "stock_reverted"
+          product_id?: string | null
+          quantity_delta?: number | null
+          payload?: Json | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_note_sync_log_delivery_note_id_fkey"
+            columns: ["delivery_note_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_notes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_note_sync_log_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_notes: {
+        Row: {
+          id: string
+          company_id: string
+          market_id: string
+          market_event_id: string
+          progressive_number: number | null
+          progressive_year: number | null
+          issue_date: string
+          transport_date: string
+          issued_at: string | null
+          cancelled_at: string | null
+          recipient_name: string
+          recipient_vat_or_cf: string | null
+          recipient_address: string | null
+          recipient_city: string | null
+          recipient_cap: string | null
+          causale: "vendita" | "conto_vendita" | "conto_deposito" | "reso" | "omaggio" | "campionatura" | "conto_lavorazione" | "conto_visione" | "trasferimento_interno"
+          trasporto_a_mezzo: "mittente" | "vettore" | "destinatario" | null
+          vettore_descrizione: string | null
+          numero_colli: number | null
+          peso_totale_kg: number | null
+          annotazioni: string | null
+          signature_required: boolean
+          signed_by_recipient_user_id: string | null
+          signed_at: string | null
+          signature_method: "digital_in_app" | "not_required" | null
+          status: "draft" | "issued" | "cancelled"
+          cancellation_reason: string | null
+          source: "manual_form" | "ai_upload" | "reused_template"
+          template_of: string | null
+          pdf_url: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          market_id: string
+          market_event_id: string
+          progressive_number?: number | null
+          progressive_year?: number | null
+          issue_date: string
+          transport_date: string
+          issued_at?: string | null
+          cancelled_at?: string | null
+          recipient_name: string
+          recipient_vat_or_cf?: string | null
+          recipient_address?: string | null
+          recipient_city?: string | null
+          recipient_cap?: string | null
+          causale: "vendita" | "conto_vendita" | "conto_deposito" | "reso" | "omaggio" | "campionatura" | "conto_lavorazione" | "conto_visione" | "trasferimento_interno"
+          trasporto_a_mezzo?: "mittente" | "vettore" | "destinatario" | null
+          vettore_descrizione?: string | null
+          numero_colli?: number | null
+          peso_totale_kg?: number | null
+          annotazioni?: string | null
+          signature_required?: boolean
+          signed_by_recipient_user_id?: string | null
+          signed_at?: string | null
+          signature_method?: "digital_in_app" | "not_required" | null
+          status?: "draft" | "issued" | "cancelled"
+          cancellation_reason?: string | null
+          source?: "manual_form" | "ai_upload" | "reused_template"
+          template_of?: string | null
+          pdf_url?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          market_id?: string
+          market_event_id?: string
+          progressive_number?: number | null
+          progressive_year?: number | null
+          issue_date?: string
+          transport_date?: string
+          issued_at?: string | null
+          cancelled_at?: string | null
+          recipient_name?: string
+          recipient_vat_or_cf?: string | null
+          recipient_address?: string | null
+          recipient_city?: string | null
+          recipient_cap?: string | null
+          causale?: "vendita" | "conto_vendita" | "conto_deposito" | "reso" | "omaggio" | "campionatura" | "conto_lavorazione" | "conto_visione" | "trasferimento_interno"
+          trasporto_a_mezzo?: "mittente" | "vettore" | "destinatario" | null
+          vettore_descrizione?: string | null
+          numero_colli?: number | null
+          peso_totale_kg?: number | null
+          annotazioni?: string | null
+          signature_required?: boolean
+          signed_by_recipient_user_id?: string | null
+          signed_at?: string | null
+          signature_method?: "digital_in_app" | "not_required" | null
+          status?: "draft" | "issued" | "cancelled"
+          cancellation_reason?: string | null
+          source?: "manual_form" | "ai_upload" | "reused_template"
+          template_of?: string | null
+          pdf_url?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_notes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_notes_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "markets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_notes_market_event_id_fkey"
+            columns: ["market_event_id"]
+            isOneToOne: false
+            referencedRelation: "market_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_notes_signed_by_recipient_user_id_fkey"
+            columns: ["signed_by_recipient_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_notes_template_of_fkey"
+            columns: ["template_of"]
+            isOneToOne: false
+            referencedRelation: "delivery_notes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      favorites: {
+        Row: {
+          id: string
+          user_id: string
+          company_id: string | null
+          market_id: string | null
+          product_id: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
           company_id?: string | null
           market_id?: string | null
           product_id?: string | null
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          company_id?: string | null
+          market_id?: string | null
+          product_id?: string | null
+          created_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "favorites_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "favorites_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "favorites_company_id_fkey"
             columns: ["company_id"]
@@ -543,13 +557,6 @@ export type Database = {
             referencedRelation: "markets"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "favorites_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
         ]
       }
       market_events: {
@@ -562,9 +569,8 @@ export type Database = {
           title: string | null
           capacity: number | null
           registered_company_ids: string[]
-          created_date: string
-          updated_date: string
-          created_by: string | null
+          created_at: string
+          updated_at: string
         }
         Insert: {
           id?: string
@@ -575,9 +581,8 @@ export type Database = {
           title?: string | null
           capacity?: number | null
           registered_company_ids?: string[]
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
+          created_at?: string
+          updated_at?: string
         }
         Update: {
           id?: string
@@ -588,9 +593,8 @@ export type Database = {
           title?: string | null
           capacity?: number | null
           registered_company_ids?: string[]
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
+          created_at?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -614,13 +618,12 @@ export type Database = {
           schedule: string | null
           image_url: string | null
           company_ids: string[]
+          created_at: string
+          updated_at: string
           comune_istat: string | null
           quartiere_id: string | null
           codice_mercato: string | null
           attivo: boolean
-          created_date: string
-          updated_date: string
-          created_by: string | null
         }
         Insert: {
           id?: string
@@ -633,13 +636,12 @@ export type Database = {
           schedule?: string | null
           image_url?: string | null
           company_ids?: string[]
+          created_at?: string
+          updated_at?: string
           comune_istat?: string | null
           quartiere_id?: string | null
           codice_mercato?: string | null
           attivo?: boolean
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
         }
         Update: {
           id?: string
@@ -652,13 +654,12 @@ export type Database = {
           schedule?: string | null
           image_url?: string | null
           company_ids?: string[]
+          created_at?: string
+          updated_at?: string
           comune_istat?: string | null
           quartiere_id?: string | null
           codice_mercato?: string | null
           attivo?: boolean
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
         }
         Relationships: [
           {
@@ -685,9 +686,7 @@ export type Database = {
           date: string | null
           url: string | null
           source: string
-          created_date: string
-          updated_date: string
-          created_by: string | null
+          created_at: string
         }
         Insert: {
           id?: string
@@ -696,9 +695,7 @@ export type Database = {
           date?: string | null
           url?: string | null
           source: string
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
+          created_at?: string
         }
         Update: {
           id?: string
@@ -707,15 +704,14 @@ export type Database = {
           date?: string | null
           url?: string | null
           source?: string
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
+          created_at?: string
         }
         Relationships: []
       }
       notifications: {
         Row: {
           id: string
+          user_id: string | null
           user_email: string
           title: string
           message: string | null
@@ -725,12 +721,11 @@ export type Database = {
           order_id: string | null
           message_id: string | null
           read: boolean
-          created_date: string
-          updated_date: string
-          created_by: string | null
+          created_at: string
         }
         Insert: {
           id?: string
+          user_id?: string | null
           user_email: string
           title: string
           message?: string | null
@@ -740,12 +735,11 @@ export type Database = {
           order_id?: string | null
           message_id?: string | null
           read?: boolean
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
+          created_at?: string
         }
         Update: {
           id?: string
+          user_id?: string | null
           user_email?: string
           title?: string
           message?: string | null
@@ -755,11 +749,16 @@ export type Database = {
           order_id?: string | null
           message_id?: string | null
           read?: boolean
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
+          created_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "notifications_company_id_fkey"
             columns: ["company_id"]
@@ -793,6 +792,7 @@ export type Database = {
       orders: {
         Row: {
           id: string
+          user_id: string | null
           company_id: string
           company_name: string | null
           market_id: string
@@ -802,12 +802,12 @@ export type Database = {
           status: "in_attesa" | "confermato" | "pronto" | "ritirato" | "annullato"
           pickup_date: string | null
           notes: string | null
-          created_date: string
-          updated_date: string
-          created_by: string | null
+          created_at: string
+          updated_at: string
         }
         Insert: {
           id?: string
+          user_id?: string | null
           company_id: string
           company_name?: string | null
           market_id: string
@@ -817,12 +817,12 @@ export type Database = {
           status?: "in_attesa" | "confermato" | "pronto" | "ritirato" | "annullato"
           pickup_date?: string | null
           notes?: string | null
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
+          created_at?: string
+          updated_at?: string
         }
         Update: {
           id?: string
+          user_id?: string | null
           company_id?: string
           company_name?: string | null
           market_id?: string
@@ -832,11 +832,17 @@ export type Database = {
           status?: "in_attesa" | "confermato" | "pronto" | "ritirato" | "annullato"
           pickup_date?: string | null
           notes?: string | null
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
+          created_at?: string
+          updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "orders_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orders_company_id_fkey"
             columns: ["company_id"]
@@ -858,34 +864,34 @@ export type Database = {
           id: string
           message_id: string
           company_id: string
+          user_id: string | null
           producer_email: string
           market_id: string
           status: "pending" | "accepted" | "declined"
-          created_date: string
-          updated_date: string
-          created_by: string | null
+          created_at: string
+          updated_at: string
         }
         Insert: {
           id?: string
           message_id: string
           company_id: string
+          user_id?: string | null
           producer_email: string
           market_id: string
           status?: "pending" | "accepted" | "declined"
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
+          created_at?: string
+          updated_at?: string
         }
         Update: {
           id?: string
           message_id?: string
           company_id?: string
+          user_id?: string | null
           producer_email?: string
           market_id?: string
           status?: "pending" | "accepted" | "declined"
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
+          created_at?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -903,7 +909,89 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "producer_event_rsvps_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "producer_event_rsvps_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "markets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      producer_needs: {
+        Row: {
+          id: string
+          company_id: string
+          market_id: string
+          category: "bags" | "materials" | "urgent" | "maintenance" | "other"
+          title: string
+          description: string | null
+          size: string | null
+          price: number | null
+          quantity: number | null
+          payment_status: "unpaid" | "paid"
+          priority: "low" | "medium" | "high"
+          status: "open" | "in_progress" | "resolved" | "closed"
+          due_date: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+          source: string | null
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          market_id: string
+          category: "bags" | "materials" | "urgent" | "maintenance" | "other"
+          title: string
+          description?: string | null
+          size?: string | null
+          price?: number | null
+          quantity?: number | null
+          payment_status?: "unpaid" | "paid"
+          priority?: "low" | "medium" | "high"
+          status?: "open" | "in_progress" | "resolved" | "closed"
+          due_date?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+          source?: string | null
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          market_id?: string
+          category?: "bags" | "materials" | "urgent" | "maintenance" | "other"
+          title?: string
+          description?: string | null
+          size?: string | null
+          price?: number | null
+          quantity?: number | null
+          payment_status?: "unpaid" | "paid"
+          priority?: "low" | "medium" | "high"
+          status?: "open" | "in_progress" | "resolved" | "closed"
+          due_date?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+          source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_needs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_needs_market_id_fkey"
             columns: ["market_id"]
             isOneToOne: false
             referencedRelation: "markets"
@@ -915,38 +1003,38 @@ export type Database = {
         Row: {
           id: string
           company_id: string
-          product_id: string | null
-          name: string | null
+          product_id: string
           quantity: number
           min_threshold: number | null
           notes: string | null
-          created_date: string
-          updated_date: string
-          created_by: string | null
+          created_at: string
+          updated_at: string
+          is_carried_over: boolean
+          carried_over_from_event_id: string | null
         }
         Insert: {
           id?: string
           company_id: string
-          product_id?: string | null
-          name?: string | null
-          quantity?: number
+          product_id: string
+          quantity: number
           min_threshold?: number | null
           notes?: string | null
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+          is_carried_over?: boolean
+          carried_over_from_event_id?: string | null
         }
         Update: {
           id?: string
           company_id?: string
-          product_id?: string | null
-          name?: string | null
+          product_id?: string
           quantity?: number
           min_threshold?: number | null
           notes?: string | null
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+          is_carried_over?: boolean
+          carried_over_from_event_id?: string | null
         }
         Relationships: [
           {
@@ -963,50 +1051,54 @@ export type Database = {
             referencedRelation: "products"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "product_stocks_carried_over_from_event_id_fkey"
+            columns: ["carried_over_from_event_id"]
+            isOneToOne: false
+            referencedRelation: "market_events"
+            referencedColumns: ["id"]
+          },
         ]
       }
       products: {
         Row: {
           id: string
+          company_id: string
           name: string
           description: string | null
           price: number
           unit: "kg" | "lt" | "pz" | "confezione" | null
           image_url: string | null
           category: "frutta" | "verdura" | "formaggi" | "salumi" | "olio" | "vino" | "miele" | "pane_pasta" | "conserve" | "altro" | null
-          company_id: string
           available: boolean
-          created_date: string
-          updated_date: string
-          created_by: string | null
+          created_at: string
+          updated_at: string
         }
         Insert: {
           id?: string
+          company_id: string
           name: string
           description?: string | null
           price: number
           unit?: "kg" | "lt" | "pz" | "confezione" | null
           image_url?: string | null
           category?: "frutta" | "verdura" | "formaggi" | "salumi" | "olio" | "vino" | "miele" | "pane_pasta" | "conserve" | "altro" | null
-          company_id: string
           available?: boolean
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
+          created_at?: string
+          updated_at?: string
         }
         Update: {
           id?: string
+          company_id?: string
           name?: string
           description?: string | null
           price?: number
           unit?: "kg" | "lt" | "pz" | "confezione" | null
           image_url?: string | null
           category?: "frutta" | "verdura" | "formaggi" | "salumi" | "olio" | "vino" | "miele" | "pane_pasta" | "conserve" | "altro" | null
-          company_id?: string
           available?: boolean
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
+          created_at?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -1014,53 +1106,6 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      profiles: {
-        Row: {
-          id: string
-          email: string
-          full_name: string | null
-          avatar_url: string | null
-          role: "admin" | "client" | "producer" | "staff"
-          role_confirmed: boolean
-          phone: string | null
-          created_date: string
-          updated_date: string
-          created_by: string | null
-        }
-        Insert: {
-          id: string
-          email: string
-          full_name?: string | null
-          avatar_url?: string | null
-          role?: "admin" | "client" | "producer" | "staff"
-          role_confirmed?: boolean
-          phone?: string | null
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
-        }
-        Update: {
-          id?: string
-          email?: string
-          full_name?: string | null
-          avatar_url?: string | null
-          role?: "admin" | "client" | "producer" | "staff"
-          role_confirmed?: boolean
-          phone?: string | null
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "profiles_id_fkey"
-            columns: ["id"]
-            isOneToOne: false
-            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -1091,6 +1136,147 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "regioni"
             referencedColumns: ["codice_istat"]
+          },
+        ]
+      }
+      punti_eventi: {
+        Row: {
+          id: string
+          tessera_id: string
+          fonte: string
+          punti: number
+          stato: "valido" | "in_sospeso" | "rifiutato" | "annullato"
+          market_id: string | null
+          company_id: string | null
+          order_id: string | null
+          giorno: string
+          riferimento: string | null
+          annulla_evento: string | null
+          revisionato_da: string | null
+          revisionato_il: string | null
+          note: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          tessera_id: string
+          fonte: string
+          punti: number
+          stato?: "valido" | "in_sospeso" | "rifiutato" | "annullato"
+          market_id?: string | null
+          company_id?: string | null
+          order_id?: string | null
+          giorno?: string
+          riferimento?: string | null
+          annulla_evento?: string | null
+          revisionato_da?: string | null
+          revisionato_il?: string | null
+          note?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          tessera_id?: string
+          fonte?: string
+          punti?: number
+          stato?: "valido" | "in_sospeso" | "rifiutato" | "annullato"
+          market_id?: string | null
+          company_id?: string | null
+          order_id?: string | null
+          giorno?: string
+          riferimento?: string | null
+          annulla_evento?: string | null
+          revisionato_da?: string | null
+          revisionato_il?: string | null
+          note?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "punti_eventi_tessera_id_fkey"
+            columns: ["tessera_id"]
+            isOneToOne: false
+            referencedRelation: "tessere"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "punti_eventi_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "markets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "punti_eventi_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "punti_eventi_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "punti_eventi_annulla_evento_fkey"
+            columns: ["annulla_evento"]
+            isOneToOne: false
+            referencedRelation: "punti_eventi"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "punti_eventi_revisionato_da_fkey"
+            columns: ["revisionato_da"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      punti_regole: {
+        Row: {
+          id: string
+          fonte: string
+          market_id: string | null
+          punti: number
+          tetto_giorno: number | null
+          attiva: boolean
+          richiede_revisione: boolean
+          descrizione: string | null
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          fonte: string
+          market_id?: string | null
+          punti: number
+          tetto_giorno?: number | null
+          attiva?: boolean
+          richiede_revisione?: boolean
+          descrizione?: string | null
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          fonte?: string
+          market_id?: string | null
+          punti?: number
+          tetto_giorno?: number | null
+          attiva?: boolean
+          richiede_revisione?: boolean
+          descrizione?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "punti_regole_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "markets"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -1127,17 +1313,17 @@ export type Database = {
         Row: {
           codice_istat: string
           nome: string
-          ripartizione: string | null
+          ripartizione: "Nord-ovest" | "Nord-est" | "Centro" | "Sud" | "Isole"
         }
         Insert: {
           codice_istat: string
           nome: string
-          ripartizione?: string | null
+          ripartizione: "Nord-ovest" | "Nord-est" | "Centro" | "Sud" | "Isole"
         }
         Update: {
           codice_istat?: string
           nome?: string
-          ripartizione?: string | null
+          ripartizione?: "Nord-ovest" | "Nord-est" | "Centro" | "Sud" | "Isole"
         }
         Relationships: []
       }
@@ -1154,9 +1340,8 @@ export type Database = {
           payment_method: "bank_transfer" | "cash" | "check" | "stripe" | null
           status: "paid" | "pending" | "overdue"
           receipt_url: string | null
-          created_date: string
-          updated_date: string
-          created_by: string | null
+          created_at: string
+          updated_at: string
         }
         Insert: {
           id?: string
@@ -1170,9 +1355,8 @@ export type Database = {
           payment_method?: "bank_transfer" | "cash" | "check" | "stripe" | null
           status?: "paid" | "pending" | "overdue"
           receipt_url?: string | null
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
+          created_at?: string
+          updated_at?: string
         }
         Update: {
           id?: string
@@ -1186,9 +1370,8 @@ export type Database = {
           payment_method?: "bank_transfer" | "cash" | "check" | "stripe" | null
           status?: "paid" | "pending" | "overdue"
           receipt_url?: string | null
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
+          created_at?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -1217,38 +1400,45 @@ export type Database = {
       reviews: {
         Row: {
           id: string
+          user_id: string
           company_id: string
           rating: number
           message: string | null
           reply: string | null
           reply_date: string | null
-          created_date: string
-          updated_date: string
-          created_by: string | null
+          created_at: string
+          updated_at: string
         }
         Insert: {
           id?: string
+          user_id: string
           company_id: string
           rating: number
           message?: string | null
           reply?: string | null
           reply_date?: string | null
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
+          created_at?: string
+          updated_at?: string
         }
         Update: {
           id?: string
+          user_id?: string
           company_id?: string
           rating?: number
           message?: string | null
           reply?: string | null
           reply_date?: string | null
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
+          created_at?: string
+          updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "reviews_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "reviews_company_id_fkey"
             columns: ["company_id"]
@@ -1261,6 +1451,7 @@ export type Database = {
       staff_members: {
         Row: {
           id: string
+          user_id: string | null
           market_id: string
           full_name: string
           email: string
@@ -1268,12 +1459,12 @@ export type Database = {
           position: string | null
           is_active: boolean
           market_confirmed: boolean
-          created_date: string
-          updated_date: string
-          created_by: string | null
+          created_at: string
+          updated_at: string
         }
         Insert: {
           id?: string
+          user_id?: string | null
           market_id: string
           full_name: string
           email: string
@@ -1281,12 +1472,12 @@ export type Database = {
           position?: string | null
           is_active?: boolean
           market_confirmed?: boolean
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
+          created_at?: string
+          updated_at?: string
         }
         Update: {
           id?: string
+          user_id?: string | null
           market_id?: string
           full_name?: string
           email?: string
@@ -1294,11 +1485,17 @@ export type Database = {
           position?: string | null
           is_active?: boolean
           market_confirmed?: boolean
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
+          created_at?: string
+          updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "staff_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "staff_members_market_id_fkey"
             columns: ["market_id"]
@@ -1312,35 +1509,32 @@ export type Database = {
         Row: {
           id: string
           message_id: string
-          producer_email: string
+          user_id: string | null
           company_id: string | null
-          read_at: string | null
+          producer_email: string
+          read_at: string
           feedback: string | null
-          created_date: string
-          updated_date: string
-          created_by: string | null
+          created_at: string
         }
         Insert: {
           id?: string
           message_id: string
-          producer_email: string
+          user_id?: string | null
           company_id?: string | null
-          read_at?: string | null
+          producer_email: string
+          read_at?: string
           feedback?: string | null
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
+          created_at?: string
         }
         Update: {
           id?: string
           message_id?: string
-          producer_email?: string
+          user_id?: string | null
           company_id?: string | null
-          read_at?: string | null
+          producer_email?: string
+          read_at?: string
           feedback?: string | null
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
+          created_at?: string
         }
         Relationships: [
           {
@@ -1348,6 +1542,13 @@ export type Database = {
             columns: ["message_id"]
             isOneToOne: false
             referencedRelation: "staff_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_message_reads_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
           {
@@ -1362,11 +1563,12 @@ export type Database = {
       staff_messages: {
         Row: {
           id: string
+          created_by: string | null
+          market_id: string | null
           title: string
           description: string | null
           type: "closure" | "special_opening" | "event"
           is_mandatory: boolean
-          market_id: string | null
           location: string
           event_date: string
           time_start: string | null
@@ -1374,17 +1576,17 @@ export type Database = {
           details: string | null
           is_published: boolean
           attachments: Json
-          created_date: string
-          updated_date: string
-          created_by: string | null
+          created_at: string
+          updated_at: string
         }
         Insert: {
           id?: string
+          created_by?: string | null
+          market_id?: string | null
           title: string
           description?: string | null
           type: "closure" | "special_opening" | "event"
           is_mandatory?: boolean
-          market_id?: string | null
           location: string
           event_date: string
           time_start?: string | null
@@ -1392,17 +1594,17 @@ export type Database = {
           details?: string | null
           is_published?: boolean
           attachments?: Json
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
+          created_at?: string
+          updated_at?: string
         }
         Update: {
           id?: string
+          created_by?: string | null
+          market_id?: string | null
           title?: string
           description?: string | null
           type?: "closure" | "special_opening" | "event"
           is_mandatory?: boolean
-          market_id?: string | null
           location?: string
           event_date?: string
           time_start?: string | null
@@ -1410,11 +1612,17 @@ export type Database = {
           details?: string | null
           is_published?: boolean
           attachments?: Json
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
+          created_at?: string
+          updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "staff_messages_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "staff_messages_market_id_fkey"
             columns: ["market_id"]
@@ -1430,42 +1638,39 @@ export type Database = {
           company_id: string
           market_id: string
           stall_number: string | null
-          monthly_rent: number | null
-          rental_start_date: string | null
+          monthly_rent: number
+          rental_start_date: string
           rental_end_date: string | null
-          payment_method: string | null
-          status: string | null
-          created_date: string
-          updated_date: string
-          created_by: string | null
+          payment_method: "bank_transfer" | "cash" | "check" | "stripe" | null
+          status: "active" | "suspended" | "terminated"
+          created_at: string
+          updated_at: string
         }
         Insert: {
           id?: string
           company_id: string
           market_id: string
           stall_number?: string | null
-          monthly_rent?: number | null
-          rental_start_date?: string | null
+          monthly_rent: number
+          rental_start_date: string
           rental_end_date?: string | null
-          payment_method?: string | null
-          status?: string | null
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
+          payment_method?: "bank_transfer" | "cash" | "check" | "stripe" | null
+          status?: "active" | "suspended" | "terminated"
+          created_at?: string
+          updated_at?: string
         }
         Update: {
           id?: string
           company_id?: string
           market_id?: string
           stall_number?: string | null
-          monthly_rent?: number | null
-          rental_start_date?: string | null
+          monthly_rent?: number
+          rental_start_date?: string
           rental_end_date?: string | null
-          payment_method?: string | null
-          status?: string | null
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
+          payment_method?: "bank_transfer" | "cash" | "check" | "stripe" | null
+          status?: "active" | "suspended" | "terminated"
+          created_at?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -1495,9 +1700,8 @@ export type Database = {
           status: "da_pagare" | "pagato" | "scaduto"
           payment_method: "bonifico" | "contanti" | "assegno" | "altro" | null
           notes: string | null
-          created_date: string
-          updated_date: string
-          created_by: string | null
+          created_at: string
+          updated_at: string
         }
         Insert: {
           id?: string
@@ -1509,9 +1713,8 @@ export type Database = {
           status?: "da_pagare" | "pagato" | "scaduto"
           payment_method?: "bonifico" | "contanti" | "assegno" | "altro" | null
           notes?: string | null
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
+          created_at?: string
+          updated_at?: string
         }
         Update: {
           id?: string
@@ -1523,9 +1726,8 @@ export type Database = {
           status?: "da_pagare" | "pagato" | "scaduto"
           payment_method?: "bonifico" | "contanti" | "assegno" | "altro" | null
           notes?: string | null
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
+          created_at?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -1549,43 +1751,37 @@ export type Database = {
           id: string
           company_id: string
           name: string
-          category: string | null
           contact_name: string | null
-          email: string | null
           phone: string | null
-          description: string | null
+          email: string | null
+          category: "materie_prime" | "packaging" | "attrezzature" | "servizi" | "trasporti" | "altro" | null
           notes: string | null
-          created_date: string
-          updated_date: string
-          created_by: string | null
+          created_at: string
+          updated_at: string
         }
         Insert: {
           id?: string
           company_id: string
           name: string
-          category?: string | null
           contact_name?: string | null
-          email?: string | null
           phone?: string | null
-          description?: string | null
+          email?: string | null
+          category?: "materie_prime" | "packaging" | "attrezzature" | "servizi" | "trasporti" | "altro" | null
           notes?: string | null
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
+          created_at?: string
+          updated_at?: string
         }
         Update: {
           id?: string
           company_id?: string
           name?: string
-          category?: string | null
           contact_name?: string | null
-          email?: string | null
           phone?: string | null
-          description?: string | null
+          email?: string | null
+          category?: "materie_prime" | "packaging" | "attrezzature" | "servizi" | "trasporti" | "altro" | null
           notes?: string | null
-          created_date?: string
-          updated_date?: string
-          created_by?: string | null
+          created_at?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -1597,137 +1793,62 @@ export type Database = {
           },
         ]
       }
-      tessera_utilizzi: {
-        Row: {
-          id: string
-          tessera_id: string
-          market_id: string | null
-          company_id: string | null
-          order_id: string | null
-          tipo_evento: "scansione" | "ordine" | "sconto" | "altro"
-          importo: number | null
-          note: string | null
-          created_date: string
-          created_by: string | null
-        }
-        Insert: {
-          id?: string
-          tessera_id: string
-          market_id?: string | null
-          company_id?: string | null
-          order_id?: string | null
-          tipo_evento?: "scansione" | "ordine" | "sconto" | "altro"
-          importo?: number | null
-          note?: string | null
-          created_date?: string
-          created_by?: string | null
-        }
-        Update: {
-          id?: string
-          tessera_id?: string
-          market_id?: string | null
-          company_id?: string | null
-          order_id?: string | null
-          tipo_evento?: "scansione" | "ordine" | "sconto" | "altro"
-          importo?: number | null
-          note?: string | null
-          created_date?: string
-          created_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tessera_utilizzi_tessera_id_fkey"
-            columns: ["tessera_id"]
-            isOneToOne: false
-            referencedRelation: "tessere"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tessera_utilizzi_market_id_fkey"
-            columns: ["market_id"]
-            isOneToOne: false
-            referencedRelation: "markets"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tessera_utilizzi_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tessera_utilizzi_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "orders"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       tessere: {
         Row: {
           id: string
-          codice: string
           user_id: string | null
           user_email: string
           intestatario: string | null
           market_id: string | null
+          codice: string
+          qr_payload: string
           tipo: "base" | "premium"
           stato: "attiva" | "sospesa" | "scaduta" | "revocata"
           data_emissione: string
           data_scadenza: string | null
           ultimo_utilizzo: string | null
-          qr_payload: string
           note: string | null
-          created_date: string
-          updated_date: string
+          created_at: string
+          updated_at: string
           created_by: string | null
         }
         Insert: {
           id?: string
-          codice: string
           user_id?: string | null
           user_email: string
           intestatario?: string | null
           market_id?: string | null
+          codice: string
+          qr_payload: string
           tipo?: "base" | "premium"
           stato?: "attiva" | "sospesa" | "scaduta" | "revocata"
           data_emissione?: string
           data_scadenza?: string | null
           ultimo_utilizzo?: string | null
-          qr_payload: string
           note?: string | null
-          created_date?: string
-          updated_date?: string
+          created_at?: string
+          updated_at?: string
           created_by?: string | null
         }
         Update: {
           id?: string
-          codice?: string
           user_id?: string | null
           user_email?: string
           intestatario?: string | null
           market_id?: string | null
+          codice?: string
+          qr_payload?: string
           tipo?: "base" | "premium"
           stato?: "attiva" | "sospesa" | "scaduta" | "revocata"
           data_emissione?: string
           data_scadenza?: string | null
           ultimo_utilizzo?: string | null
-          qr_payload?: string
           note?: string | null
-          created_date?: string
-          updated_date?: string
+          created_at?: string
+          updated_at?: string
           created_by?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "tessere_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "tessere_market_id_fkey"
             columns: ["market_id"]
@@ -1735,76 +1856,137 @@ export type Database = {
             referencedRelation: "markets"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "tessere_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          id: string
+          email: string | null
+          role: "admin" | "client" | "producer" | "staff" | "direzione" | null
+          role_confirmed: boolean
+          created_at: string
+          updated_at: string
+          full_name: string | null
+          phone: string | null
+          avatar_url: string | null
+        }
+        Insert: {
+          id: string
+          email?: string | null
+          role?: "admin" | "client" | "producer" | "staff" | "direzione" | null
+          role_confirmed?: boolean
+          created_at?: string
+          updated_at?: string
+          full_name?: string | null
+          phone?: string | null
+          avatar_url?: string | null
+        }
+        Update: {
+          id?: string
+          email?: string | null
+          role?: "admin" | "client" | "producer" | "staff" | "direzione" | null
+          role_confirmed?: boolean
+          created_at?: string
+          updated_at?: string
+          full_name?: string | null
+          phone?: string | null
+          avatar_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "users_id_fkey"
+            columns: ["id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
         ]
       }
     }
     Views: {
-      v_ddt_totali: {
-        Row: {
-          ddt_id: string | null
-          righe: number | null
-          quantita_totale: number | null
-          importo_totale: number | null
-        }
-        Relationships: []
-      }
       v_markets_territorio: {
         Row: {
           id: string | null
-          name: string | null
-          city: string | null
+          mercato: string | null
           attivo: boolean | null
           quartiere: string | null
-          comune: string | null
+          quartiere_id: string | null
+          municipio: string | null
           comune_istat: string | null
-          provincia: string | null
+          comune: string | null
           provincia_sigla: string | null
-          regione: string | null
+          provincia: string | null
           regione_istat: string | null
+          regione: string | null
           ripartizione: string | null
+          latitude: number | null
+          longitude: number | null
+        }
+        Relationships: []
+      }
+      v_tessere_saldo: {
+        Row: {
+          tessera_id: string | null
+          user_email: string | null
+          stato: string | null
+          market_id: string | null
+          punti_validi: number | null
+          punti_in_sospeso: number | null
+          ultimo_movimento: string | null
         }
         Relationships: []
       }
     }
     Functions: {
+      aziende_in_ambito: {
+        Args: Record<string, unknown>   // p_livello text, p_ambito text
+        Returns: Json
+      }
       composizione_fatturato: {
-        Args: Record<string, unknown>   // p_livello text, p_ambito text DEFAULT NULL::text, p_dal date DEFAULT NULL::date, p_al date DEFAULT NULL::date, p_limite integer DEFAULT 8
+        Args: Record<string, unknown>   // p_livello text, p_ambito text, p_dal date, p_al date, p_limite integer
+        Returns: Json
+      }
+      mercati_in_ambito: {
+        Args: Record<string, unknown>   // p_livello text, p_ambito text
+        Returns: Json
+      }
+      metriche_operative: {
+        Args: Record<string, unknown>   // p_livello text, p_ambito text, p_dal date, p_al date
+        Returns: Json
+      }
+      puo_leggere_rete: {
+        Args: Record<string, unknown>   // nessuno
+        Returns: boolean
+      }
+      sincronizza_mercati_azienda: {
+        Args: Record<string, unknown>   // p_company_id uuid, p_market_ids uuid[]
+        Returns: undefined
+      }
+      serie_storica_fatturato: {
+        Args: Record<string, unknown>   // p_livello text, p_ambito text, p_mesi integer
         Returns: Json
       }
       ddt_nazionali: {
         Args: Record<string, unknown>   // p_dal date DEFAULT NULL::date, p_al date DEFAULT NULL::date, p_regione text DEFAULT NULL::text, p_stato text DEFAULT NULL::text, p_limite integer DEFAULT 100
         Returns: Json
       }
-      emetti_ddt: {
-        Args: Record<string, unknown>   // p_ddt_id uuid
-        Returns: Json
-      }
-      genera_codice_tessera: {
-        Args: Record<string, unknown>   // nessuno
-        Returns: string
-      }
       is_admin: {
         Args: Record<string, unknown>   // nessuno
         Returns: boolean
       }
-      is_staff_of_market: {
-        Args: Record<string, unknown>   // p_market_id uuid
-        Returns: boolean
-      }
       metriche_territorio: {
-        Args: Record<string, unknown>   // p_livello text, p_ambito text DEFAULT NULL::text, p_dal date DEFAULT NULL::date, p_al date DEFAULT NULL::date
-        Returns: Json
-      }
-      metriche_operative: {
-        Args: Record<string, unknown>   // p_livello text, p_ambito text DEFAULT NULL::text, p_dal date DEFAULT NULL::date, p_al date DEFAULT NULL::date
-        Returns: Json
-      }
-      my_markets: {
-        Args: Record<string, unknown>   // nessuno
+        Args: Record<string, unknown>   // p_livello text DEFAULT 'italia'::text, p_ambito text DEFAULT NULL::text, p_dal date DEFAULT NULL::date, p_al date DEFAULT NULL::date
         Returns: Json
       }
       next_ddt_number: {
-        Args: Record<string, unknown>   // p_company_id uuid, p_anno integer
+        Args: Record<string, unknown>   // p_company_id uuid, p_year integer
         Returns: number
       }
       owns_company: {
@@ -1814,18 +1996,6 @@ export type Database = {
       riepilogo_nazionale: {
         Args: Record<string, unknown>   // p_dal date DEFAULT NULL::date, p_al date DEFAULT NULL::date
         Returns: Json
-      }
-      serie_storica_fatturato: {
-        Args: Record<string, unknown>   // p_livello text DEFAULT 'italia', p_ambito text DEFAULT NULL::text, p_mesi integer DEFAULT 24
-        Returns: Json
-      }
-      sincronizza_mercati_azienda: {
-        Args: Record<string, unknown>   // p_company_id uuid, p_market_ids uuid[]
-        Returns: Json
-      }
-      user_role: {
-        Args: Record<string, unknown>   // nessuno
-        Returns: string
       }
     }
     Enums: { [_ in never]: never }

@@ -20,7 +20,7 @@ import { getMyCompany } from '@/api/companies';
 import { getMarkets } from '@/api/markets';
 import { getProductsByCompany } from '@/api/products';
 import {
-  getDdtByCompany, getDdt, creaBozzaDdt, emettiDdt, annullaDdt, segnaConsegnato,
+  getDdtByCompany, getDdt, creaBozzaDdt, emettiDdt, annullaDdt, firmaDdt, numeroCompleto,
   ETICHETTE_STATO, ETICHETTE_CAUSALE,
 } from '@/api/ddt';
 
@@ -31,7 +31,7 @@ const COLORI_STATO = {
   annullato:  'bg-red-50 text-red-700 border-red-200',
 };
 
-const RIGA_VUOTA = { product_id: '', descrizione: '', quantita: '', unita: 'kg', prezzo_unitario: '' };
+const RIGA_VUOTA = { product_id: '', product_name: '', quantity: '', unit: 'kg', lot: '', expiry_date: '' };
 
 export default function ProducerDDT() {
   const qc = useQueryClient();
@@ -42,7 +42,7 @@ export default function ProducerDDT() {
   const [motivo, setMotivo] = useState('');
 
   const [testata, setTestata] = useState({
-    market_id: '', causale: 'trasferimento', trasporto_a_cura_di: 'mittente',
+    market_id: '', market_event_id: '', causale: 'trasferimento_interno', trasporto_a_mezzo: 'mittente',
     numero_colli: '', peso_kg: '', note: '',
   });
   const [righe, setRighe] = useState([{ ...RIGA_VUOTA }]);
@@ -66,32 +66,35 @@ export default function ProducerDDT() {
   const creaMutation = useMutation({
     mutationFn: async () => {
       const mercato = mercati.find((m) => m.id === testata.market_id);
-      const valide = righe.filter((r) => r.descrizione.trim() && Number(r.quantita) > 0);
+      const valide = righe.filter((r) => r.product_name.trim() && Number(r.quantity) > 0);
       if (valide.length === 0) throw new Error('Aggiungi almeno una riga con descrizione e quantità');
+
+      const oggi = new Date().toISOString().slice(0, 10);
 
       return creaBozzaDdt(
         {
           company_id: azienda.id,
-          mittente_ragione_sociale: azienda.ragione_sociale || azienda.name,
-          mittente_partita_iva: azienda.partita_iva || null,
-          mittente_codice_fiscale: azienda.codice_fiscale || null,
-          mittente_indirizzo: azienda.sede_indirizzo || null,
-          destinatario_tipo: 'mercato',
           market_id: testata.market_id,
-          destinatario_denominazione: mercato?.name || 'Mercato',
-          destinatario_indirizzo: mercato?.address || null,
+          market_event_id: testata.market_event_id,
+          issue_date: oggi,
+          transport_date: oggi,
+          recipient_name: mercato?.name || 'Mercato',
+          recipient_address: mercato?.address || null,
+          recipient_city: mercato?.city || null,
           causale: testata.causale,
-          trasporto_a_cura_di: testata.trasporto_a_cura_di,
+          trasporto_a_mezzo: testata.trasporto_a_mezzo,
           numero_colli: testata.numero_colli ? Number(testata.numero_colli) : null,
-          peso_kg: testata.peso_kg ? Number(testata.peso_kg) : null,
-          note: testata.note || null,
+          peso_totale_kg: testata.peso_kg ? Number(testata.peso_kg) : null,
+          signature_required: true,
+          annotazioni: testata.note || null,
         },
         valide.map((r) => ({
           product_id: r.product_id || null,
-          descrizione: r.descrizione.trim(),
-          quantita: Number(r.quantita),
-          unita: r.unita,
-          prezzo_unitario: r.prezzo_unitario ? Number(r.prezzo_unitario) : null,
+          product_name: r.product_name.trim(),
+          quantity: Number(r.quantity),
+          unit: r.unit,
+          lot: r.lot?.trim() || null,
+          expiry_date: r.expiry_date || null,
         })),
       );
     },
@@ -110,19 +113,20 @@ export default function ProducerDDT() {
     onSuccess: (d) => {
       qc.invalidateQueries({ queryKey: ['ddt'] });
       toast({
-        title: `DDT ${d.numero_completo} emesso`,
+        title: `DDT ${numeroCompleto(d)} emesso`,
         description: 'Il documento non è più modificabile.',
       });
     },
     onError: (e) => toast({ title: 'Errore', description: e.message, variant: 'destructive' }),
   });
 
-  const consegnaMutation = useMutation({
-    mutationFn: (id) => segnaConsegnato(id),
+  const firmaMutation = useMutation({
+    mutationFn: (id) => firmaDdt(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['ddt'] });
-      toast({ title: 'Segnato come consegnato' });
+      toast({ title: 'Ricevuta firmata' });
     },
+    onError: (e) => toast({ title: 'Errore', description: e.message, variant: 'destructive' }),
   });
 
   const annullaMutation = useMutation({
@@ -144,7 +148,7 @@ export default function ProducerDDT() {
       if (campo === 'product_id') {
         const p = prodotti.find((x) => x.id === valore);
         return p
-          ? { ...riga, product_id: valore, descrizione: p.name, unita: p.unit || 'kg', prezzo_unitario: p.price ?? '' }
+          ? { ...riga, product_id: valore, product_name: p.name, unit: p.unit || 'kg' }
           : { ...riga, product_id: '' };
       }
       return { ...riga, [campo]: valore };
@@ -195,14 +199,14 @@ export default function ProducerDDT() {
                 <button onClick={() => apriDettaglio(d.id)} className="text-left flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-semibold">
-                      {d.numero_completo ? `DDT ${d.numero_completo}` : 'Bozza'}
+                      {numeroCompleto(d) ? `DDT ${numeroCompleto(d)}` : 'Bozza'}
                     </span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full border ${COLORI_STATO[d.stato]}`}>
-                      {ETICHETTE_STATO[d.stato]}
+                    <span className={`text-xs px-2 py-0.5 rounded-full border ${COLORI_STATO[d.status]}`}>
+                      {ETICHETTE_STATO[d.status]}
                     </span>
                   </div>
                   <p className="text-sm text-muted-foreground mt-1 truncate">
-                    {d.destinatario_denominazione} · {format(new Date(d.data_documento), 'd MMMM yyyy', { locale: it })}
+                    {d.recipient_name} · {format(new Date(d.issue_date), 'd MMMM yyyy', { locale: it })}
                   </p>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     {ETICHETTE_CAUSALE[d.causale]}
@@ -210,18 +214,18 @@ export default function ProducerDDT() {
                 </button>
 
                 <div className="flex flex-col gap-1.5 shrink-0">
-                  {d.stato === 'bozza' && (
+                  {d.status === 'draft' && (
                     <Button size="sm" onClick={() => emettiMutation.mutate(d.id)}
                             disabled={emettiMutation.isPending}>
                       <Send className="w-3.5 h-3.5 mr-1" /> Emetti
                     </Button>
                   )}
-                  {d.stato === 'emesso' && (
-                    <Button size="sm" variant="outline" onClick={() => consegnaMutation.mutate(d.id)}>
+                  {d.status === 'issued' && (
+                    <Button size="sm" variant="outline" onClick={() => firmaMutation.mutate(d.id)}>
                       <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Consegnato
                     </Button>
                   )}
-                  {(d.stato === 'emesso' || d.stato === 'consegnato') && (
+                  {d.status === 'issued' && (
                     <Button size="sm" variant="ghost"
                             className="text-destructive hover:text-destructive"
                             onClick={() => setAnnullamento(d)}>
@@ -301,14 +305,14 @@ export default function ProducerDDT() {
                     </div>
 
                     <Input placeholder="Descrizione della merce"
-                           value={r.descrizione}
-                           onChange={(e) => aggiornaRiga(i, 'descrizione', e.target.value)} />
+                           value={r.product_name}
+                           onChange={(e) => aggiornaRiga(i, 'product_name', e.target.value)} />
 
                     <div className="grid grid-cols-3 gap-2">
                       <Input type="number" step="0.001" placeholder="Quantità"
-                             value={r.quantita}
-                             onChange={(e) => aggiornaRiga(i, 'quantita', e.target.value)} />
-                      <Select value={r.unita} onValueChange={(v) => aggiornaRiga(i, 'unita', v)}>
+                             value={r.quantity}
+                             onChange={(e) => aggiornaRiga(i, 'quantity', e.target.value)} />
+                      <Select value={r.unit} onValueChange={(v) => aggiornaRiga(i, 'unit', v)}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
                           {['kg', 'lt', 'pz', 'confezione'].map((u) => (
@@ -316,9 +320,12 @@ export default function ProducerDDT() {
                           ))}
                         </SelectContent>
                       </Select>
-                      <Input type="number" step="0.01" placeholder="€ unitario"
-                             value={r.prezzo_unitario}
-                             onChange={(e) => aggiornaRiga(i, 'prezzo_unitario', e.target.value)} />
+                      <Input placeholder="Lotto"
+                             value={r.lot}
+                             onChange={(e) => aggiornaRiga(i, 'lot', e.target.value)} />
+                      <Input type="date" placeholder="Scadenza"
+                             value={r.expiry_date}
+                             onChange={(e) => aggiornaRiga(i, 'expiry_date', e.target.value)} />
                     </div>
                   </div>
                 ))}
@@ -369,7 +376,7 @@ export default function ProducerDDT() {
             <>
               <DialogHeader>
                 <DialogTitle>
-                  {dettaglio.numero_completo ? `DDT ${dettaglio.numero_completo}` : 'Bozza'}
+                  {numeroCompleto(dettaglio) ? `DDT ${numeroCompleto(dettaglio)}` : 'Bozza'}
                 </DialogTitle>
               </DialogHeader>
 
@@ -384,14 +391,14 @@ export default function ProducerDDT() {
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground mb-0.5">Destinatario</p>
-                    <p className="font-medium">{dettaglio.destinatario_denominazione}</p>
-                    {dettaglio.destinatario_indirizzo && (
-                      <p className="text-xs text-muted-foreground">{dettaglio.destinatario_indirizzo}</p>
+                    <p className="font-medium">{dettaglio.recipient_name}</p>
+                    {dettaglio.recipient_address && (
+                      <p className="text-xs text-muted-foreground">{dettaglio.recipient_address}</p>
                     )}
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground mb-0.5">Data</p>
-                    <p>{format(new Date(dettaglio.data_documento), 'd MMMM yyyy', { locale: it })}</p>
+                    <p>{format(new Date(dettaglio.issue_date), 'd MMMM yyyy', { locale: it })}</p>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground mb-0.5">Causale</p>
@@ -404,10 +411,11 @@ export default function ProducerDDT() {
                   <div className="border rounded-lg divide-y">
                     {dettaglio.righe.map((r) => (
                       <div key={r.id} className="p-2.5 flex justify-between gap-3">
-                        <span className="min-w-0 truncate">{r.descrizione}</span>
+                        <span className="min-w-0 truncate">{r.product_name}</span>
                         <span className="text-muted-foreground shrink-0">
-                          {r.quantita} {r.unita}
-                          {r.prezzo_unitario ? ` · € ${Number(r.importo).toFixed(2)}` : ''}
+                          {r.quantity} {r.unit}
+                          {r.lot ? ` · lotto ${r.lot}` : ''}
+                          {r.expiry_date ? ` · scad. ${format(new Date(r.expiry_date), 'dd/MM/yy')}` : ''}
                         </span>
                       </div>
                     ))}
@@ -422,23 +430,28 @@ export default function ProducerDDT() {
                   </p>
                 )}
 
-                {dettaglio.note && <p className="text-xs">{dettaglio.note}</p>}
+                {dettaglio.annotazioni && <p className="text-xs">{dettaglio.annotazioni}</p>}
 
-                {dettaglio.stato === 'annullato' && (
+                {dettaglio.status === 'cancelled' && (
                   <div className="bg-red-50 border border-red-200 rounded-lg p-3">
                     <p className="text-xs font-medium text-red-800">Documento annullato</p>
-                    {dettaglio.motivo_annullamento && (
-                      <p className="text-xs text-red-700 mt-0.5">{dettaglio.motivo_annullamento}</p>
+                    {dettaglio.cancellation_reason && (
+                      <p className="text-xs text-red-700 mt-0.5">{dettaglio.cancellation_reason}</p>
                     )}
                   </div>
                 )}
               </div>
 
               <DialogFooter>
-                {dettaglio.stato !== 'bozza' && (
+                {dettaglio.status !== 'draft' && (
                   <Button variant="outline" onClick={() => window.print()}>
                     <Printer className="w-4 h-4 mr-1" /> Stampa
                   </Button>
+                )}
+                {dettaglio.signed_at && (
+                  <span className="text-xs text-emerald-700 self-center mr-auto">
+                    Firmato il {format(new Date(dettaglio.signed_at), 'd MMM yyyy', { locale: it })}
+                  </span>
                 )}
                 <Button onClick={() => setDettaglio(null)}>Chiudi</Button>
               </DialogFooter>

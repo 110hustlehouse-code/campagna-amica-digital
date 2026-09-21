@@ -148,7 +148,7 @@ export default function AbsenceCalendar() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-muted-foreground">
-                        {abs.created_date ? format(new Date(abs.created_date), 'EEEE d MMMM yyyy · HH:mm', { locale: it }) : '—'}
+                        {abs.created_at ? format(new Date(abs.created_at), 'EEEE d MMMM yyyy · HH:mm', { locale: it }) : '—'}
                       </p>
                       {abs.description && abs.description !== `Il produttore ha segnalato un'assenza.` && (
                         <p className="text-sm text-foreground mt-1 italic">"{abs.description}"</p>
@@ -206,7 +206,7 @@ function HistoryView({ absences, companies }) {
         const company = getCompany(companyId);
         const open = compAbsences.filter(a => a.status === 'open').length;
         const resolved = compAbsences.filter(a => a.status === 'resolved').length;
-        const lastDate = compAbsences[0]?.created_date;
+        const lastDate = compAbsences[0]?.created_at;
 
         return (
           <div key={companyId} className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden">
