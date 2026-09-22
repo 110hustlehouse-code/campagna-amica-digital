@@ -155,6 +155,8 @@ const AuthenticatedApp = () => {
 };
 
 
+const ResellerAccess = lazy(() => import('./pages/reseller/ResellerAccess.jsx'));
+
 function App() {
 
   return (
@@ -162,7 +164,11 @@ function App() {
       <ThemeProvider>
         <QueryClientProvider client={queryClientInstance}>
           <Router>
-            <AuthenticatedApp />
+            <Routes>
+              {/* Pubbliche: nessun account richiesto, solo una password */}
+              <Route path="/rivenditore/:companyId" element={<Suspense fallback={<PageLoader />}><ResellerAccess /></Suspense>} />
+              <Route path="*" element={<AuthenticatedApp />} />
+            </Routes>
           </Router>
           <Toaster />
         </QueryClientProvider>
