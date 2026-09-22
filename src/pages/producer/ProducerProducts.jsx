@@ -6,7 +6,7 @@ import { uploadFile } from '@/api/storage';
 import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Trash2, Edit2, ToggleLeft, ToggleRight, Loader2, AlertTriangle, Package, ImageIcon, Award, Leaf, Boxes, Search, X, Truck } from 'lucide-react';
+import { Plus, Trash2, Edit2, ToggleLeft, ToggleRight, Loader2, AlertTriangle, Package, ImageIcon, Award, Leaf, FileText, Search, X, Truck } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
@@ -125,9 +125,9 @@ export default function ProducerProducts() {
              <Leaf className="w-3.5 h-3.5 text-primary" />
              {active} attivi · {products.length} totali
            </p>
-           <Button asChild variant="outline" size="sm" className="rounded-lg gap-1">
-             <Link to="/produttore/disponibilita">
-               <Boxes className="w-4 h-4" /> Disponibilità
+                      <Button asChild variant="outline" size="sm" className="rounded-lg gap-1">
+             <Link to="/produttore/ddt">
+               <FileText className="w-4 h-4" /> DDT
              </Link>
            </Button>
          </div>
