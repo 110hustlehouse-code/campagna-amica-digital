@@ -6,8 +6,7 @@ import { uploadFile } from '@/api/storage';
 import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Trash2, Edit2, ToggleLeft, ToggleRight, Loader2, AlertTriangle, Package, ImageIcon, Award, Leaf, FileText, Search, X, Truck } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Plus, Trash2, Edit2, ToggleLeft, ToggleRight, Loader2, AlertTriangle, Package, ImageIcon, Award, Leaf, FileText, Search, X, Truck, Store } from 'lucide-react';import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
 import { Link } from 'react-router-dom';
@@ -112,9 +111,14 @@ export default function ProducerProducts() {
             >
               <Trash2 className="w-4 h-4 text-muted-foreground" />
             </button>
-            <Button asChild variant="outline" className="rounded-xl gap-1">
+                        <Button asChild variant="outline" className="rounded-xl gap-1">
               <Link to="/produttore/fornitori">
                 <Truck className="w-4 h-4" /> Fornitori
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="rounded-xl gap-1">
+              <Link to="/produttore/rivenditori">
+                <Store className="w-4 h-4" /> Rivenditori
               </Link>
             </Button>
            </div>

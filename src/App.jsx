@@ -54,6 +54,7 @@ const News = lazy(() => import('./pages/News'));
 const Stagionalita = lazy(() => import('./pages/Stagionalita.jsx'));
 const ClientProfile = lazy(() => import('./pages/ClientProfile.jsx'));
 const AdminSyncMarkets = lazy(() => import('./pages/AdminSyncMarkets.jsx'));
+const ProducerResellers = lazy(() => import('./pages/producer/ProducerResellers.jsx'));
 
 const PageLoader = () => (
   <div className="flex items-center justify-center h-screen">
@@ -137,6 +138,7 @@ const AuthenticatedApp = () => {
         <Route path="/produttore/azienda" element={<Suspense fallback={<PageLoader />}><ProducerCompany /></Suspense>} />
         <Route path="/produttore/fornitori" element={<Suspense fallback={<PageLoader />}><ProducerSuppliers /></Suspense>} />
         <Route path="/produttore/ddt" element={<Suspense fallback={<PageLoader />}><ProducerDDT /></Suspense>} />
+        <Route path="/produttore/rivenditori" element={<Suspense fallback={<PageLoader />}><ProducerResellers /></Suspense>} />
       </Route>
       <Route element={<StaffLayout />}>
         <Route path="/staff" element={<Suspense fallback={<PageLoader />}><StaffDashboard /></Suspense>} />
