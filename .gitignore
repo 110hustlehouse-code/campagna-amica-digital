@@ -32,3 +32,6 @@ dist-ssr
 *.backup
 credenziali_produttori*.csv
 supabase/.temp/
+
+# pacchetti di consegna
+*.tar.gz
