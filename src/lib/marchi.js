@@ -15,7 +15,9 @@ const BASE =
 
 export const MARCHIO_PROGETTO = {
   src: `${BASE}/campagna-amica-digital.png`,
-  srcChiaro: `${BASE}/campagna-amica-digital-chiaro.png`,
+  // TODO: sostituire con la versione chiara ufficiale appena arriva dal grafico —
+  // per ora si usa la stessa immagine anche su fondo scuro.
+  srcChiaro: `${BASE}/campagna-amica-digital.png`,
   alt: 'Campagna Amica Digital',
 }
 
