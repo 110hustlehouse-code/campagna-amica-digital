@@ -69,7 +69,7 @@ export default function ProducerCompany() {
       if (companyId) {
         await updateCompany(companyId, { ...data, is_registered: true });
       } else {
-        const created = await createCompany({ ...data, is_registered: true });
+                const created = await createCompany({ ...data, is_registered: true, owner_id: user.id });
         companyId = created?.id;
       }
 
