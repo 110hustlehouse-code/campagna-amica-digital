@@ -108,8 +108,9 @@ export default function ProducerCompany() {
   const improveDescription = async () => {
     if (!form.description) return;
     setImprovingDescription(true);
-    const res = await invokeLLM({
-      prompt: `Sei un copywriter specializzato in aziende agricole italiane. Migliora questa descrizione per renderla più professionale, accattivante e persuasiva. 
+    try {
+      const res = await invokeLLM({
+        prompt: `Sei un copywriter specializzato in aziende agricole italiane. Migliora questa descrizione per renderla più professionale, accattivante e persuasiva. 
 
   Descrizione originale: "${form.description}"
 
@@ -121,11 +122,15 @@ export default function ProducerCompany() {
   - Lunghezza: massimo 200 caratteri
 
   Rispondi SOLO con la descrizione migliorata, senza altre parole o spiegazioni.`
-    });
-    setForm(f => ({ ...f, description: res.data }));
-    setShowSaveButton(true);
-    setImprovingDescription(false);
-    toast({ title: '✨ Descrizione migliorata!' });
+      });
+      setForm(f => ({ ...f, description: res.text }));
+      setShowSaveButton(true);
+      toast({ title: '✨ Descrizione migliorata!' });
+    } catch (e) {
+      toast({ title: 'Errore', description: e.message, variant: 'destructive' });
+    } finally {
+      setImprovingDescription(false);
+    }
   };
 
   if (isLoading || !form) return (

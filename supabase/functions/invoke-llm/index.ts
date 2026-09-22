@@ -1,16 +1,19 @@
 /**
  * invoke-llm
- * Wrapper OpenAI per le chiamate LLM dell'app.
+ * Wrapper Anthropic (Claude) per le chiamate LLM dell'app.
  * Sostituisce Base44's integrations.Core.InvokeLLM.
  *
- * Richiede env: OPENAI_API_KEY
+ * Richiede env: ANTHROPIC_API_KEY
  *
  * Body: { prompt, response_json_schema?, add_context_from_internet?, model? }
  * Response: oggetto JSON estratto oppure { text: string }
  */
 import { corsHeaders, supabase, getUserFromRequest } from '../_shared/supabase.ts';
 
-const OPENAI_URL = 'https://api.openai.com/v1/chat/completions';
+const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
+const ANTHROPIC_VERSION = '2023-06-01';
+const DEFAULT_MODEL = 'claude-sonnet-5';
+const MAX_TOKENS = 4096;
 
 // H3 — SSRF protection: block private/loopback ranges
 const BLOCKED_URL_RE = /^(https?:)?\/\/(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.|::1|fc00:)/i;
@@ -30,9 +33,9 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders });
     }
 
-    const apiKey = Deno.env.get('OPENAI_API_KEY');
+    const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
     if (!apiKey) {
-      return Response.json({ error: 'OPENAI_API_KEY not configured' }, { status: 500, headers: corsHeaders });
+      return Response.json({ error: 'ANTHROPIC_API_KEY not configured' }, { status: 500, headers: corsHeaders });
     }
 
     // H4 — Rate limit: max 10 calls per minute per user
@@ -54,7 +57,7 @@ Deno.serve(async (req) => {
       prompt,
       response_json_schema,
       add_context_from_internet = false,
-      model = 'gpt-4o',
+      model = DEFAULT_MODEL,
     } = body;
 
     if (!prompt) {
@@ -100,59 +103,55 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Build messages
-    const messages: Array<{ role: string; content: string }> = [
-      { role: 'user', content: finalPrompt },
-    ];
-
-    // Build request body
+    // Build request body per l'API Messages di Anthropic
     const requestBody: Record<string, unknown> = {
       model,
-      messages,
-      temperature: 0.2,
+      max_tokens: MAX_TOKENS,
+      messages: [{ role: 'user', content: finalPrompt }],
     };
 
-    // If a JSON schema is requested, use structured output
+    // Per uno schema JSON, si forza uno strumento (tool use): è il modo
+    // affidabile di ottenere output strutturato da Claude, non esiste un
+    // equivalente diretto di response_format di OpenAI.
     if (response_json_schema) {
-      requestBody.response_format = {
-        type: 'json_schema',
-        json_schema: {
-          name: 'structured_response',
-          schema: response_json_schema,
-          strict: false,
-        },
-      };
+      requestBody.tools = [{
+        name: 'structured_response',
+        description: 'Restituisce la risposta nello schema richiesto.',
+        input_schema: response_json_schema,
+      }];
+      requestBody.tool_choice = { type: 'tool', name: 'structured_response' };
     }
 
-    const openaiResp = await fetch(OPENAI_URL, {
+    const anthropicResp = await fetch(ANTHROPIC_URL, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
+        'x-api-key': apiKey,
+        'anthropic-version': ANTHROPIC_VERSION,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(requestBody),
     });
 
-    if (!openaiResp.ok) {
-      const errText = await openaiResp.text();
-      return Response.json({ error: `OpenAI error: ${errText}` }, { status: openaiResp.status, headers: corsHeaders });
+    if (!anthropicResp.ok) {
+      const errText = await anthropicResp.text();
+      return Response.json({ error: `Anthropic error: ${errText}` }, { status: anthropicResp.status, headers: corsHeaders });
     }
 
-    const openaiData = await openaiResp.json();
-    const rawContent = openaiData.choices?.[0]?.message?.content ?? '';
+    const anthropicData = await anthropicResp.json();
+    const content: Array<{ type: string; text?: string; input?: unknown }> = anthropicData.content ?? [];
 
-    // Try to parse JSON if schema was requested
     if (response_json_schema) {
-      try {
-        const parsed = JSON.parse(rawContent);
-        return Response.json(parsed, { headers: corsHeaders });
-      } catch {
-        // Return as text if JSON parse fails
-        return Response.json({ text: rawContent }, { headers: corsHeaders });
+      const toolUse = content.find((c) => c.type === 'tool_use');
+      if (toolUse?.input !== undefined) {
+        return Response.json(toolUse.input, { headers: corsHeaders });
       }
+      // Fallback: se per qualche motivo non arriva un tool_use, restituisci il testo.
+      const rawText = content.find((c) => c.type === 'text')?.text ?? '';
+      return Response.json({ text: rawText }, { headers: corsHeaders });
     }
 
-    return Response.json({ text: rawContent }, { headers: corsHeaders });
+    const rawText = content.find((c) => c.type === 'text')?.text ?? '';
+    return Response.json({ text: rawText }, { headers: corsHeaders });
   } catch (err: unknown) {
     console.error('[invoke-llm]', err instanceof Error ? err.message : String(err));
     return Response.json({ error: 'Internal server error' }, { status: 500, headers: corsHeaders });
