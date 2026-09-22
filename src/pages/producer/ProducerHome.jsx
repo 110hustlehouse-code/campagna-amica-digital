@@ -50,7 +50,6 @@ export default function ProducerHome() {
     queryKey: ['my-company', user?.email],
     queryFn: getMyCompany,
     enabled: !!user?.email,
-    select: (data) => data[0],
   });
 
   const { data: products = [] } = useQuery({
