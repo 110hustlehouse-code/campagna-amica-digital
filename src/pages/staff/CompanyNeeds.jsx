@@ -230,13 +230,13 @@ export default function CompanyNeeds() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header Coldiretti */}
+      {/* Intestazione */}
       <div className="bg-gradient-to-r from-primary via-primary/95 to-secondary border-b-4 border-secondary px-6 pt-12 pb-8 shadow-lg">
         <div>
           <div className="inline-flex items-center gap-1.5 bg-secondary rounded-full px-4 py-1.5 mb-3 shadow-md">
             <span className="text-primary font-bold text-xs tracking-widest uppercase">📋 Esigenze Aziende</span>
           </div>
-          <h1 className="font-heading text-4xl font-bold text-white drop-shadow-lg">Traccia Bisogni Coldiretti</h1>
+          <h1 className="font-heading text-4xl font-bold text-white drop-shadow-lg">Traccia bisogni</h1>
           <p className="text-white/90 text-sm mt-2 font-medium">
             Monitora i bisogni auto-generati dal tuo mercato di riferimento
           </p>

@@ -31,3 +31,4 @@ dist-ssr
 .vite
 *.backup
 credenziali_produttori*.csv
+supabase/.temp/

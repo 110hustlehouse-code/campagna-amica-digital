@@ -146,7 +146,7 @@ export default function StaffDashboard() {
             <div className="inline-flex items-center gap-1.5 bg-secondary rounded-full px-4 py-1.5 mb-3 shadow-md">
               <span className="text-primary font-bold text-xs tracking-widest uppercase">📊 Dashboard Operativo</span>
             </div>
-            <h1 className="font-heading text-4xl font-bold text-white drop-shadow-lg">Mercati Coldiretti</h1>
+            <h1 className="font-heading text-4xl font-bold text-white drop-shadow-lg">Mercati</h1>
             <p className="text-white/90 text-sm mt-2 font-medium">{format(today, 'EEEE, d MMMM yyyy', { locale: it })}</p>
           </div>
           <AbsenceButton needs={needs} />

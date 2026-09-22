@@ -42,6 +42,7 @@ export default function ProducerCompany() {
     queryKey: ['my-company', user?.email],
     queryFn: getMyCompany,
     enabled: !!user?.email,
+    select: d => d[0],
   });
 
   const { data: markets = [] } = useQuery({
@@ -54,7 +55,7 @@ export default function ProducerCompany() {
       setForm({ ...myCompany });
       setIsEditing(true);
       setShowSaveButton(false);
-    } else if (!myCompany && !isLoading) {
+    } else if (myCompany === undefined && !isLoading) {
       setForm({ name: '', description: '', category: 'altro', region: '', city: '', phone: '', email: '', website: '', market_ids: [], market_schedules: [] });
       setIsEditing(true);
       setShowSaveButton(true);
@@ -83,9 +84,6 @@ export default function ProducerCompany() {
       toast({ title: 'Azienda salvata!' });
       setIsEditing(false);
       setShowSaveButton(false);
-    },
-    onError: (err) => {
-      toast({ title: 'Salvataggio non riuscito', description: err?.message || 'Riprova.', variant: 'destructive' });
     },
   });
 
@@ -170,7 +168,7 @@ export default function ProducerCompany() {
           <div>
             <div className="inline-flex items-center gap-1.5 bg-primary/10 border border-primary/20 rounded-full px-3 py-1 mb-2">
               <Award className="w-3.5 h-3.5 text-primary" />
-              <span className="text-primary text-[9px] font-bold uppercase tracking-wider">Profilo Azienda Coldiretti</span>
+              <span className="text-primary text-[9px] font-bold uppercase tracking-wider">Profilo azienda</span>
             </div>
             <p className="font-heading text-lg font-bold text-foreground">{form.name || 'La mia azienda'}</p>
             <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">

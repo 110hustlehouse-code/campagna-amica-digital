@@ -19,7 +19,7 @@ export default function FeaturedCompaniesSlider({ companies }) {
       <div className="flex items-center justify-between mb-5">
         <div>
           <h2 className="font-heading text-2xl md:text-3xl font-bold text-foreground">Scopri i Produttori</h2>
-          <p className="text-muted-foreground text-sm mt-0.5">Le migliori aziende agricole certificate Coldiretti</p>
+          <p className="text-muted-foreground text-sm mt-0.5">Le migliori aziende agricole del circuito</p>
         </div>
         <div className="flex items-center gap-2">
           <button

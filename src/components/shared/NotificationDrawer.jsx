@@ -5,6 +5,7 @@ import { Bell, Package, ShoppingBag, CheckCheck, X, Leaf } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
+import Marchi from '@/components/shared/Marchi';
 
 const TYPE_ICON = {
   new_product: Package,
@@ -89,12 +90,12 @@ export default function NotificationDrawer({ open, onClose, notifications = [], 
   return (
     <Sheet open={open} onOpenChange={onClose}>
       <SheetContent side="right" className="w-full max-w-sm p-0">
-        {/* Coldiretti branded header */}
+        {/* Intestazione istituzionale */}
         <div className="bg-primary px-5 pt-6 pb-5">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-1.5">
               <Leaf className="w-3.5 h-3.5 text-secondary" />
-              <span className="text-secondary font-bold text-[9px] tracking-widest uppercase">Campagna Amica · Coldiretti</span>
+              <span className="text-secondary font-bold text-[9px] tracking-widest uppercase">Campagna Amica Digital</span>
             </div>
             <button onClick={onClose} className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition-colors">
               <X className="w-3.5 h-3.5" />
@@ -170,11 +171,9 @@ export default function NotificationDrawer({ open, onClose, notifications = [], 
         {/* Footer — always visible, not flex-based */}
         <div className="border-t border-border/50 py-4 flex flex-col items-center gap-2 bg-card">
           <div className="flex items-center gap-4">
-            <img src="https://media.base44.com/images/public/69cd578540390a850769aa6d/570bdc5f1_cropped-coldiretti-vector-logo.png" alt="Coldiretti" className="h-8 w-auto opacity-75" />
-            <div className="w-px h-7 bg-border" />
-            <img src="https://media.base44.com/images/public/69cd578540390a850769aa6d/ce1586586_images.jpeg" alt="Campagna Amica" className="h-8 w-auto rounded-lg opacity-75" />
+            <Marchi altezza={32} className="opacity-75" />
           </div>
-          <p className="text-[10px] text-muted-foreground">© Coldiretti · Campagna Amica</p>
+          <p className="text-[10px] text-muted-foreground">© Campagna Amica Digital · Campo Zero</p>
         </div>
       </SheetContent>
     </Sheet>

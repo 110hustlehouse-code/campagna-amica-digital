@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import ProfileButton from '@/components/home/ProfileButton';
 import NewsSection from '@/components/home/NewsSection';
+import { IMMAGINE_APERTURA } from '@/lib/marchi';
 
 export default function Home() {
   const { user } = useAuth();
@@ -61,9 +62,9 @@ export default function Home() {
 
       <div className="relative overflow-hidden min-h-[420px] md:min-h-[620px] flex items-center flex-1">
         <img
-          src="https://media.base44.com/images/public/69cd578540390a850769aa6d/70d2750ce_generated_image.png"
+          src={IMMAGINE_APERTURA}
           alt="hero"
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover object-[72%_center] md:object-center"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/70 to-black/20" />
 
@@ -74,7 +75,7 @@ export default function Home() {
             </h1>
 
             <p className="text-white/90 text-base md:text-xl mt-5 max-w-lg leading-relaxed font-medium">
-              La scelta Coldiretti: Prodotti freschi, genuini e a km 0 direttamente dalle aziende agricole italiane certificate.
+              La scelta del mercato contadino: Prodotti freschi, genuini e a km 0 direttamente dalle aziende agricole italiane certificate.
             </p>
 
             <div className="flex gap-3 mt-6">
@@ -147,7 +148,7 @@ export default function Home() {
       <div className="px-6 md:px-12 py-10 flex-1">
         <div className="max-w-7xl mx-auto">
           <h2 className="font-heading text-2xl md:text-3xl font-bold text-foreground mb-5">
-            Scopri Coldiretti
+            Scopri la rete
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <Link to="/aziende" className="group block">

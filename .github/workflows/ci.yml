@@ -26,21 +26,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Impalcatura Supabase (auth, ruoli, estensioni)
+      # pg_net e pg_cron non esistono su un Postgres nudo. Le righe che le
+      # abilitano vengono neutralizzate SOLO qui: i file nel repository
+      # restano quelli veri, che su Supabase servono.
+      - name: Impalcatura Supabase (auth, storage, vault, ruoli)
         run: $PSQL -f supabase/prova/00_bootstrap.sql
 
-      - name: Migration, in ordine
+      - name: Migration, in ordine di timestamp
         run: |
+          mkdir -p /tmp/mig
           for f in supabase/migrations/*.sql; do
-            echo "--> $f"
+            sed -E 's/^([[:space:]]*)create extension( if not exists)? (pg_net|pg_cron)/\1-- [CI] \3/I' \
+              "$f" > "/tmp/mig/$(basename "$f")"
+          done
+          for f in /tmp/mig/*.sql; do
+            echo "--> $(basename "$f")"
             $PSQL -f "$f"
           done
 
-      - name: Dati di riferimento
+      - name: Dati di riferimento territoriali
         run: $PSQL -f supabase/seed/01_territorio.sql
-
-      - name: Dati di ambiente
-        run: $PSQL -f supabase/seed/02_ambiente.sql
 
       - name: Le funzioni admin rispondono
         run: $PSQL -f supabase/prova/99_fumo.sql
@@ -54,14 +59,15 @@ jobs:
           " | tee /tmp/rls.txt
           test ! -s /tmp/rls.txt || { echo 'Tabelle senza RLS, vedi sopra'; exit 1; }
 
-      - name: Nessuna funzione esposta ad anon
+      - name: Nessuna funzione admin raggiungibile da anon
         run: |
           $PSQL -At -c "
             select 'ESPOSTA AD ANON: '||p.proname
               from pg_proc p join pg_namespace n on n.oid=p.pronamespace
              where n.nspname='public'
                and p.proname in ('riepilogo_nazionale','metriche_territorio','ddt_nazionali',
-                                 'serie_storica_fatturato','metriche_operative','composizione_fatturato')
+                                 'serie_storica_fatturato','metriche_operative',
+                                 'composizione_fatturato','puo_leggere_rete')
                and has_function_privilege('anon', p.oid, 'execute')
           " | tee /tmp/anon.txt
           test ! -s /tmp/anon.txt || { echo 'Funzioni admin raggiungibili da anon'; exit 1; }
@@ -86,6 +92,26 @@ jobs:
 
       - name: Nessun segreto nel codice
         run: |
-          if grep -rnE "(service_role|sb_secret_|SUPABASE_SERVICE)" src/ ; then
-            echo 'Possibile chiave di servizio nel frontend'; exit 1
+          if grep -rnE "(service_role|sb_secret_|SUPABASE_SERVICE|sk-[A-Za-z0-9]{20})" src/ ; then
+            echo 'Possibile chiave di servizio o API nel frontend'; exit 1
+          fi
+
+      - name: Nessun asset esterno residuo
+        run: |
+          if grep -rn "media.base44.com" src/ ; then
+            echo 'Asset serviti da un dominio di terzi: vanno su Supabase Storage'
+            exit 1
+          fi
+
+      - name: Nessun marchio di terzi nell'interfaccia
+        run: |
+          # I tre file delle notizie citano la fonte per nome: e' attribuzione,
+          # non uso come marchio. Ovunque altro non deve comparire.
+          if grep -rniE "coldiretti" src/ --include=*.jsx --include=*.ts \
+             | grep -v "src/components/home/NewsSection.jsx" \
+             | grep -v "src/components/home/ColdirettiNewsSection.jsx" \
+             | grep -v "src/pages/News.jsx" \
+             | grep -v "coldiretti\.it" ; then
+            echo 'Marchio di terzi nell interfaccia: usare i marchi propri'
+            exit 1
           fi

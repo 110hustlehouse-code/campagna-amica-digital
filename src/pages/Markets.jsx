@@ -9,6 +9,7 @@ import MarketsMap from '../components/markets/MarketsMap';
 import Pagination from '../components/shared/Pagination';
 import MarketNewsDrawer from '../components/markets/MarketNewsDrawer';
 import PullToRefresh from '../components/shared/PullToRefresh';
+import Marchi from '@/components/shared/Marchi';
 
 const PAGE_SIZE = 12;
 
@@ -107,15 +108,15 @@ export default function Markets() {
         <div className="relative px-6 md:px-12 pt-10 pb-8">
           <div className="inline-flex items-center gap-1.5 bg-secondary rounded-full px-3 py-1 mb-3 shadow">
             <Leaf className="w-3 h-3 text-primary" />
-            <span className="text-primary font-bold text-[10px] tracking-widest uppercase">Campagna Amica · Coldiretti</span>
+            <span className="text-primary font-bold text-[10px] tracking-widest uppercase">Campagna Amica Digital</span>
           </div>
           <div className="flex items-start justify-between gap-4">
             <div>
               <h1 className="font-heading text-3xl md:text-4xl font-bold text-white leading-tight flex items-center gap-3">
                 <MapPin className="w-8 h-8 text-secondary flex-shrink-0" />
-                Mercati Coldiretti
+                Mercati
               </h1>
-              <p className="text-white/70 text-sm mt-2">Campagna Amica · Rete nazionale di fiducia</p>
+              <p className="text-white/70 text-sm mt-2">Campagna Amica Digital · Rete nazionale</p>
               {markets.length > 0 && (
                 <span className="inline-block mt-3 bg-white/20 text-white text-xs font-semibold px-3 py-1 rounded-full">
                   {markets.length} mercati
@@ -237,11 +238,9 @@ export default function Markets() {
       {/* Footer */}
       <div className="flex flex-col items-center gap-3 py-8 mt-4 border-t border-border/50 bg-card">
         <div className="flex items-center gap-5">
-          <img src="https://media.base44.com/images/public/69cd578540390a850769aa6d/570bdc5f1_cropped-coldiretti-vector-logo.png" alt="Coldiretti" className="h-10 w-auto opacity-80" />
-          <div className="w-px h-8 bg-border" />
-          <img src="https://media.base44.com/images/public/69cd578540390a850769aa6d/ce1586586_images.jpeg" alt="Campagna Amica" className="h-10 w-auto rounded-lg opacity-80" />
+          <Marchi altezza={40} className="opacity-80" />
         </div>
-        <p className="text-xs text-muted-foreground">© Coldiretti · Campagna Amica</p>
+        <p className="text-xs text-muted-foreground">© Campagna Amica Digital · Campo Zero</p>
       </div>
     </div>
   );

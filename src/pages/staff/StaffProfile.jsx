@@ -251,7 +251,7 @@ export default function StaffProfile() {
 
           <div className="mt-4 flex items-center gap-2 p-3 rounded-xl bg-blue-50 border border-blue-100">
             <Key className="w-4 h-4 text-blue-600 flex-shrink-0" />
-            <p className="text-xs text-blue-700">La tua password è protetta e gestita in sicurezza dal sistema Coldiretti</p>
+            <p className="text-xs text-blue-700">La tua password è protetta e gestita in sicurezza dal sistema</p>
           </div>
         </Card>
 

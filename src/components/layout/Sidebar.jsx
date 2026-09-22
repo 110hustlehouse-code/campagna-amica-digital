@@ -37,7 +37,7 @@ export default function Sidebar() {
               <Leaf className="w-6 h-6 text-secondary" />
             </div>
             <div>
-              <h1 className="font-heading text-xl font-bold text-foreground">Coldiretti</h1>
+              <h1 className="font-heading text-xl font-bold text-foreground">Campagna Amica</h1>
               <p className="text-[10px] text-muted-foreground tracking-widest uppercase font-medium">Campagna Amica</p>
             </div>
           </div>

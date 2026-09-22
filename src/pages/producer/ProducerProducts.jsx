@@ -35,6 +35,7 @@ export default function ProducerProducts() {
     queryKey: ['my-company', user?.email],
     queryFn: getMyCompany,
     enabled: !!user?.email,
+    select: d => d[0],
   });
 
   const { data: products = [], isLoading } = useQuery({
@@ -95,13 +96,13 @@ export default function ProducerProducts() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Page header — Coldiretti branded */}
+      {/* Intestazione pagina */}
        <div className="bg-gradient-to-r from-primary/5 to-secondary/5 border-b border-primary/20 px-5 pt-12 pb-5">
          <div className="flex items-start justify-between gap-4 mb-4">
            <div>
              <div className="inline-flex items-center gap-1.5 bg-primary/10 border border-primary/20 rounded-full px-3 py-1 mb-2">
                <Award className="w-3.5 h-3.5 text-primary" />
-               <span className="text-primary text-xs font-bold uppercase tracking-widest">Listino Certificato Coldiretti</span>
+               <span className="text-primary text-xs font-bold uppercase tracking-widest">Listino prodotti</span>
              </div>
              <h1 className="font-heading text-3xl font-bold text-foreground">Il mio Catalogo</h1>
            </div>

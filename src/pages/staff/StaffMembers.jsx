@@ -122,7 +122,7 @@ export default function StaffMembers() {
             <div className="inline-flex items-center gap-1.5 bg-secondary rounded-full px-4 py-1.5 mb-3 shadow-md">
               <span className="text-primary font-bold text-xs tracking-widest uppercase">👥 Team Management</span>
             </div>
-            <h1 className="font-heading text-4xl font-bold text-white drop-shadow-lg">Team Staff Coldiretti</h1>
+            <h1 className="font-heading text-4xl font-bold text-white drop-shadow-lg">Team staff</h1>
             <p className="text-white/80 text-sm mt-1">Cerca, modifica e gestisci i membri del team</p>
           </div>
           <Button onClick={() => setShowDialog(true)} className="rounded-xl gap-2 h-11 shrink-0">

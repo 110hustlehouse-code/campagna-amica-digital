@@ -10,6 +10,7 @@ import { Heart, Loader2, MapPin, Leaf, ArrowRight, Star, ShoppingBasket, Buildin
 import CategoryBadge from '../components/shared/CategoryBadge';
 import ListaDellaSpesa from '../components/spesa/ListaDellaSpesa';
 import { toast } from 'sonner';
+import Marchi from '@/components/shared/Marchi';
 
 const TABS = [
   { id: 'preferiti', label: 'I Miei Preferiti', icon: Heart },
@@ -193,7 +194,7 @@ export default function Favorites() {
         <div className="relative px-6 md:px-12 pt-10 pb-8">
           <div className="inline-flex items-center gap-1.5 bg-secondary rounded-full px-3 py-1 mb-3 shadow">
             <Leaf className="w-3 h-3 text-primary" />
-            <span className="text-primary font-bold text-[10px] tracking-widest uppercase">Campagna Amica · Coldiretti</span>
+            <span className="text-primary font-bold text-[10px] tracking-widest uppercase">Campagna Amica Digital</span>
           </div>
           <h1 className="font-heading text-3xl md:text-4xl font-bold text-white leading-tight">
             I Miei Preferiti
@@ -324,11 +325,9 @@ export default function Favorites() {
       {/* Footer */}
       <div className="flex flex-col items-center gap-3 py-8 mt-4 border-t border-border/50 bg-card">
         <div className="flex items-center gap-5">
-          <img src="https://media.base44.com/images/public/69cd578540390a850769aa6d/570bdc5f1_cropped-coldiretti-vector-logo.png" alt="Coldiretti" className="h-10 w-auto opacity-80" />
-          <div className="w-px h-8 bg-border" />
-          <img src="https://media.base44.com/images/public/69cd578540390a850769aa6d/ce1586586_images.jpeg" alt="Campagna Amica" className="h-10 w-auto rounded-lg opacity-80" />
+          <Marchi altezza={40} className="opacity-80" />
         </div>
-        <p className="text-xs text-muted-foreground">© Coldiretti · Campagna Amica</p>
+        <p className="text-xs text-muted-foreground">© Campagna Amica Digital · Campo Zero</p>
       </div>
     </div>
   );

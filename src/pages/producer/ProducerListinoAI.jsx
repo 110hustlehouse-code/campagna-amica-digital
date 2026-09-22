@@ -32,6 +32,7 @@ export default function ProducerListinoAI() {
     queryKey: ['my-company', user?.email],
     queryFn: getMyCompany,
     enabled: !!user?.email,
+    select: d => d[0],
   });
 
   useEffect(() => {
@@ -133,7 +134,7 @@ export default function ProducerListinoAI() {
            <div>
              <div className="inline-flex items-center gap-1.5 bg-primary/10 border border-primary/20 rounded-full px-3 py-1 mb-2">
                <Award className="w-3.5 h-3.5 text-primary" />
-               <span className="text-primary text-xs font-bold uppercase tracking-widest">Generatore Listino Coldiretti</span>
+               <span className="text-primary text-xs font-bold uppercase tracking-widest">Generatore listino</span>
              </div>
              <h1 className="font-heading text-2xl font-bold text-foreground">Listino AI</h1>
              <p className="text-sm text-muted-foreground">Carica il file e l'AI fa il resto</p>

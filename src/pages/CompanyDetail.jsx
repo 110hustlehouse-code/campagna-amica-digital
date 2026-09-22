@@ -19,6 +19,7 @@ import ReviewModal from '../components/companies/ReviewModal';
 import RatingDisplay from '../components/shared/RatingDisplay.jsx';
 import BackButton from '../components/shared/BackButton';
 import { toast } from 'sonner';
+import Marchi from '@/components/shared/Marchi';
 
 const UNIT_STEPS = { kg: 0.5, lt: 0.5, pz: 1, confezione: 1 };
 
@@ -179,7 +180,7 @@ export default function CompanyDetail() {
   return (
     <div className="min-h-screen bg-background pb-36">
 
-      {/* Cover con branding Coldiretti */}
+      {/* Cover istituzionale */}
       <div className="relative h-64 md:h-80 bg-gradient-to-br from-primary/30 to-secondary/20">
         {company.cover_image_url && (
           <img src={company.cover_image_url} alt={company.name} className="w-full h-full object-cover" />
@@ -188,7 +189,7 @@ export default function CompanyDetail() {
 
         <div className="absolute top-4 right-4 flex items-center gap-1.5 bg-black/30 backdrop-blur-sm border border-white/20 rounded-full px-3 py-1.5">
           <Leaf className="w-3 h-3 text-secondary" />
-          <span className="text-white text-[9px] font-bold tracking-widest uppercase">Campagna Amica</span>
+          <span className="text-white text-[9px] font-bold tracking-widest uppercase">Campagna Amica Digital</span>
         </div>
 
         <div className="absolute top-4 left-4">
@@ -222,7 +223,7 @@ export default function CompanyDetail() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-1.5 bg-primary/10 border border-primary/20 rounded-full px-3 py-1 w-fit">
                 <Award className="w-3.5 h-3.5 text-primary" />
-                <span className="text-primary text-xs font-bold">Azienda Certificata Coldiretti</span>
+                <span className="text-primary text-xs font-bold">Azienda del circuito</span>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
                 <Button
@@ -381,14 +382,12 @@ export default function CompanyDetail() {
         </div>
       </div>
 
-      {/* Footer Coldiretti */}
+      {/* Footer istituzionale */}
       <div className="flex flex-col items-center gap-3 py-6 border-t border-border/50 bg-card mt-4">
         <div className="flex items-center gap-4">
-          <img src="https://media.base44.com/images/public/69cd578540390a850769aa6d/570bdc5f1_cropped-coldiretti-vector-logo.png" alt="Coldiretti" className="h-8 w-auto opacity-75" />
-          <div className="w-px h-7 bg-border" />
-          <img src="https://media.base44.com/images/public/69cd578540390a850769aa6d/ce1586586_images.jpeg" alt="Campagna Amica" className="h-8 w-auto rounded-lg opacity-75" />
+          <Marchi altezza={32} className="opacity-75" />
         </div>
-        <p className="text-[10px] text-muted-foreground">© Coldiretti · Campagna Amica</p>
+        <p className="text-[10px] text-muted-foreground">© Campagna Amica Digital · Campo Zero</p>
       </div>
 
       {/* CartBar sticky */}

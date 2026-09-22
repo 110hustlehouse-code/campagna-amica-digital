@@ -22,7 +22,7 @@ export default function ColdirettiNewsSection() {
           <div className="flex items-center gap-2 mb-1">
             <Newspaper className="w-5 h-5 text-primary" />
             <h2 className="font-heading text-2xl md:text-3xl font-bold text-foreground">
-              Notizie <span className="text-primary">Coldiretti</span>
+              Notizie <span className="text-primary">dal mondo agricolo</span>
             </h2>
           </div>
           <p className="text-muted-foreground text-sm">Aggiornamenti da coldiretti.it e campagnamica.it</p>

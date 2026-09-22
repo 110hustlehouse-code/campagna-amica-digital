@@ -4,10 +4,9 @@ import { Sprout, ShoppingBasket, ChevronRight, X, Shield, Loader2 } from 'lucide
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { confirmRole } from '@/api/auth';
+import { verificaCodiceAccesso } from '@/api/accessi';
 import { useAuth } from '@/lib/AuthContext';
-
-const PRODUCER_ACCESS_CODE = 'CAMPAGNA2025';
-const STAFF_ACCESS_CODE = 'COLDIRETTI2025';
+import Marchi from '@/components/shared/Marchi';
 
 export default function RoleSelect() {
   const navigate = useNavigate();
@@ -69,26 +68,30 @@ export default function RoleSelect() {
     }
   };
 
+  /**
+   * Il codice non viene piu' confrontato qui.
+   *
+   * Un confronto nel browser e' teatro: il codice viaggia nel bundle e chi
+   * apre gli strumenti di sviluppo lo legge in dieci secondi. Ora la
+   * verifica avviene in una Edge Function che tiene i codici in variabili
+   * d'ambiente, limita i tentativi falliti e assegna il ruolo con la chiave
+   * di servizio — l'unica autorizzata a farlo.
+   */
   const handleCodeSubmit = async () => {
+    const trimmed = codeInput.trim();
+    if (!trimmed) {
+      setCodeError('Inserisci il codice');
+      return;
+    }
+    setCodeError('');
+    setLoading(true);
     try {
-      const trimmed = codeInput.trim();
-      if (codeType === 'producer' && trimmed === PRODUCER_ACCESS_CODE) {
-        setLoading(true);
-        await confirmRole('producer');
-        await refreshUser();
-        navigate('/produttore/onboarding');
-      } else if (codeType === 'staff' && trimmed === STAFF_ACCESS_CODE) {
-        setLoading(true);
-        await confirmRole('staff');
-        await refreshUser();
-        navigate('/staff-onboarding');
-      } else {
-        setCodeError('Codice non valido');
-        setCodeInput('');
-      }
+      await verificaCodiceAccesso(trimmed, codeType);
+      await refreshUser();
+      navigate(codeType === 'producer' ? '/produttore/onboarding' : '/staff-onboarding');
     } catch (error) {
-      console.error('Error in code submission:', error);
-      setCodeError('Errore nella verifica del codice');
+      setCodeError(error?.message ?? 'Errore nella verifica del codice');
+      setCodeInput('');
       setLoading(false);
     }
   };
@@ -114,23 +117,13 @@ export default function RoleSelect() {
         <div className="absolute top-[-80px] right-[-80px] w-72 h-72 rounded-full opacity-10" style={{ background: '#f5c518' }} />
         <div className="absolute bottom-[-40px] left-[-60px] w-52 h-52 rounded-full opacity-10" style={{ background: '#f5c518' }} />
 
-        {/* Loghi ufficiali */}
+        {/* Marchi del progetto */}
         <div className="flex items-center justify-center gap-6 mb-6">
-          <img
-            src="https://media.base44.com/images/public/69cd578540390a850769aa6d/570bdc5f1_cropped-coldiretti-vector-logo.png"
-            alt="Coldiretti"
-            className="h-16 w-auto drop-shadow-lg"
-          />
-          <div className="w-px h-10 bg-white/25" />
-          <img
-            src="https://media.base44.com/images/public/69cd578540390a850769aa6d/ce1586586_images.jpeg"
-            alt="Campagna Amica"
-            className="h-16 w-auto rounded-xl drop-shadow-lg"
-          />
+          <Marchi altezza={64} fondo="scuro" />
         </div>
 
         <div className="text-center mb-2">
-          <h1 className="font-heading text-4xl font-bold text-white leading-tight">Campagna Amica</h1>
+          <h1 className="font-heading text-4xl font-bold text-white leading-tight">Campagna Amica Digital</h1>
           <p className="text-white/70 mt-3 text-sm max-w-xs mx-auto leading-relaxed">
             Il mercato degli agricoltori italiani. Prodotti freschi, stagionali, a chilometro zero.
           </p>
@@ -179,7 +172,7 @@ export default function RoleSelect() {
             <ChevronRight className="w-5 h-5 text-white/40 group-hover:text-white/80 transition-colors flex-shrink-0" />
           </button>
 
-          {/* Staff Coldiretti */}
+          {/* Staff */}
           <button
             onClick={handleStaffClick}
             className="group flex items-center gap-5 p-4 sm:p-5 rounded-2xl text-left transition-all duration-200 active:scale-95 min-h-20 sm:min-h-24 touch-action-none"
@@ -191,7 +184,7 @@ export default function RoleSelect() {
             </div>
             <div className="flex-1 min-w-0">
               <div className="font-heading text-base sm:text-lg font-bold text-white">Sono dello staff</div>
-              <div className="text-white/60 text-xs mt-0.5">Gestisci eventi e comunicazioni Coldiretti</div>
+              <div className="text-white/60 text-xs mt-0.5">Gestisci eventi e comunicazioni</div>
             </div>
             <ChevronRight className="w-5 h-5 text-white/40 group-hover:text-white/80 transition-colors flex-shrink-0" />
           </button>
@@ -201,10 +194,9 @@ export default function RoleSelect() {
       {/* Footer */}
       <div className="flex flex-col items-center gap-2 pt-4" style={{ paddingBottom: 'max(2.5rem, env(safe-area-inset-bottom))' }}>
         <div className="flex items-center gap-4 opacity-50">
-          <img src="https://media.base44.com/images/public/69cd578540390a850769aa6d/570bdc5f1_cropped-coldiretti-vector-logo.png" alt="Coldiretti" className="h-6 w-auto" />
-          <img src="https://media.base44.com/images/public/69cd578540390a850769aa6d/ce1586586_images.jpeg" alt="Campagna Amica" className="h-6 w-auto rounded" />
+          <Marchi altezza={24} fondo="scuro" />
         </div>
-        <p className="text-white/25 text-[10px]">© Coldiretti · Campagna Amica</p>
+        <p className="text-white/25 text-[10px]">© Campagna Amica Digital · Campo Zero</p>
       </div>
 
       {/* Modale codice accesso */}
@@ -222,7 +214,7 @@ export default function RoleSelect() {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <p className="text-sm text-muted-foreground mb-4">Inserisci il codice Coldiretti per continuare</p>
+            <p className="text-sm text-muted-foreground mb-4">Inserisci il codice di accesso per continuare</p>
             <Input
               type="text"
               placeholder="Codice di accesso"

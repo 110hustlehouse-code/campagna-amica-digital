@@ -1,86 +1,99 @@
-# Frontend agganciato allo schema unificato
+# Repository unificato — riorganizzazione di `supabase/`
 
-`npx tsc --noEmit` a **zero**, `npm run build` completata. 26 file toccati.
-
----
-
-## 1. La decisione, in breve
-
-Base il **tuo** frontend, non il suo. Quattro ragioni, tutte verificabili:
-
-- il suo passa da un adattatore che riproduce l'interfaccia Base44 su Supabase (`src/api/entities/_adapter.js`): traduce `-created_date` in `{field:'created_at', ascending:false}` e rimappa i nomi. È la cosa che avevi escluso a settembre, e tenerla significa portarsi i nomi di Base44 per sempre
-- il tuo è tipizzato: il compilatore ha trovato **82 errori in 7 file** in tre secondi, tutti nel data layer, zero nelle 77 pagine. Sul suo, JavaScript senza tipi, la stessa operazione sarebbe grep e speranza
-- la sua area direzione — 4 pagine, 840 righe — non contiene **nessun** riferimento a regione, provincia, comune o quartiere: il drill-down nazionale da lui non esiste
-- è la versione che Campagna Amica ha già visto
-
-Dal suo restano da prendere tre cose, non ancora fatte: le pagine **Affitti** e **Problemi** della direzione, e l'aggancio a `verify-access-code` che elimina i codici in chiaro.
+Chiude i punti **6** (la CI validava lo schema sbagliato) e **7** (repo ibrido) della lista.
 
 ---
 
-## 2. Due migration nuove
+## Il problema che risolve
 
-Oltre alle cinque già consegnate:
+Il repository era in tre stati contemporaneamente:
 
-**`20260921000004_users_profilo.sql`** — `public.users` ha solo id, email, role e role_confirmed: abbastanza per autorizzare, non per l'interfaccia. Il frontend mostra il nome in 33 punti e il telefono in 18 — fra cui il dettaglio ordine, dove lo staff deve poter chiamare chi ha prenotato. Aggiunge `full_name`, `phone`, `avatar_url`, aggiorna `handle_new_user()` perché copi il nome dai metadati di registrazione, e aggiunge la policy che lascia all'utente il proprio profilo ma non il proprio ruolo.
+- il **frontend** parla lo schema unificato
+- `supabase/migrations/` conteneva le 8 migration del **17 settembre**, cioè lo schema superato
+- `supabase/unificato/` conteneva le 7 nuove, sciolte dal resto
+- `supabase/functions/` conteneva **12 Edge Function scritte per lo schema vecchio**
 
-**`20260921000005_mercati_azienda.sql`** — porta `sincronizza_mercati_azienda()` sul nuovo schema. L'operazione tocca `companies.market_ids` e `markets.company_ids`, due array che devono restare in accordo; un produttore può scrivere sulla propria azienda ma non su `markets`, quindi dal frontend l'aggiornamento riuscirebbe a metà e le due liste divergerebbero in silenzio. Qui è una transazione sola, con la proprietà verificata dentro.
+E soprattutto: **le 24 Edge Function realmente deployate non erano versionate da nessuna parte.** Vivevano solo in `gianluca_tmp`, una cartella temporanea del Codespace. Se quel Codespace venisse ricreato, il codice che gira in produzione esisterebbe solo nel repository di Gianluca.
 
----
-
-## 3. Cosa è cambiato nel frontend
-
-### Rinomine, sei file
-
-`profiles` → `users` · `company_needs` → `producer_needs` · `created_date` → `created_at` · `updated_date` → `updated_at`
-
-Lo schema di Gianluca usa `_at`; il tuo replicava `_date` di Base44.
-
-`favorites` ora richiede `user_id`: senza, la riga non appartiene a nessuno e le policy non saprebbero a chi mostrarla. `aggiungiPreferito` lo prende dalla sessione.
-
-### `ddt.ts`, riscritto
-
-Non era una rinomina. Nel suo schema il ciclo di vita del DDT passa da Edge Function che girano con la service key — `issueDdt`, `signDdt`, `cancelDdt`, `exportDdtPDF` — perché il progressivo va assegnato lato server con lock: due emissioni simultanee non devono poter ottenere lo stesso numero.
-
-Cambiamenti che si vedono nell'interfaccia:
-
-- **Non esiste più lo stato "consegnato".** Gli stati sono `draft`, `issued`, `cancelled`, e la consegna è la **firma**: `signed_at`, `signed_by_recipient_user_id`, `signature_method`. Non è un flag, è una prova con data e autore. `segnaConsegnato()` è diventata `firmaDdt()`.
-- **Le righe non hanno prezzo.** Un DDT non è una fattura. Ho tolto il campo "€ unitario" dall'editor e al suo posto ci sono **lotto** e **data di scadenza**, che il suo schema porta e che sono la tracciabilità vera — l'argomento con Coldiretti.
-- Il numero non è una colonna: `progressive_number` e `progressive_year` si compongono con l'helper `numeroCompleto()`.
-
-### Andamento
-
-`ddt_consegna_media_gg` è diventata `ddt_firma_media_gg`, affiancata da `ddt_non_firmati`.
-
-E la pagina adesso **dichiara la copertura della stima**: siccome il valore merce è calcolato al prezzo di catalogo e le righe senza prodotto collegato valgono zero, sotto il grafico compare che percentuale delle righe ha un prezzo. Senza quel numero, un totale basso non si distingue da un dato mancante — e a un dirigente non si mostra una cifra che non sa quanto vale.
+La CI, intanto, era verde: ricostruiva da zero uno schema che nessuno usa più. Una pipeline che valida la cosa sbagliata è peggio di nessuna pipeline, perché dà una sicurezza che non c'è.
 
 ---
 
-## 4. Come applicarlo
+## Com'è adesso
 
-Le due migration nuove, sul progetto `campagna-amica-unificato`:
-
-```bash
-psql -W -h aws-0-eu-west-2.pooler.supabase.com -p 5432 -U postgres.otefhryrnajzfyaiwmja -d postgres -v ON_ERROR_STOP=1 -f _migrations_nuove/20260921000004_users_profilo.sql
+```
+supabase/
+  migrations/     28 file — la catena unificata completa, in ordine di timestamp
+  functions/      24 Edge Function, le stesse che girano su Supabase
+  seed/           01 territorio · 02 mercato pilota · 03 utenti di prova
+  prova/          impalcatura e controlli per la CI — MAI su Supabase
+archivio/
+  schema-precedente/   le 8 migration e le 12 funzioni del vecchio schema
 ```
 
-```bash
-psql -W -h aws-0-eu-west-2.pooler.supabase.com -p 5432 -U postgres.otefhryrnajzfyaiwmja -d postgres -v ON_ERROR_STOP=1 -f _migrations_nuove/20260921000005_mercati_azienda.sql
-```
-
-Poi i file del frontend: estrai il pacchetto nella radice del tuo repo, sovrascrive i 26 file elencati. Poi:
-
-```bash
-npx tsc --noEmit && npm run build
-```
-
-Infine cambia `.env.local` perché punti al progetto nuovo: `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` li trovi in Supabase → Project Settings → API.
+Lo schema vecchio non si cancella: si archivia. Se un domani serve ricostruire la storia del progetto — e in una trattativa su chi ha fatto cosa può servire — quei file sono la prova datata di un lavoro reale.
 
 ---
 
-## 5. Cosa manca ancora
+## La CI, rifatta
 
-1. **Le Edge Functions non sono deployate** sul progetto nuovo. Senza `issueDdt`, `signDdt`, `cancelDdt` il DDT si crea in bozza ma non si emette. Sono 25 sue più le tue: è il prossimo blocco di lavoro.
-2. **Nessun collaudo in browser.** Compila e costruisce, ma non ho potuto provarlo contro il database vero: il mio ambiente non raggiunge Supabase. Appena le Edge Function sono su, va rifatto il giro con `strumenti/diagnostica.mjs` sui quattro ruoli.
-3. **Pagine Affitti e Problemi** da portare dalla sua direzione.
-4. **`verify-access-code`** al posto dei codici in chiaro in `RoleSelect.jsx`.
-5. **La CI** va puntata sulla catena unificata, aggiungendo il controllo che l'ha resa utile: che lo schema si ricostruisca da zero.
+Il job `database` adesso punta alla catena giusta e fa quattro controlli:
+
+1. **Lo schema si ricostruisce da zero.** È il controllo che avrebbe intercettato le cinque migration rotte trovate domenica.
+2. **Le sei funzioni admin rispondono** — e, subito dopo, **rifiutano un chiamante senza ruolo**. Servono entrambe le verifiche: un test che provasse solo la prima passerebbe anche con il controllo di ruolo rimosso per sbaglio, cioè esattamente nel caso che deve intercettare.
+3. Nessuna tabella senza RLS.
+4. Nessuna funzione admin raggiungibile da `anon`.
+
+Il job `frontend` fa `tsc`, `build`, e due grep che fanno fallire la build:
+
+- una chiave di servizio o una chiave API dentro `src/`
+- un riferimento residuo a `media.base44.com`
+
+Quest'ultimo è pensato apposta per il punto 5: finché quei 13 file non sono sistemati la build resta rossa, così il problema non si dimentica invece di essere risolto.
+
+`pg_net` e `pg_cron` non esistono su un Postgres nudo: la CI neutralizza quelle righe **in una copia temporanea**. I file nel repository restano quelli veri, che su Supabase servono.
+
+---
+
+## Come applicarlo
+
+**1. Pulizia** — sposta il vecchio in archivio e toglie i file di appoggio:
+
+```bash
+cd /workspaces/campagna-amica-digital && bash PULIZIA.sh
+```
+
+Metti prima `PULIZIA.sh` nella radice del repo (è dentro il pacchetto).
+
+**2. Estrai il pacchetto** nella radice: sovrascrive `supabase/` e `.github/workflows/ci.yml`.
+
+**3. Controlla** cosa è cambiato prima di committare:
+
+```bash
+cd /workspaces/campagna-amica-digital && git status --short | head -40
+```
+
+Ti aspetti: molti file spostati in `archivio/`, `supabase/migrations/` con 28 file, `supabase/functions/` con 24 cartelle, `supabase/unificato/` sparita.
+
+**4. Verifica che compili ancora** (la pulizia non tocca `src/`, ma è un controllo da due secondi):
+
+```bash
+cd /workspaces/campagna-amica-digital && npx tsc --noEmit && npm run build 2>&1 | tail -2
+```
+
+**5. Commit e push.**
+
+La CI diventerà **rossa** al primo push, e va bene così: il controllo su `media.base44.com` fallisce finché il punto 5 non è chiuso. È il promemoria che si voleva.
+
+---
+
+## Verificato
+
+La catena è stata applicata su PostgreSQL 16 esattamente come la esegue la CI — stessa neutralizzazione delle estensioni, stesso ordine:
+
+```
+28 migration        applicate senza errori
+01_territorio       20 regioni, 5 province
+6 funzioni admin    rispondono con un admin
+                    rifiutano senza ruolo  (insufficient_privilege)
+```

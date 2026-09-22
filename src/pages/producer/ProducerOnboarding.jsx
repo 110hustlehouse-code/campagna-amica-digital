@@ -3,25 +3,26 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Leaf, ArrowRight, Check, Package, Users, TrendingUp, Zap, X, Loader2 } from 'lucide-react';
+import Marchi from '@/components/shared/Marchi';
 
 const STEPS = [
   {
     id: 'welcome',
-    title: 'Benvenuto nel Network Coldiretti',
+    title: 'Benvenuto nella rete',
     icon: Leaf,
     description: 'Sei parte di una rete nazionale di fiducia dedita a filiera corta e qualità',
   },
   {
     id: 'what-is',
-    title: 'Cosa è Campagna Amica?',
+    title: 'Cosa è Campagna Amica Digital?',
     icon: Users,
-    description: 'La rete nazionale di Coldiretti dedita ai mercati a km 0',
+    description: 'La rete nazionale dedita ai mercati a km 0',
   },
   {
     id: 'benefits',
     title: 'I tuoi vantaggi',
     icon: TrendingUp,
-    description: 'Scopri come crescere con Campagna Amica',
+    description: 'Scopri come crescere con Campagna Amica Digital',
   },
   {
     id: 'ready',
@@ -81,17 +82,7 @@ export default function ProducerOnboarding() {
 
         {/* Logos */}
         <div className="flex items-center justify-center gap-4 mb-8 relative z-10">
-          <img
-            src="https://media.base44.com/images/public/69cd578540390a850769aa6d/570bdc5f1_cropped-coldiretti-vector-logo.png"
-            alt="Coldiretti"
-            className="h-12 w-auto drop-shadow-lg"
-          />
-          <div className="w-px h-8 bg-white/25" />
-          <img
-            src="https://media.base44.com/images/public/69cd578540390a850769aa6d/ce1586586_images.jpeg"
-            alt="Campagna Amica"
-            className="h-12 w-auto rounded-xl drop-shadow-lg"
-          />
+          <Marchi altezza={48} fondo="scuro" />
         </div>
 
         {/* Step indicator */}
@@ -133,11 +124,11 @@ export default function ProducerOnboarding() {
                 {step === 0 && (
                   <div className="space-y-4">
                     <p className="text-white/80 text-sm leading-relaxed">
-                      Sei ufficialmente parte della piattaforma Campagna Amica Coldiretti, la rete nazionale dedita ai mercati contadini e alla filiera corta.
+                      Sei ufficialmente parte della piattaforma Campagna Amica Digital, la rete nazionale dedita ai mercati contadini e alla filiera corta.
                     </p>
                     <div className="bg-white/10 rounded-2xl p-4 border border-white/20">
                       <p className="text-white/90 text-sm font-medium">
-                        Qui puoi gestire i tuoi mercati, i tuoi prodotti, e connetterti direttamente con i clienti che credono nei valori di Coldiretti.
+                        Qui puoi gestire i tuoi mercati, i tuoi prodotti, e connetterti direttamente con i clienti che credono nei valori della filiera corta.
                       </p>
                     </div>
                   </div>
@@ -146,7 +137,7 @@ export default function ProducerOnboarding() {
                 {step === 1 && (
                   <div className="space-y-4">
                     <p className="text-white/80 text-sm leading-relaxed mb-4">
-                      Campagna Amica è la rete più grande di mercati contadini certificati in Italia, presente in tutte le regioni.
+                      I mercati contadini certificati sono la rete di vendita diretta più estesa in Italia, presente in tutte le regioni.
                     </p>
                     <div className="space-y-3">
                       <div className="bg-white/10 rounded-xl p-3 border border-white/20 text-left">
@@ -177,7 +168,7 @@ export default function ProducerOnboarding() {
                 {step === 2 && (
                   <div className="space-y-4">
                     <p className="text-white/80 text-sm leading-relaxed mb-4">
-                      Con Coldiretti Campagna Amica puoi:
+                      Con Campagna Amica Digital puoi:
                     </p>
                     <div className="space-y-3">
                       <div className="bg-white/10 rounded-xl p-3 border border-white/20 text-left">
@@ -208,7 +199,7 @@ export default function ProducerOnboarding() {
                 {step === 3 && (
                   <div className="space-y-4">
                     <p className="text-white/80 text-sm leading-relaxed">
-                      Sei pronto a iniziare la tua avventura nel network Coldiretti?
+                      Sei pronto a iniziare la tua avventura nella rete?
                     </p>
                     <div className="bg-secondary/80 rounded-2xl p-4 border border-secondary">
                       <p className="text-primary font-bold text-sm">
@@ -216,7 +207,7 @@ export default function ProducerOnboarding() {
                       </p>
                     </div>
                     <p className="text-white/70 text-xs">
-                      Il nostro team Coldiretti è sempre disponibile per supportarti nei tuoi primi passi.
+                      Il nostro team è sempre disponibile per supportarti nei tuoi primi passi.
                     </p>
                   </div>
                 )}

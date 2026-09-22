@@ -54,6 +54,7 @@ export default function ProducerSuppliers() {
     queryKey: ['my-company', user?.email],
     queryFn: getMyCompany,
     enabled: !!user?.email,
+    select: d => d[0],
   });
 
   const { data: suppliers = [], isLoading } = useQuery({
@@ -258,10 +259,10 @@ export default function ProducerSuppliers() {
                 </SelectContent>
               </Select>
 
-              {/* Box ricerca aziende Coldiretti (solo per materie prime) */}
+              {/* Box ricerca aziende del circuito (solo per materie prime) */}
               {editSupplier.category === 'materie_prime' && (
                 <div className="rounded-xl border border-green-200 bg-green-50 p-3 space-y-2">
-                  <p className="text-xs font-semibold text-green-800">🌾 Seleziona un'azienda Coldiretti come fornitore</p>
+                  <p className="text-xs font-semibold text-green-800">🌾 Seleziona un'azienda del circuito come fornitore</p>
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                     <input

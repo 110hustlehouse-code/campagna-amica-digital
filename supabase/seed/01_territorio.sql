@@ -1,8 +1,10 @@
 -- ---------------------------------------------------------------------------
 -- Dati di riferimento territoriali: regioni, province, comuni, quartieri.
--- Vanno caricati in OGNI ambiente, CI compresa: le viste e le funzioni di
--- aggregazione si appoggiano a questa gerarchia.
+-- Vanno caricati in OGNI ambiente, CI compresa: le funzioni di aggregazione
+-- e la vista v_markets_territorio si appoggiano a questa gerarchia.
+-- Idempotente: si puo' rieseguire senza danni.
 -- ---------------------------------------------------------------------------
+
 insert into public.regioni (codice_istat, nome, ripartizione) values
   ('01','Piemonte','Nord-ovest'),
   ('02','Valle d''Aosta','Nord-ovest'),

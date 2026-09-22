@@ -50,6 +50,7 @@ export default function ProducerHome() {
     queryKey: ['my-company', user?.email],
     queryFn: getMyCompany,
     enabled: !!user?.email,
+    select: (data) => data[0],
   });
 
   const { data: products = [] } = useQuery({
@@ -197,7 +198,7 @@ export default function ProducerHome() {
         <div className="absolute bottom-5 left-5">
           <div className="inline-flex items-center gap-1.5 bg-secondary rounded-full px-3 py-1.5 shadow-lg">
             <Leaf className="w-3 h-3 text-primary" />
-            <span className="text-primary font-bold text-[10px] tracking-widest uppercase">Campagna Amica</span>
+            <span className="text-primary font-bold text-[10px] tracking-widest uppercase">Campagna Amica Digital</span>
           </div>
         </div>
       </div>

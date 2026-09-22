@@ -1,4 +1,4 @@
-/** Notizie Coldiretti memorizzate nella cache. */
+/** Notizie di settore memorizzate nella cache. */
 import { supabase, unwrapMany } from './client'
 import type { Tables } from './types'
 

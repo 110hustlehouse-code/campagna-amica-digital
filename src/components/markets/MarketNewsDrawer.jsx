@@ -6,6 +6,7 @@ import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Loader2, ExternalLink, RefreshCw, Newspaper, MapPin, Leaf, X, Calendar, Clock } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import Marchi from '@/components/shared/Marchi';
 
 const categoryColors = {
   'Economia':  'bg-blue-100 text-blue-700',
@@ -35,8 +36,8 @@ export default function MarketNewsDrawer({ open, onClose, userLocation, nearestC
         prompt: `Vai su www.coldiretti.it e cerca le ultime notizie sui MERCATI Campagna Amica di Coldiretti.
         Restituisci esattamente le 10 notizie più recenti che riguardano i mercati contadini, mercati Campagna Amica, fiere, eventi mercato, aperture di nuovi mercati, iniziative nei mercati.
         ${cityContext}
-        Per ogni notizia fornisci: titolo originale, breve descrizione (2-3 frasi), categoria (scegli tra: Mercati, Territorio, Economia, Ambiente, Prodotti), data di pubblicazione nel formato "gg mese aaaa", e l'URL diretto alla notizia su coldiretti.it.
-        IMPORTANTE: usa solo notizie reali trovate su www.coldiretti.it strettamente legate ai mercati Coldiretti, non inventare.`,
+        Per ogni notizia fornisci: titolo originale, un riassunto tuo di 2-3 frasi, riscritto con parole diverse dall'originale (non copiare il testo della fonte), categoria (scegli tra: Mercati, Territorio, Economia, Ambiente, Prodotti), data di pubblicazione nel formato "gg mese aaaa", e l'URL diretto alla notizia su coldiretti.it.
+        IMPORTANTE: usa solo notizie reali trovate su www.coldiretti.it strettamente legate ai mercati, non inventare.`,
         add_context_from_internet: true,
         response_json_schema: {
           type: "object",
@@ -78,7 +79,7 @@ export default function MarketNewsDrawer({ open, onClose, userLocation, nearestC
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-1.5">
               <Leaf className="w-3.5 h-3.5 text-secondary" />
-              <span className="text-secondary font-bold text-[9px] tracking-widest uppercase">Coldiretti · Campagna Amica</span>
+              <span className="text-secondary font-bold text-[9px] tracking-widest uppercase">Campagna Amica Digital</span>
             </div>
             <div className="flex items-center gap-1">
               <button
@@ -240,11 +241,9 @@ export default function MarketNewsDrawer({ open, onClose, userLocation, nearestC
         {/* Footer */}
         <div className="border-t border-border/50 py-3 flex flex-col items-center gap-1.5 bg-card">
           <div className="flex items-center gap-4">
-            <img src="https://media.base44.com/images/public/69cd578540390a850769aa6d/570bdc5f1_cropped-coldiretti-vector-logo.png" alt="Coldiretti" className="h-7 w-auto opacity-75" />
-            <div className="w-px h-6 bg-border" />
-            <img src="https://media.base44.com/images/public/69cd578540390a850769aa6d/ce1586586_images.jpeg" alt="Campagna Amica" className="h-7 w-auto rounded-lg opacity-75" />
+            <Marchi altezza={28} className="opacity-75" />
           </div>
-          <p className="text-[10px] text-muted-foreground">© Coldiretti · Campagna Amica</p>
+          <p className="text-[10px] text-muted-foreground">© Campagna Amica Digital · Campo Zero</p>
         </div>
       </SheetContent>
     </Sheet>

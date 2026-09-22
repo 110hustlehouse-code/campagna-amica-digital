@@ -5,6 +5,7 @@ import { supabase } from '@/api/client';
 import { useAuth } from '@/lib/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingBag, Heart, MapPin, Building2, Newspaper, LogOut, ChevronRight, User, X, Leaf } from 'lucide-react';
+import Marchi from '@/components/shared/Marchi';
 
 const menuLinks = [
   { path: '/ordini', label: 'I miei ordini', desc: 'Visualizza e gestisci gli ordini', icon: ShoppingBag },
@@ -35,7 +36,7 @@ export default function ProfileDrawer({ open, onClose }) {
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-2.5">
               <Leaf className="w-4 h-4 text-secondary" />
-              <span className="text-secondary font-bold text-[10px] tracking-widest uppercase">Campagna Amica</span>
+              <span className="text-secondary font-bold text-[10px] tracking-widest uppercase">Campagna Amica Digital</span>
             </div>
             <button
               onClick={onClose}
@@ -114,8 +115,7 @@ export default function ProfileDrawer({ open, onClose }) {
             Esci dall'account
           </Button>
           <div className="flex items-center justify-center gap-3 pt-1 opacity-60">
-            <img src="https://media.base44.com/images/public/69cd578540390a850769aa6d/570bdc5f1_cropped-coldiretti-vector-logo.png" alt="Coldiretti" className="h-5 w-auto" />
-            <img src="https://media.base44.com/images/public/69cd578540390a850769aa6d/ce1586586_images.jpeg" alt="Campagna Amica" className="h-5 w-auto rounded" />
+            <Marchi altezza={20} />
           </div>
         </div>
       </SheetContent>

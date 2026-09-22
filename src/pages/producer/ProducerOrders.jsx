@@ -197,7 +197,7 @@ export default function ProducerOrders() {
           <div>
             <div className="inline-flex items-center gap-1.5 bg-primary/10 border border-primary/20 rounded-full px-3 py-1 mb-2">
               <Award className="w-3.5 h-3.5 text-primary" />
-              <span className="text-primary text-xs font-bold uppercase tracking-widest">Centro Ordini Coldiretti</span>
+              <span className="text-primary text-xs font-bold uppercase tracking-widest">Centro ordini</span>
             </div>
             <div className="flex items-center gap-3">
               <div>
