@@ -16,6 +16,7 @@ import RoleSelect from './pages/RoleSelect';
 import Login from './pages/Login';
 import ErrorBoundary from './components/shared/ErrorBoundary';
 import AdminLayout from '@/components/layout/AdminLayout';
+import DirezioneLayout from '@/components/layout/DirezioneLayout';
 import StaffMarketOnboarding from './pages/staff/StaffMarketOnboarding.jsx';
 
 // Lazy load pages
@@ -41,6 +42,8 @@ const StaffDDT = lazy(() => import('./pages/staff/StaffDDT.jsx'));
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard.jsx'));
 const AdminDDT = lazy(() => import('./pages/admin/AdminDDT.jsx'));
 const AdminAndamento = lazy(() => import('./pages/admin/AdminAndamento.jsx'));
+const DirezioneAffitti = lazy(() => import('./pages/direzione/DirezioneAffitti.jsx'));
+const DirezioneProblemi = lazy(() => import('./pages/direzione/DirezioneProblemi.jsx'));
 const Companies = lazy(() => import('./pages/Companies'));
 const CompanyDetail = lazy(() => import('./pages/CompanyDetail'));
 const Markets = lazy(() => import('./pages/Markets'));
@@ -80,10 +83,11 @@ const AuthenticatedApp = () => {
   }
 
   // Gate: if user is authenticated, force /benvenuto if role_confirmed is false or missing
-  const needsOnboarding = user && !user.role_confirmed && user.role !== 'admin';
+  const needsOnboarding = user && !user.role_confirmed && user.role !== 'admin' && user.role !== 'direzione';
 
   // Determine home route based on role
   const roleHome = user?.role === 'admin' ? '/admin'
+    : user?.role === 'direzione' ? '/direzione'
     : user?.role === 'producer' ? '/produttore'
     : user?.role === 'staff' ? '/staff'
     : '/home';
@@ -102,6 +106,11 @@ const AuthenticatedApp = () => {
         <Route path="/admin" element={<Suspense fallback={<PageLoader />}><AdminDashboard /></Suspense>} />
         <Route path="/admin/ddt" element={<Suspense fallback={<PageLoader />}><AdminDDT /></Suspense>} />
         <Route path="/admin/andamento" element={<Suspense fallback={<PageLoader />}><AdminAndamento /></Suspense>} />
+      </Route>
+      <Route element={<DirezioneLayout />}>
+        <Route path="/direzione" element={<Navigate to="/direzione/affitti" replace />} />
+        <Route path="/direzione/affitti" element={<Suspense fallback={<PageLoader />}><DirezioneAffitti /></Suspense>} />
+        <Route path="/direzione/problemi" element={<Suspense fallback={<PageLoader />}><DirezioneProblemi /></Suspense>} />
       </Route>
       <Route element={<AppLayout />}>
         <Route path="/home" element={<Suspense fallback={<PageLoader />}><Home /></Suspense>} />
