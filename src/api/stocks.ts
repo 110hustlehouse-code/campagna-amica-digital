@@ -7,7 +7,9 @@ export type ProductStock = Tables<'product_stocks'>
 export async function getStocks(companyId: string): Promise<ProductStock[]> {
   return unwrapMany(
     await supabase.from('product_stocks').select('*')
-      .eq('company_id', companyId).order('name'),
+      // In questo schema la scorta non porta un nome proprio: e' legata
+      // al prodotto. Si ordina per data, il nome lo risolve la pagina.
+      .eq('company_id', companyId).order('created_at', { ascending: false }),
     'Scorte')
 }
 

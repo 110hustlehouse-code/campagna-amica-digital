@@ -18,10 +18,10 @@ import { chromium } from 'playwright'
 const BASE = process.env.BASE ?? 'http://localhost:5173'
 const PASSWORD = process.env.PASSWORD ?? 'CircoMassimo2026'
 const UTENTI = {
-  cliente:    'cliente@test.local',
-  produttore: 'produttore@test.local',
-  staff:      'staff@test.local',
-  admin:      '110hustlehouse@gmail.com',
+  cliente:    process.env.EMAIL_CLIENTE    ?? 'cliente@prova.it',
+  produttore: process.env.EMAIL_PRODUTTORE ?? 'produttore@prova.it',
+  staff:      process.env.EMAIL_STAFF      ?? 'staff@prova.it',
+  admin:      process.env.EMAIL_ADMIN      ?? 'admin@prova.it',
 }
 const ruolo = process.env.RUOLO ?? 'cliente'
 const email = UTENTI[ruolo] ?? ruolo
@@ -33,7 +33,7 @@ const PERCORSI = {
                '/produttore/ddt', '/produttore/listino-ai'],
   staff:      ['/staff', '/staff/bisogni', '/staff/crea-evento', '/staff/affitti',
                '/staff/team', '/staff/assenze', '/staff/profilo', '/staff/ddt'],
-  admin:      ['/admin', '/admin/ddt'],
+  admin:      ['/admin', '/admin/andamento', '/admin/ddt'],
 }
 
 const browser = await chromium.launch()

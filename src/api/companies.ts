@@ -27,13 +27,13 @@ export async function getCompaniesByMarket(marketId: string): Promise<Company[]>
 /** Azienda del produttore collegato. Null se non l'ha ancora creata. */
 export async function getMyCompany(): Promise<Company | null> {
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user?.email) return null
+  if (!user) return null
   // limit(1) e non maybeSingle(): se per qualsiasi ragione esistessero
   // due righe, maybeSingle fallirebbe e porterebbe giu' l'intera area
   // produttore. Qui si prende la piu' recente e si va avanti.
   const { data, error } = await supabase
     .from('companies').select('*')
-    .ilike('created_by', user.email)
+    .eq('owner_id', user.id)
     .order('updated_at', { ascending: false })
     .limit(1)
   if (error) throw error

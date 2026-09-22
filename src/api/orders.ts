@@ -16,10 +16,12 @@ export interface OrderItem {
 
 export async function getMyOrders(): Promise<Order[]> {
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user?.email) return []
+  if (!user) return []
+  // In questo schema l'ordine e' legato all'utente da user_id, non
+  // dall'email: un indirizzo puo' cambiare, l'identificativo no.
   return unwrapMany(
     await supabase.from('orders').select('*')
-      .ilike('created_by', user.email).order('created_at', { ascending: false }),
+      .eq('user_id', user.id).order('created_at', { ascending: false }),
     'I miei ordini')
 }
 
