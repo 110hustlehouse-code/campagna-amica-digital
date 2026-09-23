@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getMyProfile } from '@/api/auth';
 import { getMyStaffMember } from '@/api/staff';
-import { getNeedsByMarket, updateNeed } from '@/api/needs';
+import { getAbsencesByMarket, updateAbsence } from '@/api/absences';
 import { getCompaniesByMarket } from '@/api/companies';
 import { useAuth } from '@/lib/AuthContext';
 import { format } from 'date-fns';
@@ -41,16 +41,14 @@ export default function AbsenceCalendar() {
 
   const { data: absences = [], isLoading } = useQuery({
     queryKey: ['absences', staffMarketId],
-    queryFn: () => getNeedsByMarket(staffMarketId),
+    queryFn: () => getAbsencesByMarket(staffMarketId),
     enabled: !!staffMarketId,
-    select: (data) => data.filter(n => n.title?.includes('Assenza segnalata')),
   });
 
   const resolveMutation = useMutation({
-    mutationFn: (id) => updateNeed(id, { status: 'resolved' }),
+    mutationFn: (id) => updateAbsence(id, { status: 'resolved' }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['absences', staffMarketId] });
-      qc.invalidateQueries({ queryKey: ['dash-needs', staffMarketId] });
       toast({ title: 'Assenza segnata come gestita' });
     },
   });
@@ -115,8 +113,7 @@ export default function AbsenceCalendar() {
 
         {Object.entries(grouped).map(([companyId, compAbsences]) => {
           const company = getCompany(companyId);
-          const hasOpen = compAbsences.some(a => a.status === 'open');
-
+          const hasOpen = compAbsences.some(a => a.status === 'reported');
           return (
             <div key={companyId} className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden">
               {/* Company header */}
@@ -140,8 +137,8 @@ export default function AbsenceCalendar() {
               <div className="divide-y divide-border/40">
                 {compAbsences.map(abs => (
                   <div key={abs.id} className="px-4 py-3 flex items-start gap-3">
-                    <div className={`mt-0.5 flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center ${abs.status === 'open' ? 'bg-red-100' : 'bg-green-100'}`}>
-                      {abs.status === 'open'
+                      <div className={`mt-0.5 flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center ${abs.status === 'reported' ? 'bg-red-100' : 'bg-green-100'}`}>
+                      {abs.status === 'reported'
                         ? <AlertTriangle className="w-3.5 h-3.5 text-red-500" />
                         : <CheckCircle className="w-3.5 h-3.5 text-green-500" />
                       }
@@ -150,15 +147,13 @@ export default function AbsenceCalendar() {
                       <p className="text-xs text-muted-foreground">
                         {abs.created_at ? format(new Date(abs.created_at), 'EEEE d MMMM yyyy · HH:mm', { locale: it }) : '—'}
                       </p>
-                      {abs.description && abs.description !== `Il produttore ha segnalato un'assenza.` && (
-                        <p className="text-sm text-foreground mt-1 italic">"{abs.description}"</p>
-                      )}
+                      {abs.reason && (
+                        <p className="text-sm text-foreground mt-1 italic">"{abs.reason}"</p>                      )}
                       {abs.status === 'resolved' && (
                         <span className="text-xs text-green-600 font-semibold">Gestita</span>
                       )}
                     </div>
-                    {abs.status === 'open' && (
-                      <Button
+                    {abs.status === 'reported' && (                      <Button
                         size="sm"
                         variant="outline"
                         onClick={() => resolveMutation.mutate(abs.id)}
@@ -204,8 +199,7 @@ function HistoryView({ absences, companies }) {
     <div className="space-y-4">
       {Object.entries(grouped).map(([companyId, compAbsences]) => {
         const company = getCompany(companyId);
-        const open = compAbsences.filter(a => a.status === 'open').length;
-        const resolved = compAbsences.filter(a => a.status === 'resolved').length;
+        const open = compAbsences.filter(a => a.status === 'reported').length;        const resolved = compAbsences.filter(a => a.status === 'resolved').length;
         const lastDate = compAbsences[0]?.created_at;
 
         return (

@@ -10,7 +10,6 @@ import { getReviews } from '@/api/reviews';
 import { isPreferito } from '@/api/favorites';
 import { getAllMarketEvents, getAssignmentsByCompany } from '@/api/events';
 import { getMarkets } from '@/api/markets';
-import { createNeed } from '@/api/needs';
 import { useAuth } from '@/lib/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,6 +24,7 @@ import { it } from 'date-fns/locale';
 import UserMenu from '@/components/layout/UserMenu';
 import NotificationDrawer from '@/components/shared/NotificationDrawer';
 import ReviewsList from '@/components/producer/ReviewsList';
+import { createAbsence } from '@/api/absences';
 
 const statusColors = {
   confermato: 'bg-emerald-100 text-emerald-700',
@@ -111,12 +111,12 @@ export default function ProducerHome() {
   }, [qc, user?.email]);
 
   const absenceMutation = useMutation({
-    mutationFn: createNeed,
+    mutationFn: createAbsence,
     onSuccess: () => {
       setAbsenceDialog(false);
       setAbsenceNote('');
       setAbsenceMarketId('');
-      qc.invalidateQueries({ queryKey: ['company-needs'] });
+      qc.invalidateQueries({ queryKey: ['absences'] });
     },
   });
 
@@ -125,11 +125,9 @@ export default function ProducerHome() {
     absenceMutation.mutate({
       company_id: myCompany.id,
       market_id: absenceMarketId,
-      category: 'other',
-      title: `⚠️ Assenza segnalata da ${myCompany.name}`,
-      description: absenceNote || 'Il produttore ha segnalato un’assenza.',
-      priority: 'high',
-      status: 'open',
+      absence_date: new Date().toISOString().slice(0, 10),
+      reason: absenceNote || null,
+      status: 'reported',
     });
   };
 
