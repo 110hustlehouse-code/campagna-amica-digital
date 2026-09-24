@@ -46,6 +46,23 @@ export default function AdminSegnalazioniDDT() {
   });
 
   const [ricerca, setRicerca] = useState('');
+  const [ricercaAttive, setRicercaAttive] = useState('');
+
+  const escalationsFiltrate = useMemo(() => {
+    const q = ricercaAttive.trim().toLowerCase();
+    if (!q) return escalations;
+    return escalations.filter((e) =>
+      e.companies?.name?.toLowerCase().includes(q) ||
+      e.markets?.name?.toLowerCase().includes(q));
+  }, [escalations, ricercaAttive]);
+
+  const segnalazioniFiltrate = useMemo(() => {
+    const q = ricercaAttive.trim().toLowerCase();
+    if (!q) return segnalazioni;
+    return segnalazioni.filter((s) =>
+      s.companies?.name?.toLowerCase().includes(q) ||
+      s.markets?.name?.toLowerCase().includes(q));
+  }, [segnalazioni, ricercaAttive]);
   const [rigaAperta, setRigaAperta] = useState(null);
 
   const cronologiaFiltrata = useMemo(() => {
@@ -125,10 +142,18 @@ export default function AdminSegnalazioniDDT() {
         </p>
       </div>
 
-      {escalations.length > 0 && (
+      {(escalations.length > 0 || segnalazioni.length > 0) && (
+        <div className="relative mb-4">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Input className="pl-9" placeholder="Cerca per azienda o mercato tra le segnalazioni attive"
+                 value={ricercaAttive} onChange={(e) => setRicercaAttive(e.target.value)} />
+        </div>
+      )}
+
+      {escalationsFiltrate.length > 0 && (
         <div className="space-y-3">
           <p className="text-sm font-semibold text-amber-800">Escalation automatiche (3+ ammonizioni)</p>
-          {escalations.map((e) => (
+          {escalationsFiltrate.map((e) => (
             <div key={e.id} className="border-2 border-amber-300 rounded-xl p-4 bg-amber-50/50">
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div>
@@ -154,15 +179,18 @@ export default function AdminSegnalazioniDDT() {
         </div>
       )}
 
-      {isLoading ? (
+            {isLoading ? (
         <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
-      ) : segnalazioni.length === 0 ? (        <div className="text-center py-16 border rounded-2xl bg-muted/20">
+      ) : segnalazioni.length === 0 && escalations.length === 0 ? (
+        <div className="text-center py-16 border rounded-2xl bg-muted/20">
           <CheckCircle2 className="w-10 h-10 mx-auto text-emerald-500 mb-3" />
           <p className="font-medium">Nessuna segnalazione in attesa</p>
         </div>
+      ) : segnalazioniFiltrate.length === 0 && escalationsFiltrate.length === 0 ? (
+        <p className="text-sm text-muted-foreground py-6 text-center border rounded-xl">Nessun risultato per "{ricercaAttive}".</p>
       ) : (
         <div className="space-y-3">
-          {segnalazioni.map((s) => (
+          {segnalazioniFiltrate.map((s) => (
             <div key={s.id} className="border rounded-xl p-4 bg-card">
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div>
