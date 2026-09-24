@@ -33,10 +33,10 @@ export default function MarketCard({ market, distance, registeredCompanyCount })
   });
 
   const contenuto = (
-    <Card className={`overflow-hidden border-0 shadow-sm transition-all duration-300 bg-card ${prestoDisponibile ? 'opacity-60 grayscale' : 'hover:shadow-xl'}`}>
+    <Card className={`overflow-hidden border-0 shadow-sm transition-all duration-300 bg-card ${!prestoDisponibile && 'hover:shadow-xl'}`}>
       <div className="aspect-[16/9] overflow-hidden bg-muted relative">
         {market.image_url ? (
-          <img src={market.image_url} alt={market.name} className={`w-full h-full object-cover transition-transform duration-500 ${!prestoDisponibile && 'group-hover:scale-105'}`} />
+          <img src={market.image_url} alt={market.name} className={`w-full h-full object-cover transition-transform duration-500 ${prestoDisponibile ? 'grayscale opacity-60' : 'group-hover:scale-105'}`} />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-secondary/30 to-primary/20 flex items-center justify-center">
             <MapPin className="w-12 h-12 text-primary/30" />
