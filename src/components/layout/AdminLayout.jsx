@@ -1,13 +1,13 @@
 import React from 'react';
 import { Outlet, NavLink, Navigate } from 'react-router-dom';
-import { LayoutDashboard, FileText, TrendingUp, Loader2, ShieldCheck, LogOut } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { LayoutDashboard, FileText, TrendingUp, Loader2, ShieldCheck, LogOut, AlertTriangle } from 'lucide-react';import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/AuthContext';
 
 const VOCI = [
   { path: '/admin', label: 'Panoramica', icon: LayoutDashboard, end: true },
   { path: '/admin/andamento', label: 'Andamento', icon: TrendingUp },
   { path: '/admin/ddt', label: 'Registro DDT', icon: FileText },
+  { path: '/admin/segnalazioni', label: 'Segnalazioni', icon: AlertTriangle },
 ];
 
 /**

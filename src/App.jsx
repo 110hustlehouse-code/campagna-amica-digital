@@ -56,6 +56,7 @@ const ClientProfile = lazy(() => import('./pages/ClientProfile.jsx'));
 const AdminSyncMarkets = lazy(() => import('./pages/AdminSyncMarkets.jsx'));
 const ProducerResellers = lazy(() => import('./pages/producer/ProducerResellers.jsx'));
 const StaffDdtReports = lazy(() => import('./pages/staff/StaffDdtReports.jsx'));
+const AdminSegnalazioniDDT = lazy(() => import('./pages/admin/AdminSegnalazioniDDT.jsx'));
 
 const PageLoader = () => (
   <div className="flex items-center justify-center h-screen">
@@ -107,6 +108,7 @@ const AuthenticatedApp = () => {
       <Route element={<AdminLayout />}>
         <Route path="/admin" element={<Suspense fallback={<PageLoader />}><AdminDashboard /></Suspense>} />
         <Route path="/admin/ddt" element={<Suspense fallback={<PageLoader />}><AdminDDT /></Suspense>} />
+        <Route path="/admin/segnalazioni" element={<Suspense fallback={<PageLoader />}><AdminSegnalazioniDDT /></Suspense>} />
         <Route path="/admin/andamento" element={<Suspense fallback={<PageLoader />}><AdminAndamento /></Suspense>} />
       </Route>
       <Route element={<DirezioneLayout />}>

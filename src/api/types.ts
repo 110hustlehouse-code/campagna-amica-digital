@@ -2008,6 +2008,100 @@ export type Database = {
           },
         ]
       }
+      stall_sanctions: {
+        Row: {
+          blocked_from: string | null
+          blocked_until: string | null
+          company_id: string
+          created_at: string
+          id: string
+          issued_by: string
+          lift_reason: string | null
+          lifted_at: string | null
+          lifted_by: string | null
+          market_id: string
+          reason: string
+          report_id: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          blocked_from?: string | null
+          blocked_until?: string | null
+          company_id: string
+          created_at?: string
+          id?: string
+          issued_by: string
+          lift_reason?: string | null
+          lifted_at?: string | null
+          lifted_by?: string | null
+          market_id: string
+          reason: string
+          report_id?: string | null
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          blocked_from?: string | null
+          blocked_until?: string | null
+          company_id?: string
+          created_at?: string
+          id?: string
+          issued_by?: string
+          lift_reason?: string | null
+          lifted_at?: string | null
+          lifted_by?: string | null
+          market_id?: string
+          reason?: string
+          report_id?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stall_sanctions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stall_sanctions_issued_by_fkey"
+            columns: ["issued_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stall_sanctions_lifted_by_fkey"
+            columns: ["lifted_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stall_sanctions_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "markets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stall_sanctions_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "v_markets_territorio"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stall_sanctions_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "missing_ddt_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       supplier_payments: {
         Row: {
           amount: number
@@ -2281,6 +2375,10 @@ export type Database = {
       aziende_in_ambito: {
         Args: { p_ambito?: string; p_livello?: string }
         Returns: string[]
+      }
+      blocco_attivo_fino_a: {
+        Args: { p_company_id: string; p_market_id: string }
+        Returns: string
       }
       composizione_fatturato: {
         Args: {
