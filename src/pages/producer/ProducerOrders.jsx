@@ -3,7 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { subscribeTable } from '@/api/client';
 import { getMyCompany } from '@/api/companies';
 import { getOrdersByCompany, updateOrderStatus } from '@/api/orders';
-import { getProdottiCopertiDaDdt } from '@/api/ddt';import { getReviews } from '@/api/reviews';
+import { getProdottiCopertiDaDdt } from '@/api/ddt';
+import { getReviews } from '@/api/reviews';
 import { invokeFunction } from '@/api/functions';
 import { useAuth } from '@/lib/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
@@ -156,7 +157,12 @@ export default function ProducerOrders() {
     onSuccess: () => qc.invalidateQueries(['my-orders']),
   });
     const handleStatusChange = async (id, status, order) => {
-    if (status !== 'confermato' || !order.pickup_date || !myCompany?.id) {
+    // Il controllo ha senso solo quando si segna "Pronto": è il momento
+    // in cui la merce deve essere fisicamente arrivata al mercato. Alla
+    // conferma (che può avvenire giorni prima del ritiro) il DDT del
+    // giorno non esiste ancora, per definizione — controllarlo lì
+    // avvisava sempre a vuoto, anche per ordini normalissimi.
+    if (status !== 'pronto' || !order.pickup_date || !myCompany?.id) {
       updateStatus.mutate({ id, status });
       return;
     }
@@ -170,12 +176,12 @@ export default function ProducerOrders() {
         toast({
           title: 'Attenzione: alcuni articoli non risultano nel DDT di oggi',
           description: mancanti.map((m) => m.product_name).join(', ') +
-            ' — verifica prima di confermare se è merce effettivamente disponibile.',
+            ' — verifica che sia merce effettivamente arrivata prima di segnarlo pronto.',
           variant: 'destructive',
         });
       }
     } catch {
-      // Verifica non riuscita: non blocchiamo la conferma per un problema tecnico.
+      // Verifica non riuscita: non blocchiamo l'azione per un problema tecnico.
     }
     updateStatus.mutate({ id, status });
   };
