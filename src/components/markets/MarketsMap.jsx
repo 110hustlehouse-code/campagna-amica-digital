@@ -32,6 +32,15 @@ const selectedIcon = new L.Icon({
   shadowSize: [41, 41],
 });
 
+const greyIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-grey.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+
 // Componente che muove la mappa quando c'è userLocation
 function FlyToUser({ userLocation }) {
   const map = useMap();
@@ -89,11 +98,12 @@ export default function MarketsMap({ markets, registeredIds, userLocation }) {
         {mappable.map(market => {
           const count = (market.company_ids || []).filter(id => registeredIds.has(id)).length;
           const isSelected = selectedMarket?.id === market.id;
+          const prestoDisponibile = !market.recurring_days || market.recurring_days.length === 0;
           return (
             <Marker
               key={market.id}
               position={[market.latitude, market.longitude]}
-              icon={isSelected ? selectedIcon : greenIcon}
+              icon={prestoDisponibile ? greyIcon : (isSelected ? selectedIcon : greenIcon)}
               eventHandlers={{ click: () => setSelectedMarket(market) }}
             >
               <Popup
@@ -128,12 +138,22 @@ export default function MarketsMap({ markets, registeredIds, userLocation }) {
                       {count} {count === 1 ? 'azienda' : 'aziende'}
                     </p>
                   )}
-                  <Link
-                    to={`/mercati/${market.id}`}
-                    className="mt-3 flex items-center justify-center gap-1.5 w-full py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-primary/90 transition-colors"
-                  >
-                    Visita mercato <ArrowRight className="w-3 h-3" />
-                  </Link>
+                  {prestoDisponibile ? (
+                    <div className="mt-3 flex items-center justify-center w-full py-2">
+                      <img
+                        src="https://otefhryrnajzfyaiwmja.supabase.co/storage/v1/object/public/Badges/Mercato_Presto_Disponibile.png"
+                                                alt="Mercato presto disponibile"
+                        className="w-16 h-auto"
+                      />
+                    </div>
+                  ) : (
+                    <Link
+                      to={`/mercati/${market.id}`}
+                      className="mt-3 flex items-center justify-center gap-1.5 w-full py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-primary/90 transition-colors"
+                    >
+                      Visita mercato <ArrowRight className="w-3 h-3" />
+                    </Link>
+                  )}
                 </div>
               </Popup>
             </Marker>
