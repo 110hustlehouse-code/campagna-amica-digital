@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
-import { AlertTriangle, Loader2, ChevronLeft, Send, Archive, ShieldAlert, ShieldQuestion } from 'lucide-react';
+import { AlertTriangle, Loader2, ChevronLeft, Send, Archive, ShieldAlert, ShieldQuestion, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getMyStaffMember } from '@/api/staff';
-import { getReportsByMarket, agisciSuSegnalazione, ETICHETTE_AZIONE } from '@/api/ddtReports';
+import { getReportsByMarket, agisciSuSegnalazione, creaSegnalazioneManuale, ETICHETTE_AZIONE } from '@/api/ddtReports';
 import { createWarningStaff } from '@/api/sanctions';
+import { getCompaniesByMarket } from '@/api/companies';
 import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -21,14 +22,33 @@ export default function StaffDdtReports() {
   const { toast } = useToast();
   const [azione, setAzione] = useState(null); // { report, tipo }
   const [nota, setNota] = useState('');
+  const [nuovaSegnalazione, setNuovaSegnalazione] = useState(false);
+  const [aziendaSelezionata, setAziendaSelezionata] = useState('');
 
   const { data: staff } = useQuery({ queryKey: ['my-staff'], queryFn: getMyStaffMember });
   const marketId = staff?.market_id;
-  
+
   const { data: segnalazioni = [], isLoading } = useQuery({
     queryKey: ['ddt-reports', marketId],
     queryFn: () => getReportsByMarket(marketId),
     enabled: !!marketId,
+  });
+
+  const { data: aziende = [] } = useQuery({
+    queryKey: ['companies-market', marketId],
+    queryFn: () => getCompaniesByMarket(marketId),
+    enabled: !!marketId,
+  });
+
+  const nuovaSegnalazioneMutation = useMutation({
+    mutationFn: () => creaSegnalazioneManuale(aziendaSelezionata, marketId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['ddt-reports'] });
+      setNuovaSegnalazione(false);
+      setAziendaSelezionata('');
+      toast({ title: 'Segnalazione creata' });
+    },
+    onError: (e) => toast({ title: 'Errore', description: e.message, variant: 'destructive' }),
   });
 
   const agisciMutation = useMutation({
@@ -66,14 +86,17 @@ export default function StaffDdtReports() {
         <Link to="/staff" className="w-9 h-9 rounded-full bg-muted flex items-center justify-center">
           <ChevronLeft className="w-4 h-4" />
         </Link>
-        <div>
+        <div className="flex-1">
           <h1 className="font-heading text-2xl font-bold flex items-center gap-2">
             <AlertTriangle className="w-6 h-6 text-amber-600" /> Produttori senza DDT
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Segnalazioni da valutare per il tuo mercato
+            Rilevate in automatico, o segnalale a mano
           </p>
         </div>
+        <Button size="sm" onClick={() => setNuovaSegnalazione(true)} className="gap-1.5 shrink-0">
+          <Plus className="w-3.5 h-3.5" /> Segnala
+        </Button>
       </div>
 
       {isLoading ? (
@@ -124,6 +147,35 @@ export default function StaffDdtReports() {
         </div>
       )}
 
+      <Dialog open={nuovaSegnalazione} onOpenChange={setNuovaSegnalazione}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Segnala produttore senza DDT</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Segnala un'azienda del tuo mercato che oggi non ha emesso DDT né dichiarato assenza.
+            </p>
+            <select
+              value={aziendaSelezionata}
+              onChange={(e) => setAziendaSelezionata(e.target.value)}
+              className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm"
+            >
+              <option value="">Scegli azienda...</option>
+              {aziende.map((a) => (
+                <option key={a.id} value={a.id}>{a.name}</option>
+              ))}
+            </select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNuovaSegnalazione(false)}>Annulla</Button>
+            <Button onClick={() => nuovaSegnalazioneMutation.mutate()}
+                    disabled={!aziendaSelezionata || nuovaSegnalazioneMutation.isPending}>
+              {nuovaSegnalazioneMutation.isPending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : null}
+              Segnala
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
       <Dialog open={!!azione} onOpenChange={(open) => !open && setAzione(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>

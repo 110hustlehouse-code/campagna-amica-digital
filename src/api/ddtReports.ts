@@ -1,5 +1,5 @@
 /** Segnalazioni di DDT mancante — lo staff le vede e agisce. */
-import { supabase, unwrapOne, unwrapMany } from './client'
+import { supabase, unwrapOne, unwrapMany, DataError } from './client'
 import type { Tables, TablesUpdate } from './types'
 
 export type MissingDdtReport = Tables<'missing_ddt_reports'>
@@ -60,4 +60,20 @@ export async function getReportsAmmoniteByCompanyMarket(companyId: string, marke
       .eq('company_id', companyId).eq('market_id', marketId).eq('staff_action', 'warn')
       .order('data_evento', { ascending: false }),
     'Segnalazioni ammonite')
+}
+
+/** Segnalazione manuale dello staff: crea la riga se non esiste già per oggi. */
+export async function creaSegnalazioneManuale(companyId: string, marketId: string): Promise<MissingDdtReport> {
+  const oggi = new Date().toISOString().slice(0, 10)
+  const { data, error } = await supabase
+    .from('missing_ddt_reports')
+    .insert({ company_id: companyId, market_id: marketId, data_evento: oggi })
+    .select().single()
+  if (error) {
+    if (error.code === '23505') { // vincolo unico: già segnalata oggi
+      throw new DataError('Questa azienda è già stata segnalata oggi.')
+    }
+    throw error
+  }
+  return data
 }
