@@ -729,6 +729,80 @@ export type Database = {
           },
         ]
       }
+      missing_ddt_reports: {
+        Row: {
+          company_id: string
+          created_at: string
+          data_evento: string
+          detected_at: string
+          id: string
+          market_id: string
+          staff_action: string | null
+          staff_action_at: string | null
+          staff_note: string | null
+          staff_user_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          data_evento: string
+          detected_at?: string
+          id?: string
+          market_id: string
+          staff_action?: string | null
+          staff_action_at?: string | null
+          staff_note?: string | null
+          staff_user_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          data_evento?: string
+          detected_at?: string
+          id?: string
+          market_id?: string
+          staff_action?: string | null
+          staff_action_at?: string | null
+          staff_note?: string | null
+          staff_user_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "missing_ddt_reports_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "missing_ddt_reports_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "markets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "missing_ddt_reports_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "v_markets_territorio"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "missing_ddt_reports_staff_user_id_fkey"
+            columns: ["staff_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       news_cache: {
         Row: {
           created_at: string

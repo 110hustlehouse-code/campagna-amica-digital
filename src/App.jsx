@@ -55,6 +55,7 @@ const Stagionalita = lazy(() => import('./pages/Stagionalita.jsx'));
 const ClientProfile = lazy(() => import('./pages/ClientProfile.jsx'));
 const AdminSyncMarkets = lazy(() => import('./pages/AdminSyncMarkets.jsx'));
 const ProducerResellers = lazy(() => import('./pages/producer/ProducerResellers.jsx'));
+const StaffDdtReports = lazy(() => import('./pages/staff/StaffDdtReports.jsx'));
 
 const PageLoader = () => (
   <div className="flex items-center justify-center h-screen">
@@ -149,6 +150,7 @@ const AuthenticatedApp = () => {
         <Route path="/staff/profilo" element={<Suspense fallback={<PageLoader />}><StaffProfile /></Suspense>} />
         <Route path="/staff/assenze" element={<Suspense fallback={<PageLoader />}><AbsenceCalendar /></Suspense>} />
         <Route path="/staff/ddt" element={<Suspense fallback={<PageLoader />}><StaffDDT /></Suspense>} />
+        <Route path="/staff/segnalazioni-ddt" element={<Suspense fallback={<PageLoader />}><StaffDdtReports /></Suspense>} />
       </Route>
     </Routes>
     </AnimatePresence>
