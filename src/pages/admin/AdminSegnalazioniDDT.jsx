@@ -26,6 +26,19 @@ export default function AdminSegnalazioniDDT() {
     queryFn: getReportsEscalated,
   });
 
+  const { data: escalations = [] } = useQuery({
+    queryKey: ['escalations-aperte'],
+    queryFn: getEscalationsAperte,
+  });
+
+  const risolviEscalationMutation = useMutation({
+    mutationFn: risolviEscalation,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['escalations-aperte'] });
+      toast({ title: 'Escalation archiviata' });
+    },
+  });
+
   const provvedimentoMutation = useMutation({
     mutationFn: async () => {
       const { report, tipo } = azione;
