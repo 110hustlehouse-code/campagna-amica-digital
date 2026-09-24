@@ -191,3 +191,32 @@ export async function getProdottiCopertiDaDdt(companyId: string, data: string): 
   }
   return idsCoperti
 }
+/**
+ * True se il produttore ha ancora qualcosa da fare oggi sul DDT:
+ * almeno un mercato aperto oggi (fra quelli dell'azienda) senza
+ * ancora un DDT emesso né un'assenza dichiarata. Usata per decidere
+ * se mostrare il tab DDT nella bottom bar.
+ */
+export async function haAncoraDdtDaFareOggi(companyId: string, marketIds: string[]): Promise<boolean> {
+  if (!marketIds.length) return false
+  const oggi = new Date().toISOString().slice(0, 10)
+
+  for (const marketId of marketIds) {
+    const { data: aperto } = await supabase.rpc('is_market_open_on', { p_market_id: marketId, p_data: oggi })
+    if (!aperto) continue
+
+    const { count: ddtCount } = await supabase
+      .from('delivery_notes').select('id', { count: 'exact', head: true })
+      .eq('company_id', companyId).eq('market_id', marketId)
+      .eq('transport_date', oggi).eq('status', 'issued')
+    if ((ddtCount ?? 0) > 0) continue
+
+    const { count: absenceCount } = await supabase
+      .from('absences').select('id', { count: 'exact', head: true })
+      .eq('company_id', companyId).eq('market_id', marketId).eq('absence_date', oggi)
+    if ((absenceCount ?? 0) > 0) continue
+
+    return true // almeno un mercato aperto oggi senza DDT né assenza: c'è ancora da fare
+  }
+  return false
+}
