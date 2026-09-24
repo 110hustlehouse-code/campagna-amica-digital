@@ -20,12 +20,21 @@ export async function getReportsByMarket(marketId: string, soloAperte = true): P
 export async function agisciSuSegnalazione(
   id: string, azione: StaffAction, nota: string | null, staffUserId: string,
 ): Promise<MissingDdtReport> {
+  // 'warn' è gestito interamente dallo staff (l'ammonizione è già
+  // stata emessa): la segnalazione è chiusa, non serve amministrazione
+  // — a meno che non sia la terza, nel qual caso ci pensa il trigger
+  // di escalation automatica, non questo stato.
+  const statoRisultante =
+    azione === 'dismiss' ? 'dismissed'
+    : azione === 'warn' ? 'resolved'
+    : 'escalated'
+
   const patch: TablesUpdate<'missing_ddt_reports'> = {
     staff_action: azione,
     staff_note: nota,
     staff_user_id: staffUserId,
     staff_action_at: new Date().toISOString(),
-    status: azione === 'dismiss' ? 'dismissed' : 'escalated',
+    status: statoRisultante,
   }
   return unwrapOne(
     await supabase.from('missing_ddt_reports').update(patch).eq('id', id).select().single(),
