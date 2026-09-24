@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   LogOut, Mail, Shield, Calendar, User, CheckCircle, Trash2,
-  MapPin, Loader2, Phone, Building2, AlertCircle, Key, Edit2, Save, X, Users, Upload, ImageIcon,
+  MapPin, Loader2, Phone, Building2, AlertCircle, Key, Edit2, Save, X, Users, Upload, ImageIcon, Clock,
 } from 'lucide-react';
 import StaffMembers from '@/pages/staff/StaffMembers';
 import { useToast } from '@/components/ui/use-toast';
@@ -55,9 +55,11 @@ export default function StaffProfile() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [uploadingMarketPhoto, setUploadingMarketPhoto] = useState(false);
   const [deleteConfirmInput, setDeleteConfirmInput] = useState('');
+  const [recurringDays, setRecurringDays] = useState([]);
+  const [recurringTimeStart, setRecurringTimeStart] = useState('');
+  const [recurringTimeEnd, setRecurringTimeEnd] = useState('');
   const navigate = useNavigate();
-  const qc = useQueryClient();
-  const { toast } = useToast();
+  const qc = useQueryClient();  const { toast } = useToast();
 
   const { data: markets = [] } = useQuery({
     queryKey: ['markets-list'],
@@ -139,6 +141,33 @@ export default function StaffProfile() {
     };
     fetchUserData();
   }, []);
+
+  // Precompila l'orario ricorrente non appena si conosce il mercato dello staff.
+  useEffect(() => {
+    const mkt = markets.find((m) => m.id === staffMember?.market_id);
+    if (mkt) {
+      setRecurringDays(mkt.recurring_days || []);
+      setRecurringTimeStart(mkt.recurring_time_start || '');
+      setRecurringTimeEnd(mkt.recurring_time_end || '');
+    }
+  }, [markets, staffMember?.market_id]);
+
+  const updateScheduleMutation = useMutation({
+    mutationFn: () => updateMarket(currentMarket.id, {
+      recurring_days: recurringDays,
+      recurring_time_start: recurringTimeStart || null,
+      recurring_time_end: recurringTimeEnd || null,
+    }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['markets-list'] });
+      toast({ title: '✅ Orario del mercato aggiornato' });
+    },
+    onError: (err) => toast({ title: 'Errore', description: err.message, variant: 'destructive' }),
+  });
+
+  const toggleGiorno = (n) => {
+    setRecurringDays((prev) => prev.includes(n) ? prev.filter((d) => d !== n) : [...prev, n].sort());
+  };
 
   const handleSaveMarket = () => {
     if (!selectedMarket) { setMarketError(true); return; }
@@ -326,6 +355,80 @@ export default function StaffProfile() {
               {uploadingMarketPhoto ? 'Caricamento...' : (currentMarket.image_url ? 'Cambia foto' : 'Carica foto')}
               <input type="file" accept="image/*" className="hidden" onChange={e => e.target.files[0] && handleMarketPhotoUpload(e.target.files[0])} disabled={uploadingMarketPhoto} />
             </label>
+          </Card>
+        )}
+
+        {/* Orario di apertura */}
+        {staffMember && currentMarket && (
+          <Card className="p-6 border border-border/50">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Clock className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-heading text-lg font-semibold text-foreground">Orario di apertura</h3>
+                <p className="text-xs text-muted-foreground">
+                  I giorni e l'orario standard del mercato — restano fissi finché non li cambi qui.
+                </p>
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <label className="text-xs font-semibold text-foreground mb-2 block">Giorni</label>
+              <div className="grid grid-cols-7 gap-1.5">
+                {[
+                  { n: 1, l: 'L' }, { n: 2, l: 'M' }, { n: 3, l: 'M' }, { n: 4, l: 'G' },
+                  { n: 5, l: 'V' }, { n: 6, l: 'S' }, { n: 7, l: 'D' },
+                ].map(({ n, l }) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => toggleGiorno(n)}
+                    className={`h-10 rounded-lg text-sm font-bold transition-colors ${
+                      recurringDays.includes(n)
+                        ? 'bg-primary text-white'
+                        : 'bg-muted text-muted-foreground hover:bg-muted/70'
+                    }`}
+                  >
+                    {l}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div>
+                <label className="text-xs font-semibold text-foreground mb-1.5 block">Apertura</label>
+                <Input
+                  type="time"
+                  value={recurringTimeStart}
+                  onChange={(e) => setRecurringTimeStart(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-foreground mb-1.5 block">Chiusura</label>
+                <Input
+                  type="time"
+                  value={recurringTimeEnd}
+                  onChange={(e) => setRecurringTimeEnd(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <p className="text-xs text-muted-foreground mb-4">
+              Nei giorni selezionati, i produttori senza DDT né assenza dichiarata dopo l'orario di
+              apertura risulteranno non disponibili per i clienti.
+            </p>
+
+            <Button
+              onClick={() => updateScheduleMutation.mutate()}
+              disabled={updateScheduleMutation.isPending}
+              className="w-full h-11 text-base font-semibold gap-2"
+            >
+              {updateScheduleMutation.isPending
+                ? <Loader2 className="w-4 h-4 animate-spin" />
+                : <><Save className="w-4 h-4" /> Salva orario</>}
+            </Button>
           </Card>
         )}
 
