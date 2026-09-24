@@ -65,3 +65,30 @@ export async function risolviSegnalazione(reportId: string): Promise<void> {
   const { error } = await supabase.from('missing_ddt_reports').update({ status: 'resolved' }).eq('id', reportId)
   if (error) throw error
 }
+export type CompanyMarketEscalation = Tables<'company_market_escalations'>
+
+/** Ammonizione emessa direttamente dallo staff (non passa dall'amministrazione). */
+export async function createWarningStaff(
+  companyId: string, marketId: string, reason: string, reportId: string | null, staffUserId: string,
+): Promise<StallSanction> {
+  return createWarning(companyId, marketId, reason, reportId, staffUserId)
+}
+
+/** Escalation automatiche aperte, generate dopo 3 ammonizioni sullo stesso mercato. */
+export async function getEscalationsAperte(): Promise<any[]> {
+  const { data, error } = await supabase
+    .from('company_market_escalations')
+    .select('*, companies(name), markets(name)')
+    .eq('status', 'open')
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return data ?? []
+}
+
+export async function risolviEscalation(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('company_market_escalations')
+    .update({ status: 'resolved', resolved_at: new Date().toISOString() })
+    .eq('id', id)
+  if (error) throw error
+}

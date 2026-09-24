@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
-import { AlertTriangle, Loader2, ChevronLeft, Send, Archive, ShieldAlert } from 'lucide-react';
+import { AlertTriangle, Loader2, ChevronLeft, Send, Archive, ShieldAlert, ShieldQuestion } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getMyStaffMember } from '@/api/staff';
 import { getReportsByMarket, agisciSuSegnalazione, ETICHETTE_AZIONE } from '@/api/ddtReports';
+import { createWarningStaff } from '@/api/sanctions';
 import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -31,7 +32,14 @@ export default function StaffDdtReports() {
   });
 
   const agisciMutation = useMutation({
-    mutationFn: ({ id, tipo, nota }) => agisciSuSegnalazione(id, tipo, nota || null, user.id),
+    mutationFn: async ({ id, tipo, nota, report }) => {
+      if (tipo === 'warn') {
+        await createWarningStaff(report.company_id, report.market_id, nota || 'DDT non emesso', id, user.id);
+        await agisciSuSegnalazione(id, 'warn', nota || null, user.id);
+      } else {
+        await agisciSuSegnalazione(id, tipo, nota || null, user.id);
+      }
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['ddt-reports'] });
       setAzione(null);
@@ -42,8 +50,7 @@ export default function StaffDdtReports() {
   });
 
   const apriAzione = (report, tipo) => { setAzione({ report, tipo }); setNota(''); };
-  const conferma = () => agisciMutation.mutate({ id: azione.report.id, tipo: azione.tipo, nota });
-
+  const conferma = () => agisciMutation.mutate({ id: azione.report.id, tipo: azione.tipo, nota, report: azione.report });
   if (!marketId) {
     return (
       <div className="p-8 text-center">
@@ -97,6 +104,10 @@ export default function StaffDdtReports() {
                 </span>
               </div>
               <div className="flex flex-wrap gap-2">
+                <Button size="sm" variant="outline" onClick={() => apriAzione(s, 'warn')}
+                        className="gap-1.5 text-amber-700 border-amber-300 hover:bg-amber-50">
+                  <ShieldQuestion className="w-3.5 h-3.5" /> Ammonisci
+                </Button>
                 <Button size="sm" variant="outline" onClick={() => apriAzione(s, 'escalate')} className="gap-1.5">
                   <Send className="w-3.5 h-3.5" /> Segnala ad amministrazione
                 </Button>
@@ -116,7 +127,7 @@ export default function StaffDdtReports() {
       <Dialog open={!!azione} onOpenChange={(open) => !open && setAzione(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{azione && ETICHETTE_AZIONE[azione.tipo]}</DialogTitle>
+            <DialogTitle>{azione?.tipo === 'warn' ? 'Ammonisci azienda' : (azione && ETICHETTE_AZIONE[azione.tipo])}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">

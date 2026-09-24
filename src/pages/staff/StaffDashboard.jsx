@@ -10,7 +10,7 @@ import { getCompaniesByMarket } from '@/api/companies';
 import { getMyNotifications, segnaLetta } from '@/api/notifications';
 import { format, startOfToday } from 'date-fns';
 import { it } from 'date-fns/locale';
-import { AlertCircle, TrendingUp, Clock, CalendarPlus, ChevronDown, Users, CalendarOff, Leaf } from 'lucide-react';
+import { AlertCircle, TrendingUp, Clock, CalendarPlus, ChevronDown, Users, CalendarOff, Leaf, FileWarning } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import NeedsSection from '@/components/staff/NeedsSection';
@@ -149,7 +149,14 @@ export default function StaffDashboard() {
             <h1 className="font-heading text-4xl font-bold text-white drop-shadow-lg">Mercati</h1>
             <p className="text-white/90 text-sm mt-2 font-medium">{format(today, 'EEEE, d MMMM yyyy', { locale: it })}</p>
           </div>
-          <AbsenceButton needs={needs} />
+          <div className="flex items-center gap-2">
+            <Link to="/staff/segnalazioni-ddt" className="flex-shrink-0">
+              <div className="w-11 h-11 rounded-2xl bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center hover:bg-white/30 transition-colors">
+                <FileWarning className="w-5 h-5 text-white" />
+              </div>
+            </Link>
+            <AbsenceButton needs={needs} />
+          </div>
         </div>
       </div>
 

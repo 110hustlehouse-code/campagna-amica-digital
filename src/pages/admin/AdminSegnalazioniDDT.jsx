@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format, addDays } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { AlertTriangle, Loader2, ShieldAlert, ShieldX, CheckCircle2 } from 'lucide-react';
-import { getReportsEscalated, createWarning, createBlock, risolviSegnalazione } from '@/api/sanctions';
+import { getReportsEscalated, createWarning, createBlock, risolviSegnalazione, getEscalationsAperte, risolviEscalation } from '@/api/sanctions';
 import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,8 +35,13 @@ export default function AdminSegnalazioniDDT() {
         const oggi = format(new Date(), 'yyyy-MM-dd');
         await createBlock(report.company_id, report.market_id, reason, oggi, blockedUntil, report.id, user.id);
       }
-      await risolviSegnalazione(report.id);
-      // Notifica allo staff del mercato: riusa la Edge Function già esistente per le comunicazioni.
+      // report.id è null quando il provvedimento nasce da un'escalation
+      // automatica (3 ammonizioni), non da una singola segnalazione DDT:
+      // in quel caso non c'è nulla da risolvere in missing_ddt_reports.
+      if (report.id) {
+        await risolviSegnalazione(report.id);
+      }
+      qc.invalidateQueries({ queryKey: ['escalations-aperte'] });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['reports-escalated'] });
@@ -62,10 +67,35 @@ export default function AdminSegnalazioniDDT() {
         </p>
       </div>
 
+      {escalations.length > 0 && (
+        <div className="space-y-3">
+          <p className="text-sm font-semibold text-amber-800">Escalation automatiche (3+ ammonizioni)</p>
+          {escalations.map((e) => (
+            <div key={e.id} className="border-2 border-amber-300 rounded-xl p-4 bg-amber-50/50">
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div>
+                  <p className="font-semibold">{e.companies?.name || 'Azienda'}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{e.markets?.name}</p>
+                  <p className="text-xs text-amber-800 mt-1">{e.reason}</p>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button size="sm" variant="outline" onClick={() => apri({ company_id: e.company_id, market_id: e.market_id, companies: e.companies, id: null }, 'block')}
+                        className="gap-1.5 text-destructive border-destructive/30 hover:bg-destructive/5">
+                  <ShieldX className="w-3.5 h-3.5" /> Blocca banco
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => risolviEscalationMutation.mutate(e.id)} className="gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Archivia
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {isLoading ? (
         <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
-      ) : segnalazioni.length === 0 ? (
-        <div className="text-center py-16 border rounded-2xl bg-muted/20">
+      ) : segnalazioni.length === 0 ? (        <div className="text-center py-16 border rounded-2xl bg-muted/20">
           <CheckCircle2 className="w-10 h-10 mx-auto text-emerald-500 mb-3" />
           <p className="font-medium">Nessuna segnalazione in attesa</p>
         </div>

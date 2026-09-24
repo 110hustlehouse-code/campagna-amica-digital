@@ -209,6 +209,58 @@ export type Database = {
           },
         ]
       }
+      company_market_escalations: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          market_id: string
+          reason: string
+          resolved_at: string | null
+          status: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          market_id: string
+          reason: string
+          resolved_at?: string | null
+          status?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          market_id?: string
+          reason?: string
+          resolved_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_market_escalations_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_market_escalations_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "markets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_market_escalations_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "v_markets_territorio"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comuni: {
         Row: {
           cap_principale: string | null
@@ -2669,6 +2721,7 @@ export const Constants = {
     Enums: {},
   },
 } as const
+
 
 export type Views<T extends keyof Database['public']['Views']> =
   Database['public']['Views'][T]['Row']
