@@ -387,7 +387,7 @@ export type Database = {
           id: string
           issue_date: string
           issued_at: string | null
-          market_event_id: string
+          market_event_id: string | null
           market_id: string
           numero_colli: number | null
           pdf_url: string | null
@@ -421,7 +421,7 @@ export type Database = {
           id?: string
           issue_date: string
           issued_at?: string | null
-          market_event_id: string
+          market_event_id?: string | null
           market_id: string
           numero_colli?: number | null
           pdf_url?: string | null
@@ -455,7 +455,7 @@ export type Database = {
           id?: string
           issue_date?: string
           issued_at?: string | null
-          market_event_id?: string
+          market_event_id?: string | null
           market_id?: string
           numero_colli?: number | null
           pdf_url?: string | null
@@ -649,6 +649,9 @@ export type Database = {
           longitude: number | null
           name: string
           quartiere_id: string | null
+          recurring_days: number[]
+          recurring_time_end: string | null
+          recurring_time_start: string | null
           region: string | null
           schedule: string | null
           updated_at: string
@@ -667,6 +670,9 @@ export type Database = {
           longitude?: number | null
           name: string
           quartiere_id?: string | null
+          recurring_days?: number[]
+          recurring_time_end?: string | null
+          recurring_time_start?: string | null
           region?: string | null
           schedule?: string | null
           updated_at?: string
@@ -685,6 +691,9 @@ export type Database = {
           longitude?: number | null
           name?: string
           quartiere_id?: string | null
+          recurring_days?: number[]
+          recurring_time_end?: string | null
+          recurring_time_start?: string | null
           region?: string | null
           schedule?: string | null
           updated_at?: string
@@ -2250,6 +2259,10 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_direzione: { Args: never; Returns: boolean }
+      is_market_open_on: {
+        Args: { p_data: string; p_market_id: string }
+        Returns: boolean
+      }
       is_staff: { Args: never; Returns: boolean }
       is_staff_for_market: { Args: { p_market_id: string }; Returns: boolean }
       mercati_in_ambito: {
@@ -2305,6 +2318,10 @@ export type Database = {
         Args: { p_company_id: string; p_year: number }
         Returns: number
       }
+      orario_apertura_mercato: {
+        Args: { p_data: string; p_market_id: string }
+        Returns: string
+      }
       owns_company: { Args: { p_company_id: string }; Returns: boolean }
       puo_leggere_rete: { Args: never; Returns: boolean }
       purge_old_rate_limits: { Args: never; Returns: undefined }
@@ -2343,6 +2360,10 @@ export type Database = {
       sincronizza_mercati_azienda: {
         Args: { p_company_id: string; p_market_ids: string[] }
         Returns: undefined
+      }
+      stato_disponibilita_azienda: {
+        Args: { p_company_id: string; p_data?: string; p_market_id: string }
+        Returns: string
       }
     }
     Enums: {
@@ -2476,7 +2497,6 @@ export const Constants = {
     Enums: {},
   },
 } as const
-
 
 export type Views<T extends keyof Database['public']['Views']> =
   Database['public']['Views'][T]['Row']

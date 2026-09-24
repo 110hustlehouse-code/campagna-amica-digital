@@ -5,8 +5,7 @@ import { getProductsByCompany } from '@/api/products';
 import { getMyFavorites, aggiungiPreferito, rimuoviPreferito } from '@/api/favorites';
 import { getReviews } from '@/api/reviews';
 import { getOrdersByCompany } from '@/api/orders';
-import { getMarkets } from '@/api/markets';
-import { Link } from 'react-router-dom';
+import { getMarkets, getStatoDisponibilita } from '@/api/markets';import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ArrowLeft, Globe, Phone, Mail, MapPin, Heart, Loader2, ShoppingBag, Leaf, Award, Star, Lock, Clock, Store } from 'lucide-react';
@@ -82,6 +81,23 @@ export default function CompanyDetail() {
     },
     enabled: !!company,
   });
+
+  // Disponibilità di oggi sul primo mercato dell'azienda. Con più mercati,
+  // questo mostra solo il primo — raffinabile in seguito se serve
+  // distinguere per mercato.
+  const { data: statoOggi } = useQuery({
+    queryKey: ['stato-disponibilita', companyId, markets[0]?.id],
+    queryFn: () => getStatoDisponibilita(companyId, markets[0].id),
+    enabled: !!companyId && markets.length > 0,
+    refetchInterval: 5 * 60 * 1000, // ricontrolla ogni 5 minuti: lo stato cambia nel corso della giornata
+  });
+
+  const ETICHETTE_STATO_DISPONIBILITA = {
+    disponibile: { testo: 'Al mercato oggi', colore: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
+    assente: { testo: 'Assente oggi', colore: 'bg-muted text-muted-foreground border-border' },
+    in_attesa_ddt: { testo: 'In arrivo al mercato', colore: 'bg-amber-100 text-amber-700 border-amber-200' },
+    non_ancora_aperto: { testo: 'Mercato non ancora aperto', colore: 'bg-blue-100 text-blue-700 border-blue-200' },
+  };
 
   const hasInteracted = myOrders.some(o => o.status !== 'annullato');
   const hasAlreadyReviewed = reviews.some(r => r.created_by === user?.email);
@@ -197,8 +213,13 @@ export default function CompanyDetail() {
         </div>
 
         <div className="absolute bottom-5 left-6 right-6">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
             {company.category && <CategoryBadge category={company.category} />}
+            {statoOggi && ETICHETTE_STATO_DISPONIBILITA[statoOggi] && (
+              <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${ETICHETTE_STATO_DISPONIBILITA[statoOggi].colore}`}>
+                {ETICHETTE_STATO_DISPONIBILITA[statoOggi].testo}
+              </span>
+            )}
           </div>
           <h1 className="font-heading text-2xl md:text-4xl font-bold text-white drop-shadow-lg leading-tight">
             {company.name}

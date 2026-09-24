@@ -43,3 +43,18 @@ export async function createMarket(m: TablesInsert<'markets'>): Promise<Market> 
     await supabase.from('markets').insert(m).select().single(),
     'Creazione mercato')
 }
+export type StatoDisponibilita =
+  | 'nessun_mercato' | 'non_ancora_aperto' | 'disponibile' | 'assente' | 'in_attesa_ddt'
+
+/** Stato di un'azienda in un mercato, oggi (o alla data indicata). */
+export async function getStatoDisponibilita(
+  companyId: string, marketId: string, data?: string,
+): Promise<StatoDisponibilita> {
+  const { data: risultato, error } = await supabase.rpc('stato_disponibilita_azienda', {
+    p_company_id: companyId,
+    p_market_id: marketId,
+    ...(data ? { p_data: data } : {}),
+  })
+  if (error) throw error
+  return risultato as StatoDisponibilita
+}
