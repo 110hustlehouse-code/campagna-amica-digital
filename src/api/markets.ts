@@ -58,3 +58,12 @@ export async function getStatoDisponibilita(
   if (error) throw error
   return risultato as StatoDisponibilita
 }
+
+/** Se l'azienda è bloccata ora in questo mercato, la data di fine blocco. Altrimenti null. */
+export async function getBloccoAttivoFinoA(companyId: string, marketId: string): Promise<string | null> {
+  const { data, error } = await supabase.rpc('blocco_attivo_fino_a', {
+    p_company_id: companyId, p_market_id: marketId,
+  })
+  if (error) throw error
+  return data as string | null
+}
