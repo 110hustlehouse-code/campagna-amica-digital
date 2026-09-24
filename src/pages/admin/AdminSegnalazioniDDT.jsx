@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format, addDays } from 'date-fns';
 import { it } from 'date-fns/locale';
-import { AlertTriangle, Loader2, ShieldAlert, ShieldX, CheckCircle2 } from 'lucide-react';
-import { getReportsEscalated, createWarning, createBlock, risolviSegnalazione, getEscalationsAperte, risolviEscalation } from '@/api/sanctions';
+import { AlertTriangle, Loader2, ShieldAlert, ShieldX, CheckCircle2, Euro } from 'lucide-react';
+import { getReportsEscalated, createWarning, createBlock, createMonetaryNotice, risolviSegnalazione, getEscalationsAperte, risolviEscalation } from '@/api/sanctions';
 import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -44,6 +44,8 @@ export default function AdminSegnalazioniDDT() {
       const { report, tipo } = azione;
       if (tipo === 'warning') {
         await createWarning(report.company_id, report.market_id, reason, report.id, user.id);
+      } else if (tipo === 'monetary') {
+        await createMonetaryNotice(report.company_id, report.market_id, reason, report.id, user.id);
       } else {
         const oggi = format(new Date(), 'yyyy-MM-dd');
         await createBlock(report.company_id, report.market_id, reason, oggi, blockedUntil, report.id, user.id);
@@ -93,6 +95,10 @@ export default function AdminSegnalazioniDDT() {
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
+                <Button size="sm" variant="outline" onClick={() => apri({ company_id: e.company_id, market_id: e.market_id, companies: e.companies, id: null }, 'monetary')}
+                        className="gap-1.5 text-orange-700 border-orange-300 hover:bg-orange-50">
+                  <Euro className="w-3.5 h-3.5" /> Avvisa sanzione pecuniaria
+                </Button>
                 <Button size="sm" variant="outline" onClick={() => apri({ company_id: e.company_id, market_id: e.market_id, companies: e.companies, id: null }, 'block')}
                         className="gap-1.5 text-destructive border-destructive/30 hover:bg-destructive/5">
                   <ShieldX className="w-3.5 h-3.5" /> Blocca banco
@@ -100,8 +106,7 @@ export default function AdminSegnalazioniDDT() {
                 <Button size="sm" variant="ghost" onClick={() => risolviEscalationMutation.mutate(e.id)} className="gap-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5" /> Archivia
                 </Button>
-              </div>
-            </div>
+              </div>            </div>
           ))}
         </div>
       )}
@@ -134,6 +139,10 @@ export default function AdminSegnalazioniDDT() {
                 <Button size="sm" variant="outline" onClick={() => apri(s, 'warning')} className="gap-1.5">
                   <ShieldAlert className="w-3.5 h-3.5" /> Emetti ammonizione
                 </Button>
+                <Button size="sm" variant="outline" onClick={() => apri(s, 'monetary')}
+                        className="gap-1.5 text-orange-700 border-orange-300 hover:bg-orange-50">
+                  <Euro className="w-3.5 h-3.5" /> Avvisa sanzione pecuniaria
+                </Button>
                 <Button size="sm" variant="outline" onClick={() => apri(s, 'block')}
                         className="gap-1.5 text-destructive border-destructive/30 hover:bg-destructive/5">
                   <ShieldX className="w-3.5 h-3.5" /> Blocca banco
@@ -147,8 +156,11 @@ export default function AdminSegnalazioniDDT() {
       <Dialog open={!!azione} onOpenChange={(open) => !open && setAzione(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{azione?.tipo === 'warning' ? 'Emetti ammonizione' : 'Blocca banco'}</DialogTitle>
-          </DialogHeader>
+            <DialogTitle>
+              {azione?.tipo === 'warning' ? 'Emetti ammonizione'
+                : azione?.tipo === 'monetary' ? 'Avviso sanzione pecuniaria'
+                : 'Blocca banco'}
+            </DialogTitle>          </DialogHeader>
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">
               {azione?.report?.companies?.name}

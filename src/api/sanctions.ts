@@ -92,3 +92,12 @@ export async function risolviEscalation(id: string): Promise<void> {
     .eq('id', id)
   if (error) throw error
 }
+export async function createMonetaryNotice(
+  companyId: string, marketId: string, reason: string, reportId: string | null, issuedBy: string,
+): Promise<StallSanction> {
+  const payload: TablesInsert<'stall_sanctions'> = {
+    company_id: companyId, market_id: marketId, type: 'monetary_notice',
+    reason, report_id: reportId, issued_by: issuedBy,
+  }
+  return unwrapOne(await supabase.from('stall_sanctions').insert(payload).select().single(), 'Avviso sanzione pecuniaria')
+}
