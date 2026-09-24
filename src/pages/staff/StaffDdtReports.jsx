@@ -23,8 +23,8 @@ export default function StaffDdtReports() {
   const [nota, setNota] = useState('');
 
   const { data: staff } = useQuery({ queryKey: ['my-staff'], queryFn: getMyStaffMember });
-  const marketId = staff?.[0]?.market_id;
-
+  const marketId = staff?.market_id;
+  
   const { data: segnalazioni = [], isLoading } = useQuery({
     queryKey: ['ddt-reports', marketId],
     queryFn: () => getReportsByMarket(marketId),
