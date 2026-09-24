@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { getMarkets, getProssimeDateMercato } from '@/api/markets';import { createOrder as apiCreateOrder } from '@/api/orders';
+import { createOrder as apiCreateOrder } from '@/api/orders';
+import { supabase } from '@/api/client';
+import { getMarkets, getProssimeDateMercato } from '@/api/markets';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -82,6 +84,9 @@ export default function CheckoutModal({ open, onClose, company, cart, onSuccess 
       onSuccess();
       toast.success('Ordine inviato con successo!');
     },
+    onError: (e) => {
+      toast.error('Errore nell\'invio dell\'ordine', { description: e.message });
+    },
   });
 
   const handleClose = () => {
@@ -89,8 +94,10 @@ export default function CheckoutModal({ open, onClose, company, cart, onSuccess 
     onClose();
   };
 
-  const submit = () => {
+  const submit = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
     createOrder.mutate({
+      user_id: user?.id,
       company_id: company.id, company_name: company.name,
       market_id: selectedMarket.id, market_name: selectedMarket.name,
       items: cart, total_amount: cartTotal, status: 'in_attesa', pickup_date: pickupDate, notes,
