@@ -43,6 +43,23 @@ function FlyToUser({ userLocation }) {
   return null;
 }
 
+// Leaflet non si accorge da solo quando il suo contenitore cambia
+// dimensione (es. un drawer che si apre sposta/restringe il layout
+// dietro di sé) — i tile restano disegnati con le misure vecchie,
+// sfasati. Osserviamo il contenitore e ricalcoliamo ogni volta.
+function ResizeAware() {
+  const map = useMap();
+  useEffect(() => {
+    const container = map.getContainer();
+    const observer = new ResizeObserver(() => {
+      map.invalidateSize();
+    });
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [map]);
+  return null;
+}
+
 export default function MarketsMap({ markets, registeredIds, userLocation }) {
   const [selectedMarket, setSelectedMarket] = useState(null);
 
@@ -54,8 +71,8 @@ export default function MarketsMap({ markets, registeredIds, userLocation }) {
     : [41.9, 12.5]; // centro Italia
 
   return (
-    <div className="relative rounded-2xl overflow-hidden border border-border shadow-md" style={{ height: '520px' }}>
-      <MapContainer
+    <div className="relative z-0 rounded-2xl overflow-hidden border border-border shadow-md" style={{ height: '520px' }}> 
+         <MapContainer
         center={center}
         zoom={userLocation ? 10 : 6}
         style={{ height: '100%', width: '100%' }}
@@ -67,7 +84,8 @@ export default function MarketsMap({ markets, registeredIds, userLocation }) {
           maxZoom={19}
         />
         <FlyToUser userLocation={userLocation} />
-
+        <ResizeAware />
+        
         {mappable.map(market => {
           const count = (market.company_ids || []).filter(id => registeredIds.has(id)).length;
           const isSelected = selectedMarket?.id === market.id;
