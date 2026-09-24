@@ -75,8 +75,7 @@ export default function ProducerDDT() {
         {
           company_id: azienda.id,
           market_id: testata.market_id,
-          market_event_id: testata.market_event_id,
-          issue_date: oggi,
+          market_event_id: testata.market_event_id || null,          issue_date: oggi,
           transport_date: oggi,
           recipient_name: mercato?.name || 'Mercato',
           recipient_address: mercato?.address || null,
