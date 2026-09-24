@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format, addDays } from 'date-fns';
 import { it } from 'date-fns/locale';
-import { AlertTriangle, Loader2, ShieldAlert, ShieldX, CheckCircle2, Euro } from 'lucide-react';
-import { getReportsEscalated, createWarning, createBlock, createMonetaryNotice, risolviSegnalazione, getEscalationsAperte, risolviEscalation } from '@/api/sanctions';
+import { AlertTriangle, Loader2, ShieldAlert, ShieldX, CheckCircle2, Euro, Download, History } from 'lucide-react';
+import { getReportsEscalated, createWarning, createBlock, createMonetaryNotice, risolviSegnalazione, getEscalationsAperte, risolviEscalation, getAllSanctions } from '@/api/sanctions';
 import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,6 +39,29 @@ export default function AdminSegnalazioniDDT() {
     },
   });
 
+  const { data: cronologia = [] } = useQuery({
+    queryKey: ['sanctions-history'],
+    queryFn: getAllSanctions,
+  });
+
+  const ETICHETTE_TIPO = { warning: 'Ammonizione', stall_block: 'Blocco banco', monetary_notice: 'Sanzione pecuniaria' };
+
+  const esportaCronologia = () => {
+    const intestazione = ['Azienda', 'Mercato', 'Tipo', 'Motivo', 'Bloccato dal', 'Bloccato fino al', 'Revocato', 'Emesso il'];
+    const righe = cronologia.map((s) => [
+      s.companies?.name, s.markets?.name, ETICHETTE_TIPO[s.type] || s.type, s.reason,
+      s.blocked_from || '', s.blocked_until || '', s.lifted_at ? 'sì' : 'no',
+      format(new Date(s.created_at), 'dd/MM/yyyy HH:mm'),
+    ].map((c) => `"${String(c ?? '').replace(/"/g, '""')}"`).join(';'));
+    const csv = [intestazione.join(';'), ...righe].join('\n');
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `cronologia-sanzioni-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const provvedimentoMutation = useMutation({
     mutationFn: async () => {
       const { report, tipo } = azione;
@@ -52,9 +75,11 @@ export default function AdminSegnalazioniDDT() {
       }
       // report.id è null quando il provvedimento nasce da un'escalation
       // automatica (3 ammonizioni), non da una singola segnalazione DDT:
-      // in quel caso non c'è nulla da risolvere in missing_ddt_reports.
+      // in quel caso si chiude l'escalation stessa, non missing_ddt_reports.
       if (report.id) {
         await risolviSegnalazione(report.id);
+      } else if (report.escalationId) {
+        await risolviEscalation(report.escalationId);
       }
       qc.invalidateQueries({ queryKey: ['escalations-aperte'] });
     },
@@ -95,11 +120,11 @@ export default function AdminSegnalazioniDDT() {
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
-                <Button size="sm" variant="outline" onClick={() => apri({ company_id: e.company_id, market_id: e.market_id, companies: e.companies, id: null }, 'monetary')}
+                <Button size="sm" variant="outline" onClick={() => apri({ company_id: e.company_id, market_id: e.market_id, companies: e.companies, id: null, escalationId: e.id }, 'monetary')}
                         className="gap-1.5 text-orange-700 border-orange-300 hover:bg-orange-50">
                   <Euro className="w-3.5 h-3.5" /> Avvisa sanzione pecuniaria
                 </Button>
-                <Button size="sm" variant="outline" onClick={() => apri({ company_id: e.company_id, market_id: e.market_id, companies: e.companies, id: null }, 'block')}
+                <Button size="sm" variant="outline" onClick={() => apri({ company_id: e.company_id, market_id: e.market_id, companies: e.companies, id: null, escalationId: e.id }, 'block')}
                         className="gap-1.5 text-destructive border-destructive/30 hover:bg-destructive/5">
                   <ShieldX className="w-3.5 h-3.5" /> Blocca banco
                 </Button>
@@ -193,8 +218,47 @@ export default function AdminSegnalazioniDDT() {
               Conferma
             </Button>
           </DialogFooter>
-        </DialogContent>
+                </DialogContent>
       </Dialog>
+
+      <div className="pt-6">
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-sm font-semibold flex items-center gap-1.5">
+            <History className="w-4 h-4" /> Cronologia sanzioni
+          </p>
+          <Button size="sm" variant="outline" onClick={esportaCronologia} disabled={cronologia.length === 0} className="gap-1.5">
+            <Download className="w-3.5 h-3.5" /> Esporta CSV
+          </Button>
+        </div>
+        {cronologia.length === 0 ? (
+          <p className="text-sm text-muted-foreground py-4 text-center border rounded-xl">Nessun provvedimento emesso finora.</p>
+        ) : (
+          <div className="border rounded-xl bg-card overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b bg-muted/30">
+                  <th className="px-3 py-2 text-left font-medium text-xs text-muted-foreground">Azienda</th>
+                  <th className="px-3 py-2 text-left font-medium text-xs text-muted-foreground">Mercato</th>
+                  <th className="px-3 py-2 text-left font-medium text-xs text-muted-foreground">Tipo</th>
+                  <th className="px-3 py-2 text-left font-medium text-xs text-muted-foreground">Motivo</th>
+                  <th className="px-3 py-2 text-left font-medium text-xs text-muted-foreground">Data</th>
+                </tr>
+              </thead>
+              <tbody>
+                {cronologia.map((s) => (
+                  <tr key={s.id} className="border-b last:border-0">
+                    <td className="px-3 py-2">{s.companies?.name}</td>
+                    <td className="px-3 py-2">{s.markets?.name}</td>
+                    <td className="px-3 py-2">{ETICHETTE_TIPO[s.type] || s.type}</td>
+                    <td className="px-3 py-2 max-w-xs truncate">{s.reason}</td>
+                    <td className="px-3 py-2 text-xs text-muted-foreground">{format(new Date(s.created_at), 'd MMM yyyy', { locale: it })}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

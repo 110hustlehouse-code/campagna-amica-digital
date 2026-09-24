@@ -101,3 +101,12 @@ export async function createMonetaryNotice(
   }
   return unwrapOne(await supabase.from('stall_sanctions').insert(payload).select().single(), 'Avviso sanzione pecuniaria')
 }
+/** Tutti i provvedimenti emessi, per la cronologia dell'amministrazione. */
+export async function getAllSanctions(): Promise<any[]> {
+  const { data, error } = await supabase
+    .from('stall_sanctions')
+    .select('*, companies(name), markets(name)')
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return data ?? []
+}
