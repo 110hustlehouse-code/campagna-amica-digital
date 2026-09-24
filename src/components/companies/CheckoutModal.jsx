@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { getMarkets } from '@/api/markets';
-import { createOrder as apiCreateOrder } from '@/api/orders';
+import { getMarkets, getProssimeDateMercato } from '@/api/markets';import { createOrder as apiCreateOrder } from '@/api/orders';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,6 +32,12 @@ export default function CheckoutModal({ open, onClose, company, cart, onSuccess 
   const [step, setStep] = useState(0); // 0: mercato, 1: riepilogo
   const [selectedMarket, setSelectedMarket] = useState(null);
   const [pickupDate, setPickupDate] = useState('');
+
+  const { data: prossimeDate = [] } = useQuery({
+    queryKey: ['prossime-date', selectedMarket?.id],
+    queryFn: () => getProssimeDateMercato(selectedMarket.id),
+    enabled: !!selectedMarket?.id,
+  });
   const [notes, setNotes] = useState('');
   const [userCoords, setUserCoords] = useState(null);
 
@@ -197,7 +202,24 @@ export default function CheckoutModal({ open, onClose, company, cart, onSuccess 
 
               <div>
                 <label className="text-sm font-medium block mb-1">Data di ritiro</label>
-                <Input type="date" value={pickupDate} onChange={e => setPickupDate(e.target.value)} min={new Date().toISOString().split('T')[0]} />
+                {prossimeDate.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">
+                    Nessuna data di mercato disponibile al momento per questo punto di ritiro.
+                  </p>
+                ) : (
+                  <select
+                    value={pickupDate}
+                    onChange={(e) => setPickupDate(e.target.value)}
+                    className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm"
+                  >
+                    <option value="">Scegli una data...</option>
+                    {prossimeDate.map((d) => (
+                      <option key={d} value={d}>
+                        {new Date(d).toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })}
+                      </option>
+                    ))}
+                  </select>
+                )}
                 {selectedMarket?.schedule && (
                   <p className="text-xs text-muted-foreground mt-1">Orari mercato: {selectedMarket.schedule}</p>
                 )}

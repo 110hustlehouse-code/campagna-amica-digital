@@ -168,3 +168,26 @@ export const ETICHETTE_TRASPORTO: Record<string, string> = {
   vettore: 'A cura del vettore',
   destinatario: 'A cura del destinatario',
 }
+/**
+ * Prodotti coperti da un DDT emesso per un'azienda in una data.
+ * Usata per avvisare il produttore, alla conferma di un ordine, se
+ * qualche articolo ordinato non risulta arrivato al mercato quel
+ * giorno — protegge sia il cliente (niente conferme di merce che non
+ * c'è) sia Campagna Amica (tracciabilità).
+ */
+export async function getProdottiCopertiDaDdt(companyId: string, data: string): Promise<Set<string>> {
+  const { data: ddt } = await supabase
+    .from('delivery_notes')
+    .select('id, delivery_note_items(product_id)')
+    .eq('company_id', companyId)
+    .eq('transport_date', data)
+    .eq('status', 'issued')
+
+  const idsCoperti = new Set<string>()
+  for (const doc of ddt ?? []) {
+    for (const riga of (doc as any).delivery_note_items ?? []) {
+      if (riga.product_id) idsCoperti.add(riga.product_id)
+    }
+  }
+  return idsCoperti
+}

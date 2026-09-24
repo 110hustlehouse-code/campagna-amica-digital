@@ -67,3 +67,28 @@ export async function getBloccoAttivoFinoA(companyId: string, marketId: string):
   if (error) throw error
   return data as string | null
 }
+/** Le prossime N date reali in cui il mercato è aperto (ricorrenti + eventi speciali), a partire da oggi. */
+export async function getProssimeDateMercato(marketId: string, giorni = 60): Promise<string[]> {
+  const { data: market, error } = await supabase
+    .from('markets').select('recurring_days').eq('id', marketId).single()
+  if (error) throw error
+
+  const { data: eventi } = await supabase
+    .from('market_events').select('event_date')
+    .eq('market_id', marketId)
+    .gte('event_date', new Date().toISOString().slice(0, 10))
+
+  const date = new Set<string>((eventi ?? []).map((e) => e.event_date))
+
+  const oggi = new Date()
+  for (let i = 0; i < giorni; i++) {
+    const d = new Date(oggi)
+    d.setDate(d.getDate() + i)
+    const isodow = ((d.getDay() + 6) % 7) + 1 // 1=lun...7=dom
+    if ((market.recurring_days ?? []).includes(isodow)) {
+      date.add(d.toISOString().slice(0, 10))
+    }
+  }
+
+  return Array.from(date).sort()
+}

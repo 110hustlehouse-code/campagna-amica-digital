@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { subscribeTable } from '@/api/client';
 import { getMyCompany } from '@/api/companies';
 import { getOrdersByCompany, updateOrderStatus } from '@/api/orders';
-import { getReviews } from '@/api/reviews';
+import { getProdottiCopertiDaDdt } from '@/api/ddt';import { getReviews } from '@/api/reviews';
 import { invokeFunction } from '@/api/functions';
 import { useAuth } from '@/lib/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
@@ -155,6 +155,30 @@ export default function ProducerOrders() {
     mutationFn: ({ id, status }) => updateOrderStatus(id, status),
     onSuccess: () => qc.invalidateQueries(['my-orders']),
   });
+    const handleStatusChange = async (id, status, order) => {
+    if (status !== 'confermato' || !order.pickup_date || !myCompany?.id) {
+      updateStatus.mutate({ id, status });
+      return;
+    }
+    
+    try {
+      const coperti = await getProdottiCopertiDaDdt(myCompany.id, order.pickup_date);
+      const mancanti = (order.items || []).filter(
+        (item) => item.product_id && !coperti.has(item.product_id)
+      );
+      if (mancanti.length > 0) {
+        toast({
+          title: 'Attenzione: alcuni articoli non risultano nel DDT di oggi',
+          description: mancanti.map((m) => m.product_name).join(', ') +
+            ' — verifica prima di confermare se è merce effettivamente disponibile.',
+          variant: 'destructive',
+        });
+      }
+    } catch {
+      // Verifica non riuscita: non blocchiamo la conferma per un problema tecnico.
+    }
+    updateStatus.mutate({ id, status });
+  };
 
   const exportPDF = async () => {
     try {
@@ -354,8 +378,7 @@ export default function ProducerOrders() {
           </div>
         ) : (
           sorted.map(order => (
-            <OrderCard key={order.id} order={order} onStatusChange={(id, status) => updateStatus.mutate({ id, status })} />
-          ))
+            <OrderCard key={order.id} order={order} onStatusChange={(id, status) => handleStatusChange(id, status, order)} />          ))
         )}
         </div>
 
