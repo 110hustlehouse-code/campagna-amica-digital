@@ -53,3 +53,11 @@ export const ETICHETTE_AZIONE: Record<StaffAction, string> = {
   request_suspension: 'Richiedi sospensione',
   dismiss: 'Archivia (falso allarme)',
 }
+/** Le segnalazioni ammonite dallo staff per un'azienda su un mercato — usate nella cronologia sanzioni per mostrare da dove nasce un provvedimento. */
+export async function getReportsAmmoniteByCompanyMarket(companyId: string, marketId: string): Promise<MissingDdtReport[]> {
+  return unwrapMany(
+    await supabase.from('missing_ddt_reports').select('*')
+      .eq('company_id', companyId).eq('market_id', marketId).eq('staff_action', 'warn')
+      .order('data_evento', { ascending: false }),
+    'Segnalazioni ammonite')
+}

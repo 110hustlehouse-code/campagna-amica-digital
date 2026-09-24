@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format, addDays } from 'date-fns';
 import { it } from 'date-fns/locale';
-import { AlertTriangle, Loader2, ShieldAlert, ShieldX, CheckCircle2, Euro, Download, History } from 'lucide-react';
+import { AlertTriangle, Loader2, ShieldAlert, ShieldX, CheckCircle2, Euro, Download, History, Search, ChevronDown, ChevronUp } from 'lucide-react';
 import { getReportsEscalated, createWarning, createBlock, createMonetaryNotice, risolviSegnalazione, getEscalationsAperte, risolviEscalation, getAllSanctions } from '@/api/sanctions';
+import { getReportsAmmoniteByCompanyMarket } from '@/api/ddtReports';
 import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -42,6 +43,23 @@ export default function AdminSegnalazioniDDT() {
   const { data: cronologia = [] } = useQuery({
     queryKey: ['sanctions-history'],
     queryFn: getAllSanctions,
+  });
+
+  const [ricerca, setRicerca] = useState('');
+  const [rigaAperta, setRigaAperta] = useState(null);
+
+  const cronologiaFiltrata = useMemo(() => {
+    const q = ricerca.trim().toLowerCase();
+    if (!q) return cronologia;
+    return cronologia.filter((s) =>
+      s.companies?.name?.toLowerCase().includes(q) ||
+      s.markets?.name?.toLowerCase().includes(q));
+  }, [cronologia, ricerca]);
+
+  const { data: segnalazioniCorrelate = [] } = useQuery({
+    queryKey: ['segnalazioni-correlate', rigaAperta?.company_id, rigaAperta?.market_id],
+    queryFn: () => getReportsAmmoniteByCompanyMarket(rigaAperta.company_id, rigaAperta.market_id),
+    enabled: !!rigaAperta,
   });
 
   const ETICHETTE_TIPO = { warning: 'Ammonizione', stall_block: 'Blocco banco', monetary_notice: 'Sanzione pecuniaria' };
@@ -222,7 +240,7 @@ export default function AdminSegnalazioniDDT() {
       </Dialog>
 
       <div className="pt-6">
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-3 gap-3 flex-wrap">
           <p className="text-sm font-semibold flex items-center gap-1.5">
             <History className="w-4 h-4" /> Cronologia sanzioni
           </p>
@@ -230,32 +248,62 @@ export default function AdminSegnalazioniDDT() {
             <Download className="w-3.5 h-3.5" /> Esporta CSV
           </Button>
         </div>
+
+        {cronologia.length > 0 && (
+          <div className="relative mb-3">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input className="pl-9" placeholder="Cerca per azienda o mercato"
+                   value={ricerca} onChange={(e) => setRicerca(e.target.value)} />
+          </div>
+        )}
+
         {cronologia.length === 0 ? (
           <p className="text-sm text-muted-foreground py-4 text-center border rounded-xl">Nessun provvedimento emesso finora.</p>
+        ) : cronologiaFiltrata.length === 0 ? (
+          <p className="text-sm text-muted-foreground py-4 text-center border rounded-xl">Nessun risultato per "{ricerca}".</p>
         ) : (
-          <div className="border rounded-xl bg-card overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b bg-muted/30">
-                  <th className="px-3 py-2 text-left font-medium text-xs text-muted-foreground">Azienda</th>
-                  <th className="px-3 py-2 text-left font-medium text-xs text-muted-foreground">Mercato</th>
-                  <th className="px-3 py-2 text-left font-medium text-xs text-muted-foreground">Tipo</th>
-                  <th className="px-3 py-2 text-left font-medium text-xs text-muted-foreground">Motivo</th>
-                  <th className="px-3 py-2 text-left font-medium text-xs text-muted-foreground">Data</th>
-                </tr>
-              </thead>
-              <tbody>
-                {cronologia.map((s) => (
-                  <tr key={s.id} className="border-b last:border-0">
-                    <td className="px-3 py-2">{s.companies?.name}</td>
-                    <td className="px-3 py-2">{s.markets?.name}</td>
-                    <td className="px-3 py-2">{ETICHETTE_TIPO[s.type] || s.type}</td>
-                    <td className="px-3 py-2 max-w-xs truncate">{s.reason}</td>
-                    <td className="px-3 py-2 text-xs text-muted-foreground">{format(new Date(s.created_at), 'd MMM yyyy', { locale: it })}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="border rounded-xl bg-card divide-y">
+            {cronologiaFiltrata.map((s) => {
+              const aperta = rigaAperta?.id === s.id;
+              return (
+                <div key={s.id}>
+                  <button
+                    onClick={() => setRigaAperta(aperta ? null : s)}
+                    className="w-full text-left px-4 py-3 flex items-center justify-between gap-3 hover:bg-muted/20 transition-colors"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium text-sm">{s.companies?.name}</span>
+                        <span className="text-xs text-muted-foreground">· {s.markets?.name}</span>
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-muted">{ETICHETTE_TIPO[s.type] || s.type}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5 truncate">{s.reason}</p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-xs text-muted-foreground">{format(new Date(s.created_at), 'd MMM yyyy', { locale: it })}</span>
+                      {aperta ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+                    </div>
+                  </button>
+                  {aperta && (
+                    <div className="px-4 pb-4">
+                      <p className="text-xs font-medium text-muted-foreground mb-2">Segnalazioni dello staff collegate</p>
+                      {segnalazioniCorrelate.length === 0 ? (
+                        <p className="text-xs text-muted-foreground italic">Nessuna ammonizione registrata per questa azienda su questo mercato.</p>
+                      ) : (
+                        <div className="space-y-1.5">
+                          {segnalazioniCorrelate.map((r) => (
+                            <div key={r.id} className="text-xs border rounded-lg p-2 bg-muted/20">
+                              <span className="font-medium">{format(new Date(r.data_evento), 'd MMM yyyy', { locale: it })}</span>
+                              {r.staff_note && <span className="text-muted-foreground"> — {r.staff_note}</span>}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
