@@ -45,7 +45,14 @@ export default function UnifiedBottomNav({ navItems, stacks, setStacks }) {
                   : 'text-muted-foreground hover:text-foreground'
               )}
             >
-              <Icon className={cn('w-5 h-5', isActive && 'stroke-[2.5]')} />
+              <div className="relative">
+                <Icon className={cn('w-5 h-5', isActive && 'stroke-[2.5]')} />
+                {item.badge > 0 && (
+                  <span className="absolute -top-1.5 -right-2 min-w-[16px] h-4 px-1 rounded-full bg-destructive text-white text-[9px] font-bold flex items-center justify-center leading-none">
+                    {item.badge > 10 ? '10+' : item.badge}
+                  </span>
+                )}
+              </div>
               <span className={cn('text-[10px] font-medium', isActive && 'font-bold')}>{item.label}</span>
             </button>
           );

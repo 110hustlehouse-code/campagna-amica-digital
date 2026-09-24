@@ -9,6 +9,7 @@ import Footer from '../shared/Footer';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/AuthContext';
 import { getMyCompany } from '@/api/companies';
+import { supabase } from '@/api/client';
 import { haAncoraDdtDaFareOggi } from '@/api/ddt';
 
 const ROOT_PATHS = ['/produttore', '/produttore/prodotti', '/produttore/ddt', '/produttore/ordini', '/produttore/azienda'];
@@ -53,10 +54,22 @@ export default function ProducerLayout() {
     refetchInterval: 5 * 60 * 1000,
   });
 
-  const visibleNavItems = useMemo(
-    () => haDdtDaFare ? navItems : navItems.filter((n) => n.section !== 'ddt'),
-    [haDdtDaFare],
-  );
+  const { data: ordiniInAttesa = 0 } = useQuery({
+    queryKey: ['ordini-in-attesa-count', myCompany?.id],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('orders').select('id', { count: 'exact', head: true })
+        .eq('company_id', myCompany.id).eq('status', 'in_attesa');
+      return count ?? 0;
+    },
+    enabled: !!myCompany?.id,
+    refetchInterval: 60 * 1000, // ogni minuto: gli ordini nuovi devono comparire senza aspettare troppo
+  });
+
+  const visibleNavItems = useMemo(() => {
+    const base = haDdtDaFare ? navItems : navItems.filter((n) => n.section !== 'ddt');
+    return base.map((n) => n.section === 'ordini' ? { ...n, badge: ordiniInAttesa } : n);
+  }, [haDdtDaFare, ordiniInAttesa]);
 
   useEffect(() => {
     const section = navItems.find(n => location.pathname === n.path)?.section || 'home';
