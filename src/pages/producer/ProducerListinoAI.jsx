@@ -30,7 +30,7 @@ export default function ProducerListinoAI() {
 
   const handleFile = async (file) => {
     await startUpload(file, myCompany?.id);
-    qc.invalidateQueries(['my-products']);
+    qc.invalidateQueries({ queryKey: ['my-products'] });
   };
 
   if (!myCompany) return (
@@ -155,7 +155,7 @@ export default function ProducerListinoAI() {
         )}
 
         {/* Done */}
-        {status === 'done' && result && (
+        {status === 'done' && (
           <div className="bg-white rounded-2xl border border-border/40 shadow-sm overflow-hidden">
             <div className="h-1 bg-primary" />
             <div className="p-5 space-y-4">
@@ -165,7 +165,9 @@ export default function ProducerListinoAI() {
                 </div>
                 <div>
                   <p className="font-bold text-foreground text-lg">Analisi completata!</p>
-                  <p className="text-sm text-muted-foreground">{result.count} prodotti aggiunti al listino</p>
+                  <p className="text-sm text-muted-foreground">
+                    {result?.count ? `${result.count} prodotti aggiunti al listino` : 'Catalogo aggiornato'}
+                  </p>
                 </div>
               </div>
               <Link to="/produttore/prodotti">
