@@ -283,7 +283,16 @@ export default function ProducerOrders() {
       <div className="px-5 pt-4 pb-24 space-y-4">
         {/* Statistiche */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Card className="border-0 shadow-sm bg-white">
+          <Card
+            className="relative border-0 shadow-sm bg-white cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => toast({
+              title: '📊 Metriche avanzate in arrivo',
+              description: 'Presto qui potrai vedere andamento, confronti e statistiche dettagliate sui tuoi ricavi.',
+            })}
+          >
+            <span className="absolute -top-1.5 -right-1.5 bg-secondary text-primary text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow uppercase tracking-wide">
+              Presto
+            </span>
             <CardContent className="p-4">
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
