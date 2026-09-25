@@ -203,9 +203,15 @@ export default function CompanyNeeds() {
   const activeNeeds = realNeeds.filter(n => n.status === 'open' || n.status === 'in_progress');
   const historyNeeds = realNeeds.filter(n => n.status === 'resolved' || n.status === 'closed');
 
-  const baseNeeds = showHistory ? historyNeeds : activeNeeds;
-  const filteredNeeds = baseNeeds.filter(need => {
-    if (filterStatus && need.status !== filterStatus) return false;
+  // Se filterStatus è impostato, mostra ESATTAMENTE quello stato (chiuso/risolto/in corso/aperto),
+  // indipendentemente da showHistory. showHistory fa solo da fallback quando il filtro stato è vuoto.
+  const filteredNeeds = realNeeds.filter(need => {
+    if (filterStatus) {
+      if (need.status !== filterStatus) return false;
+    } else {
+      const isActive = need.status === 'open' || need.status === 'in_progress';
+      if (showHistory ? isActive : !isActive) return false;
+    }
     if (filterPriority && need.priority !== filterPriority) return false;
     return true;
   });
