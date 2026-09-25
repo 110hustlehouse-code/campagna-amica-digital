@@ -1,9 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getMyCompany } from '@/api/companies';
-import { uploadFile } from '@/api/storage';
-import { invokeFunction } from '@/api/functions';
 import { useAuth } from '@/lib/AuthContext';
+import { useListinoAi } from '@/lib/ListinoAiContext';
 import { Button } from '@/components/ui/button';
 import { Sparkles, Upload, CheckCircle2, Package, AlertCircle, FileText, Image, Wand2, ArrowRight, Award, Leaf } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
@@ -20,13 +19,8 @@ export default function ProducerListinoAI() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const { toast } = useToast();
-  const [status, setStatus] = useState('idle');
-  const [activeStep, setActiveStep] = useState(0);
-  const [progress, setProgress] = useState(0);
-  const [result, setResult] = useState(null);
-  const [errorMsg, setErrorMsg] = useState('');
   const inputRef = useRef();
-  const progressRef = useRef(null);
+  const { status, activeStep, progress, result, errorMsg, startUpload, reset } = useListinoAi();
 
   const { data: myCompany } = useQuery({
     queryKey: ['my-company', user?.email],
@@ -34,80 +28,9 @@ export default function ProducerListinoAI() {
     enabled: !!user?.email,
   });
 
-  useEffect(() => {
-    if (status === 'analyzing') {
-      setProgress(5);
-      setActiveStep(0);
-      const milestones = [
-        { pct: 20, step: 0, delay: 400 },
-        { pct: 45, step: 1, delay: 3000 },
-        { pct: 65, step: 2, delay: 8000 },
-        { pct: 85, step: 3, delay: 14000 },
-        { pct: 93, step: 3, delay: 22000 },
-      ];
-      const timers = milestones.map(({ pct, step, delay }) =>
-        setTimeout(() => { setProgress(pct); setActiveStep(step); }, delay)
-      );
-      progressRef.current = timers;
-      // Save state to localStorage when leaving
-      const handleBeforeUnload = () => {
-        localStorage.setItem('listino-ai-state', JSON.stringify({ status, progress, activeStep, result }));
-      };
-      window.addEventListener('beforeunload', handleBeforeUnload);
-      return () => {
-        timers.forEach(clearTimeout);
-        window.removeEventListener('beforeunload', handleBeforeUnload);
-      };
-    }
-    if (status === 'done') { setProgress(100); setActiveStep(3); }
-  }, [status, progress, activeStep, result]);
-
-  // Restore state from localStorage on mount
-  useEffect(() => {
-    const saved = localStorage.getItem('listino-ai-state');
-    if (saved) {
-      const { status: savedStatus, progress: savedProgress, activeStep: savedActiveStep, result: savedResult } = JSON.parse(saved);
-      if (savedStatus === 'analyzing') {
-        setStatus(savedStatus);
-        setProgress(savedProgress);
-        setActiveStep(savedActiveStep);
-      } else if (savedStatus === 'done') {
-        setStatus(savedStatus);
-        setProgress(100);
-        setActiveStep(3);
-        setResult(savedResult);
-      }
-      localStorage.removeItem('listino-ai-state');
-    }
-  }, []);
-
   const handleFile = async (file) => {
-    if (!file || !myCompany) return;
-    setStatus('analyzing');
-    setResult(null);
-    setErrorMsg('');
-    const { file_url } = await uploadFile(file, 'allegati');
-    
-    // Retry logic per gestire timeout (504)
-    let res, retries = 0;
-    while (retries < 3) {
-      try {
-        res = await invokeFunction('analyzeListino', { file_url, company_id: myCompany.id });
-        break;
-      } catch (err) {
-        if (err.response?.status === 504 && retries < 2) {
-          retries++;
-          await new Promise(r => setTimeout(r, 2000));
-        } else throw err;
-      }
-    }
-    
-    if (progressRef.current) progressRef.current.forEach(clearTimeout);
-    if (res.data?.error) { setStatus('error'); setErrorMsg(res.data.error); return; }
-    setResult(res.data);
-    setStatus('done');
+    await startUpload(file, myCompany?.id);
     qc.invalidateQueries(['my-products']);
-    toast({ title: `✅ ${res.data.count} prodotti aggiunti!` });
   };
 
   if (!myCompany) return (
@@ -250,7 +173,7 @@ export default function ProducerListinoAI() {
                   <Package className="w-4 h-4" /> Vedi i prodotti <ArrowRight className="w-4 h-4 ml-auto" />
                 </Button>
               </Link>
-              <Button variant="outline" className="w-full rounded-xl" onClick={() => { setStatus('idle'); setProgress(0); setResult(null); }}>
+              <Button variant="outline" className="w-full rounded-xl" onClick={reset}>
                 Carica un altro listino
               </Button>
             </div>
@@ -266,7 +189,7 @@ export default function ProducerListinoAI() {
               </div>
               <p className="text-sm text-destructive font-medium">{errorMsg || 'Errore durante l\'analisi'}</p>
             </div>
-            <Button variant="outline" className="w-full rounded-xl" onClick={() => { setStatus('idle'); setProgress(0); }}>
+            <Button variant="outline" className="w-full rounded-xl" onClick={reset}>
               Riprova
             </Button>
           </div>

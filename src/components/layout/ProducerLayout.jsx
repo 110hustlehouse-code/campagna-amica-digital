@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
@@ -9,8 +9,9 @@ import Footer from '../shared/Footer';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/AuthContext';
 import { getMyCompany } from '@/api/companies';
-import { supabase } from '@/api/client';
 import { haAncoraDdtDaFareOggi } from '@/api/ddt';
+import { ListinoAiProvider, useListinoAi } from '@/lib/ListinoAiContext';
+import { supabase } from '@/api/client';
 
 const ROOT_PATHS = ['/produttore', '/produttore/prodotti', '/produttore/ddt', '/produttore/ordini', '/produttore/azienda'];
 
@@ -25,6 +26,22 @@ const navItems = [
   { path: '/produttore/ordini', label: 'Ordini', icon: ShoppingBag, section: 'ordini' },
   { path: '/produttore/azienda', label: 'Azienda', icon: Building2, section: 'azienda' },
 ];
+
+// Quando l'analisi Listino AI passa da "analyzing" a "done", riporta il
+// produttore su Prodotti a mostrare il catalogo appena caricato —
+// da qualunque schermata si trovasse mentre l'AI lavorava.
+function ListinoAiCompletionWatcher() {
+  const { status } = useListinoAi();
+  const navigate = useNavigate();
+  const prevStatus = useRef(status);
+  useEffect(() => {
+    if (prevStatus.current === 'analyzing' && status === 'done') {
+      navigate('/produttore/prodotti');
+    }
+    prevStatus.current = status;
+  }, [status, navigate]);
+  return null;
+}
 
 export default function ProducerLayout() {
   const location = useLocation();
@@ -122,16 +139,19 @@ export default function ProducerLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <div className="flex-1 overflow-y-auto pb-20">
-        <AnimatePresence mode="wait">
-          <PageTransition key={location.pathname}>
-            <Outlet />
-          </PageTransition>
-        </AnimatePresence>
-        <Footer />
+    <ListinoAiProvider>
+      <ListinoAiCompletionWatcher />
+      <div className="min-h-screen bg-background flex flex-col">
+        <div className="flex-1 overflow-y-auto pb-20">
+          <AnimatePresence mode="wait">
+            <PageTransition key={location.pathname}>
+              <Outlet />
+            </PageTransition>
+          </AnimatePresence>
+          <Footer />
+        </div>
+        <UnifiedBottomNav navItems={visibleNavItems} stacks={stacks} setStacks={setStacks} />
       </div>
-      <UnifiedBottomNav navItems={visibleNavItems} stacks={stacks} setStacks={setStacks} />
-    </div>
+    </ListinoAiProvider>
   );
 }
