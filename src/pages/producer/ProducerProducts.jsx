@@ -80,6 +80,7 @@ export default function ProducerProducts() {
     queryKey: ['my-products', myCompany?.id],
     queryFn: () => getProductsByCompany(myCompany.id),
     enabled: !!myCompany?.id,
+    refetchOnMount: 'always',
   });
 
   // Apre un prodotto esistente: carica anche i suoi prezzi rivenditore,
