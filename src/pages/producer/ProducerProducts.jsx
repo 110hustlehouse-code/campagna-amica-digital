@@ -262,7 +262,7 @@ export default function ProducerProducts() {
                 <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center text-2xl border border-primary/20">
                   {p.image_url
                     ? <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
-                    : <span>{CATEGORY_EMOJI[p.category] || '🌿'}</span>}
+                    : <img src="https://otefhryrnajzfyaiwmja.supabase.co/storage/v1/object/public/Badges/Foto_Prodotto_Non_Disponibile.png" alt="Foto non disponibile" className="w-full h-full object-cover" />}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-sm text-foreground truncate flex items-center gap-2">
@@ -302,7 +302,7 @@ export default function ProducerProducts() {
             <div className="aspect-square bg-muted flex items-center justify-center text-6xl overflow-hidden">
               {anteprima.image_url
                 ? <img src={anteprima.image_url} alt={anteprima.name} className="w-full h-full object-cover" />
-                : <span>{CATEGORY_EMOJI[anteprima.category] || '🌿'}</span>}
+                : <img src="https://otefhryrnajzfyaiwmja.supabase.co/storage/v1/object/public/Badges/Foto_Prodotto_Non_Disponibile.png" alt="Foto non disponibile" className="w-full h-full object-cover" />}
             </div>
             <div className="p-5 space-y-3">
               <div className="flex items-start justify-between gap-3">

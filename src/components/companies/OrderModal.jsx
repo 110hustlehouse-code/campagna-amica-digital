@@ -171,9 +171,7 @@ Prodotti: ${JSON.stringify(products.map(p => ({ id: p.id, name: p.name, unit: p.
                       {product.image_url ? (
                         <img src={product.image_url} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                       ) : (
-                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <ShoppingBag style={{ width: 32, height: 32, opacity: 0.3 }} />
-                        </div>
+                        <img src="https://otefhryrnajzfyaiwmja.supabase.co/storage/v1/object/public/Badges/Foto_Prodotto_Non_Disponibile.png" alt="Foto non disponibile" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                       )}
                       {inCart && (
                         <div style={{ position: 'absolute', top: 6, right: 6, width: 20, height: 20, borderRadius: '50%', background: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

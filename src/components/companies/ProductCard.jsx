@@ -22,9 +22,7 @@ export default function ProductCard({ product, isFav, onToggleFav, cartQty = 0, 
         {product.image_url ? (
           <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-primary/10 to-secondary/20 flex items-center justify-center">
-            <ShoppingBag className="w-10 h-10 text-primary/30" />
-          </div>
+          <img src="https://otefhryrnajzfyaiwmja.supabase.co/storage/v1/object/public/Badges/Foto_Prodotto_Non_Disponibile.png" alt="Foto non disponibile" className="w-full h-full object-cover" />
         )}
         {/* Cuore preferiti */}
         {onToggleFav && (
