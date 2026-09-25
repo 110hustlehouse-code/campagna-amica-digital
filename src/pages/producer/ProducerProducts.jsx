@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Plus, Trash2, Edit2, ToggleLeft, ToggleRight, Loader2, AlertTriangle, Package,
-  ImageIcon, Award, Leaf, FileText, Search, X, Truck, Store, ChevronDown, ChevronUp, Check,
+  ImageIcon, Award, Leaf, FileText, Search, X, Truck, Store, ChevronDown, ChevronUp, Check, Eye,
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -85,6 +85,8 @@ export default function ProducerProducts() {
 
   // Apre un prodotto esistente: carica anche i suoi prezzi rivenditore,
   // che vivono in una tabella separata (mai pubblica, a differenza di products).
+  const [anteprima, setAnteprima] = useState(null);
+
   const apriModifica = async (p) => {
     setMostraAvanzate(false);
     let priceList1 = '';
@@ -252,7 +254,8 @@ export default function ProducerProducts() {
           products.filter((p) => p.name.toLowerCase().includes(searchQuery.toLowerCase())).map((p) => (
             <div
               key={p.id}
-              className={`bg-white rounded-2xl border-2 border-primary/20 shadow-sm overflow-hidden transition-all hover:shadow-md ${!p.available ? 'opacity-50' : ''}`}
+              onClick={() => setAnteprima(p)}
+              className={`bg-white rounded-2xl border-2 border-primary/20 shadow-sm overflow-hidden transition-all hover:shadow-md cursor-pointer ${!p.available ? 'opacity-50' : ''}`}
             >
               <div className="h-1 w-full bg-gradient-to-r from-primary via-primary/80 to-secondary" />
               <div className="flex items-center gap-3 p-3">
@@ -274,15 +277,15 @@ export default function ProducerProducts() {
                   {p.description && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{p.description}</p>}
                 </div>
                 <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
-                  <button onClick={() => toggleMutation.mutate(p)} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
+                  <button onClick={(e) => { e.stopPropagation(); toggleMutation.mutate(p); }} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
                     {p.available !== false
                       ? <ToggleRight className="w-5 h-5 text-primary" />
                       : <ToggleLeft className="w-5 h-5 text-muted-foreground" />}
                   </button>
-                  <button onClick={() => apriModifica(p)} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
+                  <button onClick={(e) => { e.stopPropagation(); apriModifica(p); }} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
                     <Edit2 className="w-4 h-4 text-muted-foreground" />
                   </button>
-                  <button onClick={() => deleteMutation.mutate(p.id)} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
+                  <button onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(p.id); }} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
                     <Trash2 className="w-3.5 h-3.5 text-destructive/60" />
                   </button>
                 </div>
@@ -291,6 +294,67 @@ export default function ProducerProducts() {
           ))
         )}
       </div>
+
+      {/* Anteprima come la vede il cliente */}
+      {anteprima && (
+        <Dialog open onOpenChange={() => setAnteprima(null)}>
+          <DialogContent className="max-w-md mx-4 rounded-2xl overflow-hidden p-0">
+            <div className="aspect-square bg-muted flex items-center justify-center text-6xl overflow-hidden">
+              {anteprima.image_url
+                ? <img src={anteprima.image_url} alt={anteprima.name} className="w-full h-full object-cover" />
+                : <span>{CATEGORY_EMOJI[anteprima.category] || '🌿'}</span>}
+            </div>
+            <div className="p-5 space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="font-heading text-xl font-bold text-foreground">{anteprima.name}</h3>
+                  <p className="text-sm text-muted-foreground capitalize">{anteprima.category?.replace('_', ' ')}</p>
+                </div>
+                <p className="text-xl font-bold text-primary whitespace-nowrap">
+                  €{anteprima.price}<span className="text-sm font-normal text-muted-foreground">/{anteprima.unit}</span>
+                </p>
+              </div>
+
+              {anteprima.description && (
+                <p className="text-sm text-foreground">{anteprima.description}</p>
+              )}
+
+              {anteprima.ingredients && (
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">Ingredienti</p>
+                  <p className="text-sm text-foreground">{anteprima.ingredients}</p>
+                </div>
+              )}
+
+              {(() => {
+                const allergeniAttivi = ALLERGENI.filter((a) => anteprima[a.key]);
+                return allergeniAttivi.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Allergeni</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {allergeniAttivi.map((a) => (
+                        <span key={a.key} className="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+                          {a.label}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {!anteprima.available && (
+                <p className="text-xs text-destructive font-medium">Non visibile ai clienti (disattivato)</p>
+              )}
+            </div>
+            <DialogFooter className="px-5 pb-5">
+              <Button variant="outline" onClick={() => setAnteprima(null)}>Chiudi</Button>
+              <Button onClick={() => { setAnteprima(null); apriModifica(anteprima); }} className="gap-1.5">
+                <Edit2 className="w-4 h-4" /> Modifica
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Edit/Add Dialog */}
       {editProduct && (

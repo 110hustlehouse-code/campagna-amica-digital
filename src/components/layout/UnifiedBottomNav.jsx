@@ -6,6 +6,17 @@ export default function UnifiedBottomNav({ navItems, stacks, setStacks }) {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Tra tutte le voci il cui percorso corrisponde alla pagina corrente,
+  // solo la più specifica (il percorso più lungo) è davvero attiva.
+  // Senza questo, "/produttore" (Home) risulta sempre attivo anche
+  // dentro "/produttore/ordini", perché è un prefisso di ogni altra voce.
+  const candidati = navItems.filter((item) =>
+    location.pathname === item.path || location.pathname.startsWith(item.path + '/')
+  );
+  const vociAttiva = candidati.length > 0
+    ? candidati.reduce((a, b) => (b.path.length > a.path.length ? b : a))
+    : null;
+
   const handleNavClick = (item) => {
     const currentSection = navItems.find(n => 
       location.pathname === n.path || location.pathname.startsWith(n.path + '/')
@@ -32,7 +43,7 @@ export default function UnifiedBottomNav({ navItems, stacks, setStacks }) {
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
       <div className="flex items-center justify-around px-1 py-2">
         {navItems.map((item) => {
-          const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + '/');
+          const isActive = vociAttiva?.path === item.path;
           const Icon = item.icon;
           return (
             <button
