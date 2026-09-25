@@ -357,7 +357,11 @@ export default function ProducerHome() {
             </div>
             <div className="space-y-2">
               {todayOrders.slice(0, 3).map(order => (
-                <div key={order.id} className="bg-card rounded-2xl border border-border/40 p-4 flex items-center justify-between gap-3">
+                <Link
+                  key={order.id}
+                  to="/produttore/ordini"
+                  className="bg-card rounded-2xl border border-border/40 p-4 flex items-center justify-between gap-3 hover:border-primary/30 hover:bg-primary/5 transition-colors"
+                >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0">
                       <ShoppingBag className="w-4 h-4 text-amber-600" />
@@ -374,7 +378,7 @@ export default function ProducerHome() {
                   <span className={`text-xs font-semibold px-2.5 py-1 rounded-full flex-shrink-0 ${statusColors[order.status] || 'bg-muted text-muted-foreground'}`}>
                     {statusLabels[order.status] || order.status}
                   </span>
-                </div>
+                </Link>
               ))}
             </div>
           </div>
