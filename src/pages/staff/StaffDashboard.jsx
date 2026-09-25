@@ -216,9 +216,8 @@ export default function StaffDashboard() {
           </div>
         </div>
 
-        {/* Prodotti Fuori Stagione */}
-        {seasonalAlerts.length > 0 && (() => {
-          // Raggruppa per company_id
+        {/* Prodotti Fuori Stagione — sempre visibile, a tendina, come le altre sezioni */}
+        {(() => {
           const byCompany = seasonalAlerts.reduce((acc, alert) => {
             const key = alert.company_id || 'unknown';
             if (!acc[key]) acc[key] = [];
@@ -234,14 +233,19 @@ export default function StaffDashboard() {
                 <div className="flex items-center gap-2">
                   <Leaf className="w-5 h-5 text-orange-500" />
                   <span className="font-heading text-lg font-bold text-foreground">Prodotti Fuori Stagione</span>
-                  <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-orange-500 text-white text-[10px] font-bold">
-                    {seasonalAlerts.length}
-                  </span>
+                  {seasonalAlerts.length > 0 && (
+                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-orange-500 text-white text-[10px] font-bold">
+                      {seasonalAlerts.length}
+                    </span>
+                  )}
                 </div>
                 <ChevronDown className={cn('w-5 h-5 text-muted-foreground transition-transform', openSections.seasonal && 'rotate-180')} />
               </button>
               {openSections.seasonal && (
                 <div className="px-5 pb-5 space-y-4">
+                  {seasonalAlerts.length === 0 && (
+                    <p className="text-sm text-muted-foreground py-2">Nessun prodotto fuori stagione da segnalare</p>
+                  )}
                   {Object.entries(byCompany).map(([companyId, alerts]) => {
                     const company = companies.find(c => c.id === companyId);
                     const companyName = company?.name || 'Azienda sconosciuta';
