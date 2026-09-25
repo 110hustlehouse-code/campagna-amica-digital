@@ -100,6 +100,7 @@ export default function StaffDashboard() {
     queryKey: ['dash-needs', staffMarketId],
     queryFn: () => getNeedsByMarket(staffMarketId),
     enabled: staffReady,
+    refetchInterval: 5000, // poll: il realtime da solo non è affidabile ovunque
   });
 
   // 5. Affitti del mercato (tutti gli stati)

@@ -87,6 +87,7 @@ export default function CompanyNeeds() {
     queryKey: ['company-needs', staffMember?.market_id],
     queryFn: () => getNeedsByMarket(staffMember.market_id),
     enabled: !!staffMember?.market_id,
+    refetchInterval: 5000,
   });
 
   const { data: companies = [] } = useQuery({
