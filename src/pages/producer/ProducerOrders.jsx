@@ -221,55 +221,61 @@ export default function ProducerOrders() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-primary/5 to-secondary/5 border-b border-primary/20 px-5 pt-12 pb-5">
-        <div className="flex items-start justify-between gap-4 mb-4">
-          <div>
-            <div className="inline-flex items-center gap-1.5 bg-primary/10 border border-primary/20 rounded-full px-3 py-1 mb-2">
-              <Award className="w-3.5 h-3.5 text-primary" />
-              <span className="text-primary text-xs font-bold uppercase tracking-widest">Centro ordini</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div>
-                <div className="flex items-center gap-3">
-                  <h1 className="font-heading text-2xl font-bold text-foreground">Ordini ricevuti</h1>
-                  {newOrdersCount > 0 && (
-                    <span className="bg-destructive text-white text-xs font-bold px-2.5 py-1 rounded-full animate-pulse">
-                      +{newOrdersCount}
-                    </span>
-                  )}
-                </div>
-                <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
-                  <Leaf className="w-3.5 h-3.5 text-primary" />
-                  {orders.length} ordini totali
-                </p>
-              </div>
-              <button
-                onClick={exportPDF}
-                className="flex items-center gap-2 bg-white border border-border/50 rounded-xl px-3 py-2 hover:bg-muted transition-colors shadow-sm"
-              >
-                <Download className="w-4 h-4 text-primary" />
-                <span className="text-xs font-semibold text-foreground">PDF</span>
-              </button>
-            </div>
+      {/* Hero banner — stesso stile dell'identità visiva dell'app */}
+      <div className="relative bg-primary overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-white translate-x-16 -translate-y-16" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full bg-secondary -translate-x-8 translate-y-8" />
+        </div>
+        <div className="relative px-6 pt-10 pb-6">
+          <div className="inline-flex items-center gap-1.5 bg-secondary rounded-full pl-1.5 pr-3 py-1 mb-3 shadow">
+            <img
+              src="https://otefhryrnajzfyaiwmja.supabase.co/storage/v1/object/public/public-assets/marchi/campagna-amica-digital.png"
+              alt="" className="w-4 h-4 rounded-full object-cover"
+            />
+            <span className="text-primary font-bold text-[10px] tracking-widest uppercase">Centro ordini</span>
           </div>
-          <button
-            onClick={() => {
-              setReviewsOpen(true);
-              setNewReviewsCount(0);
-            }}
-            className="relative flex items-center gap-2 bg-white border border-border/50 rounded-xl px-3 py-2 hover:bg-muted transition-colors shadow-sm"
-          >
-            <Star className="w-4 h-4 text-primary" />
-            <div className="text-right">
-              <p className="text-xs text-muted-foreground">Recensioni</p>
-              <p className="text-sm font-bold text-foreground">{reviews.length}</p>
-            </div>
-            {newReviewsCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 bg-destructive text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center animate-pulse">
-                {newReviewsCount}
+
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-3">
+                <h1 className="font-heading text-3xl md:text-4xl font-bold text-white leading-tight">Ordini ricevuti</h1>
+                {newOrdersCount > 0 && (
+                  <span className="bg-destructive text-white text-xs font-bold px-2.5 py-1 rounded-full animate-pulse">
+                    +{newOrdersCount}
+                  </span>
+                )}
+              </div>
+              <span className="inline-block mt-2 bg-white/20 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                {orders.length} ordini totali
               </span>
-            )}
+            </div>
+            <button
+              onClick={() => {
+                setReviewsOpen(true);
+                setNewReviewsCount(0);
+              }}
+              className="relative flex items-center gap-2 bg-white/15 backdrop-blur-sm border border-white/20 rounded-xl px-3 py-2 hover:bg-white/25 transition-colors flex-shrink-0"
+            >
+              <Star className="w-4 h-4 text-white" />
+              <div className="text-right">
+                <p className="text-[10px] text-white/70">Recensioni</p>
+                <p className="text-sm font-bold text-white">{reviews.length}</p>
+              </div>
+              {newReviewsCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-destructive text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center animate-pulse">
+                  {newReviewsCount}
+                </span>
+              )}
+            </button>
+          </div>
+
+          <button
+            onClick={exportPDF}
+            className="flex items-center gap-2 bg-white/15 backdrop-blur-sm border border-white/20 rounded-xl px-3 py-2 hover:bg-white/25 transition-colors mt-4"
+          >
+            <Download className="w-4 h-4 text-white" />
+            <span className="text-xs font-semibold text-white">Esporta PDF</span>
           </button>
         </div>
       </div>
