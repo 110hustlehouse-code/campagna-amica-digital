@@ -14,11 +14,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import {
   CalendarPlus, MapPin, Clock, AlertCircle, CheckCircle,
   Loader2, ChevronLeft, Info, Search, ThumbsUp, ThumbsDown, HelpCircle, Calendar,
+  Download, History as HistoryIcon,
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import SearchableList from '@/components/staff/SearchableList';
-import { format } from 'date-fns';
+import { format, startOfDay } from 'date-fns';
 import { it } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
+import { exportRowsToPdf, exportRowsToExcel } from '@/lib/reportExport';
 
 const MANDATORY_OPTIONS = [
   {
@@ -39,12 +42,19 @@ const MANDATORY_OPTIONS = [
   },
 ];
 
+const TABS = [
+  { key: 'create', label: 'Crea' },
+  { key: 'upcoming', label: 'In programma' },
+  { key: 'history', label: 'Storico' },
+];
+
 export default function CreateEvent() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
   const [staffMember, setStaffMember] = useState(null);
   const [errors, setErrors] = useState({});
+  const [activeTab, setActiveTab] = useState('upcoming');
   const [selectedEventForRsvp, setSelectedEventForRsvp] = useState(null);
   const [searchAzienda, setSearchAzienda] = useState('');
   const [formData, setFormData] = useState({
@@ -80,6 +90,7 @@ export default function CreateEvent() {
   }));
 
   const staffMarketId = staffMember?.market_id;
+  const marketName = markets.find(m => m.id === staffMarketId)?.name || 'Mercato';
 
   const { data: publishedMessages = [] } = useQuery({
     queryKey: ['staff-messages-published'],
@@ -90,6 +101,15 @@ export default function CreateEvent() {
     .filter(m => m.type === 'event' && m.market_id === staffMarketId)
     .sort((a, b) => new Date(b.event_date) - new Date(a.event_date)),
   [publishedMessages, staffMarketId]);
+
+  const oggi = startOfDay(new Date());
+  const upcomingEvents = useMemo(() => myEvents
+    .filter(ev => new Date(ev.event_date) >= oggi)
+    .sort((a, b) => new Date(a.event_date) - new Date(b.event_date)),
+  [myEvents]);
+  const pastEvents = useMemo(() => myEvents
+    .filter(ev => new Date(ev.event_date) < oggi),
+  [myEvents]);
 
   const { data: rsvps = [] } = useQuery({
     queryKey: ['event-rsvps', staffMarketId],
@@ -148,7 +168,16 @@ export default function CreateEvent() {
     },
     onSuccess: () => {
       toast({ title: '✅ Evento creato correttamente' });
-      navigate('/staff');
+      setFormData({
+        title: '',
+        description: '',
+        market_id: staffMember?.market_id || '',
+        event_date: '',
+        time_start: '',
+        time_end: '',
+        is_mandatory: true,
+      });
+      setActiveTab('upcoming');
     },
     onError: (err) => {
       toast({ title: 'Errore', description: err.message, variant: 'destructive' });
@@ -176,6 +205,105 @@ export default function CreateEvent() {
 
   const selectedMarket = markets.find(m => m.id === formData.market_id);
 
+  const contaEvento = (ev) => {
+    const evRsvps = rsvps.filter((r) => r.message_id === ev.id);
+    const nAccepted = evRsvps.filter((r) => r.status === 'accepted').length;
+    const nDeclined = evRsvps.filter((r) => r.status === 'declined').length;
+    return { nAccepted, nDeclined };
+  };
+
+  const handleExportPdf = () => {
+    const columns = [
+      { key: 'titolo', label: 'Titolo' },
+      { key: 'tipo', label: 'Tipo' },
+      { key: 'data', label: 'Data' },
+      { key: 'presenti', label: 'Presenti' },
+      { key: 'assenti', label: 'Assenti' },
+    ];
+    const rows = pastEvents.map((ev) => {
+      const { nAccepted, nDeclined } = contaEvento(ev);
+      return {
+        titolo: ev.title || 'Senza titolo',
+        tipo: ev.is_mandatory ? 'Obbligatorio' : 'Facoltativo',
+        data: format(new Date(ev.event_date), 'dd/MM/yyyy', { locale: it }),
+        presenti: ev.is_mandatory ? '—' : nAccepted,
+        assenti: ev.is_mandatory ? '—' : nDeclined,
+      };
+    });
+    exportRowsToPdf({
+      title: 'Storico Eventi',
+      marketName,
+      columns,
+      rows,
+      filenamePrefix: `storico-eventi-${marketName.replace(/\s+/g, '_')}`,
+    });
+  };
+
+  const handleExportExcel = () => {
+    const columns = [
+      { key: 'titolo', label: 'Titolo' },
+      { key: 'tipo', label: 'Tipo' },
+      { key: 'data', label: 'Data' },
+      { key: 'presenti', label: 'Presenti' },
+      { key: 'assenti', label: 'Assenti' },
+    ];
+    const rows = pastEvents.map((ev) => {
+      const { nAccepted, nDeclined } = contaEvento(ev);
+      return {
+        titolo: ev.title || 'Senza titolo',
+        tipo: ev.is_mandatory ? 'Obbligatorio' : 'Facoltativo',
+        data: format(new Date(ev.event_date), 'dd/MM/yyyy', { locale: it }),
+        presenti: ev.is_mandatory ? '—' : nAccepted,
+        assenti: ev.is_mandatory ? '—' : nDeclined,
+      };
+    });
+    exportRowsToExcel({
+      sheetName: 'Storico Eventi',
+      columns,
+      rows,
+      filenamePrefix: `storico-eventi-${marketName.replace(/\s+/g, '_')}`,
+    });
+  };
+
+  const EventRow = ({ ev }) => {
+    const { nAccepted, nDeclined } = contaEvento(ev);
+    return (
+      <button
+        type="button"
+        onClick={() => { setSelectedEventForRsvp(ev); setSearchAzienda(''); }}
+        disabled={ev.is_mandatory}
+        className="w-full text-left p-3 rounded-xl border border-border/50 bg-white hover:border-primary/40 hover:bg-primary/5 transition-colors disabled:cursor-default disabled:hover:border-border/50 disabled:hover:bg-white"
+      >
+        <div className="flex items-center justify-between gap-2">
+          <p className="font-semibold text-sm text-foreground">{ev.title}</p>
+          {ev.is_mandatory ? (
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 shrink-0">
+              Obbligatorio
+            </span>
+          ) : (
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary shrink-0">
+              Facoltativo
+            </span>
+          )}
+        </div>
+        <p className="text-xs text-muted-foreground mt-1">
+          {format(new Date(ev.event_date), 'd MMM yyyy', { locale: it })}
+        </p>
+        {!ev.is_mandatory && (
+          <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-3">
+            <span className="flex items-center gap-1 text-primary font-medium">
+              <ThumbsUp className="w-3 h-3" /> {nAccepted} presenti
+            </span>
+            <span className="flex items-center gap-1 text-destructive font-medium">
+              <ThumbsDown className="w-3 h-3" /> {nDeclined} assenti
+            </span>
+            <span className="text-primary/70 underline">tocca per dettagli</span>
+          </p>
+        )}
+      </button>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -187,226 +315,236 @@ export default function CreateEvent() {
           <ChevronLeft className="w-4 h-4" /> Dashboard
         </button>
         <div className="inline-flex items-center gap-1.5 bg-secondary rounded-full px-4 py-1.5 mb-3 shadow-md">
-          <span className="text-primary font-bold text-xs tracking-widest uppercase">📅 Crea Evento</span>
+          <span className="text-primary font-bold text-xs tracking-widest uppercase">📅 Gestione Eventi</span>
         </div>
-        <h1 className="font-heading text-4xl font-bold text-white drop-shadow-lg">Nuovo Evento</h1>
-        <p className="text-white/80 text-sm mt-1">Crea un evento collegato al mercato e notifica i produttori</p>
+        <h1 className="font-heading text-4xl font-bold text-white drop-shadow-lg">Eventi</h1>
+        <p className="text-white/80 text-sm mt-1">Crea, monitora e archivia gli eventi del tuo mercato</p>
+
+        <div className="flex gap-1.5 mt-5 bg-white/10 rounded-xl p-1">
+          {TABS.map(t => (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => setActiveTab(t.key)}
+              className={cn(
+                'flex-1 px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wide transition-colors',
+                activeTab === t.key ? 'bg-secondary text-primary shadow-md' : 'text-white/80 hover:bg-white/10'
+              )}
+            >
+              {t.label}
+              {t.key === 'upcoming' && upcomingEvents.length > 0 && ` (${upcomingEvents.length})`}
+              {t.key === 'history' && pastEvents.length > 0 && ` (${pastEvents.length})`}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="px-6 py-8 max-w-2xl mx-auto space-y-6">
 
-        {/* I Tuoi Eventi — elenco con tracciamento presenze/assenze */}
-        {myEvents.length > 0 && (
+        {activeTab === 'upcoming' && (
           <Card className="p-6 border border-border/50">
             <h2 className="font-heading text-base font-semibold text-foreground mb-4 flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-primary" /> I Tuoi Eventi
+              <Calendar className="w-4 h-4 text-primary" /> Eventi in programma
             </h2>
-            <div className="space-y-2">
-              {myEvents.map((ev) => {
-                const evRsvps = rsvps.filter((r) => r.message_id === ev.id);
-                const nAccepted = evRsvps.filter((r) => r.status === 'accepted').length;
-                const nDeclined = evRsvps.filter((r) => r.status === 'declined').length;
-                return (
-                  <button
-                    key={ev.id}
-                    type="button"
-                    onClick={() => { setSelectedEventForRsvp(ev); setSearchAzienda(''); }}
-                    disabled={ev.is_mandatory}
-                    className="w-full text-left p-3 rounded-xl border border-border/50 bg-white hover:border-primary/40 hover:bg-primary/5 transition-colors disabled:cursor-default disabled:hover:border-border/50 disabled:hover:bg-white"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="font-semibold text-sm text-foreground">{ev.title}</p>
-                      {ev.is_mandatory ? (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 shrink-0">
-                          Obbligatorio
-                        </span>
-                      ) : (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary shrink-0">
-                          Facoltativo
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {format(new Date(ev.event_date), 'd MMM yyyy', { locale: it })}
-                    </p>
-                    {!ev.is_mandatory && (
-                      <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-3">
-                        <span className="flex items-center gap-1 text-primary font-medium">
-                          <ThumbsUp className="w-3 h-3" /> {nAccepted} presenti
-                        </span>
-                        <span className="flex items-center gap-1 text-destructive font-medium">
-                          <ThumbsDown className="w-3 h-3" /> {nDeclined} assenti
-                        </span>
-                        <span className="text-primary/70 underline">tocca per dettagli</span>
-                      </p>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+            {upcomingEvents.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">Nessun evento in programma</p>
+            ) : (
+              <div className="space-y-2">
+                {upcomingEvents.map((ev) => <EventRow key={ev.id} ev={ev} />)}
+              </div>
+            )}
           </Card>
         )}
 
-        {/* Titolo */}
-        <Card className="p-6 border border-border/50">
-          <h2 className="font-heading text-base font-semibold text-foreground mb-4 flex items-center gap-2">
-            <CalendarPlus className="w-4 h-4 text-primary" /> Dettagli Evento
-          </h2>
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-semibold text-foreground mb-1.5 block">
-                Titolo evento <span className="text-destructive">*</span>
-              </label>
-              <Input
-                value={formData.title}
-                onChange={e => set('title', e.target.value)}
-                placeholder="Es: Mercato Speciale di Primavera"
-                className={errors.title ? 'border-destructive ring-1 ring-destructive' : ''}
-                autoFocus
-              />
-              {errors.title && (
-                <p className="text-xs text-destructive mt-1 flex items-center gap-1">
-                  <AlertCircle className="w-3 h-3" /> {errors.title}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label className="text-sm font-semibold text-foreground mb-1.5 block">
-                Descrizione <span className="text-muted-foreground font-normal">(opzionale)</span>
-              </label>
-              <textarea
-                value={formData.description}
-                onChange={e => set('description', e.target.value)}
-                placeholder="Aggiungi dettagli sull'evento..."
-                className="w-full px-3 py-2.5 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary resize-none"
-                rows="3"
-              />
-            </div>
-          </div>
-        </Card>
-
-        {/* Mercato */}
-        <Card className="p-6 border border-border/50">
-          <h2 className="font-heading text-base font-semibold text-foreground mb-4 flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-primary" /> Mercato di Riferimento
-          </h2>
-          <SearchableList
-            items={marketItems}
-            value={formData.market_id}
-            onChange={(id) => set('market_id', id)}
-            placeholder="Seleziona il mercato..."
-            searchPlaceholder="Cerca mercato per nome o città..."
-            className={errors.market_id ? 'ring-2 ring-destructive rounded-xl' : ''}
-          />
-          {errors.market_id && (
-            <p className="text-xs text-destructive mt-1.5 flex items-center gap-1">
-              <AlertCircle className="w-3 h-3" /> {errors.market_id}
-            </p>
-          )}
-          {selectedMarket && (
-            <div className="mt-3 flex items-center gap-2 text-xs text-primary bg-primary/5 border border-primary/20 px-3 py-2 rounded-lg">
-              <CheckCircle className="w-3 h-3" />
-              <span>Mercato selezionato: <strong>{selectedMarket.name}</strong>{selectedMarket.city ? `, ${selectedMarket.city}` : ''}</span>
-            </div>
-          )}
-        </Card>
-
-        {/* Data e orari */}
-        <Card className="p-6 border border-border/50">
-          <h2 className="font-heading text-base font-semibold text-foreground mb-4 flex items-center gap-2">
-            <Clock className="w-4 h-4 text-primary" /> Data e Orari
-          </h2>
-          <div className="grid grid-cols-1 gap-4">
-            <div>
-              <label className="text-sm font-semibold text-foreground mb-1.5 block">
-                Data evento <span className="text-destructive">*</span>
-              </label>
-              <input
-                type="date"
-                value={formData.event_date}
-                onChange={e => set('event_date', e.target.value)}
-                className={`w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary ${
-                  errors.event_date ? 'border-destructive ring-1 ring-destructive' : 'border-input'
-                }`}
-              />
-              {errors.event_date && (
-                <p className="text-xs text-destructive mt-1 flex items-center gap-1">
-                  <AlertCircle className="w-3 h-3" /> {errors.event_date}
-                </p>
-              )}
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-semibold text-foreground mb-1.5 block">Orario inizio</label>
-                <input
-                  type="time"
-                  value={formData.time_start}
-                  onChange={e => set('time_start', e.target.value)}
-                  className="w-full px-3 py-2.5 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-semibold text-foreground mb-1.5 block">Orario fine</label>
-                <input
-                  type="time"
-                  value={formData.time_end}
-                  onChange={e => set('time_end', e.target.value)}
-                  className="w-full px-3 py-2.5 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
-                />
+        {activeTab === 'history' && (
+          <Card className="p-6 border border-border/50">
+            <div className="flex items-center justify-between gap-2 mb-4">
+              <h2 className="font-heading text-base font-semibold text-foreground flex items-center gap-2">
+                <HistoryIcon className="w-4 h-4 text-primary" /> Storico eventi
+              </h2>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={handleExportExcel} disabled={pastEvents.length === 0}>
+                  <Download className="w-3.5 h-3.5 mr-1.5" /> Excel
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleExportPdf} disabled={pastEvents.length === 0}>
+                  <Download className="w-3.5 h-3.5 mr-1.5" /> PDF
+                </Button>
               </div>
             </div>
-          </div>
-        </Card>
+            {pastEvents.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">Nessun evento in cronologia</p>
+            ) : (
+              <div className="space-y-2">
+                {pastEvents.map((ev) => <EventRow key={ev.id} ev={ev} />)}
+              </div>
+            )}
+          </Card>
+        )}
 
-        {/* Tipo evento */}
-        <Card className="p-6 border border-border/50">
-          <h2 className="font-heading text-base font-semibold text-foreground mb-4 flex items-center gap-2">
-            <Info className="w-4 h-4 text-primary" /> Tipo Partecipazione
-          </h2>
-          <div className="grid grid-cols-1 gap-3">
-            {MANDATORY_OPTIONS.map(opt => (
-              <button
-                key={String(opt.value)}
-                type="button"
-                onClick={() => set('is_mandatory', opt.value)}
-                className={`flex items-start gap-4 p-4 rounded-xl border-2 text-left transition-all duration-150 ${
-                  formData.is_mandatory === opt.value ? opt.activeColor : opt.color + ' hover:opacity-80'
-                }`}
-              >
-                <span className="text-2xl mt-0.5">{opt.icon}</span>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="font-semibold text-sm text-foreground">{opt.label}</p>
-                    {formData.is_mandatory === opt.value && (
-                      <CheckCircle className="w-4 h-4 text-primary" />
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">{opt.description}</p>
+        {activeTab === 'create' && (
+          <>
+            {/* Titolo */}
+            <Card className="p-6 border border-border/50">
+              <h2 className="font-heading text-base font-semibold text-foreground mb-4 flex items-center gap-2">
+                <CalendarPlus className="w-4 h-4 text-primary" /> Dettagli Evento
+              </h2>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-semibold text-foreground mb-1.5 block">
+                    Titolo evento <span className="text-destructive">*</span>
+                  </label>
+                  <Input
+                    value={formData.title}
+                    onChange={e => set('title', e.target.value)}
+                    placeholder="Es: Mercato Speciale di Primavera"
+                    className={errors.title ? 'border-destructive ring-1 ring-destructive' : ''}
+                    autoFocus
+                  />
+                  {errors.title && (
+                    <p className="text-xs text-destructive mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" /> {errors.title}
+                    </p>
+                  )}
                 </div>
-              </button>
-            ))}
-          </div>
-        </Card>
 
-        {/* CTA */}
-        <div className="pb-6">
-          <Button
-            onClick={handleSubmit}
-            disabled={createMutation.isPending}
-            className="w-full h-13 text-base font-semibold gap-2 shadow-lg shadow-primary/20"
-            size="lg"
-          >
-            {createMutation.isPending
-              ? <><Loader2 className="w-5 h-5 animate-spin" /> Creazione in corso...</>
-              : <><CalendarPlus className="w-5 h-5" /> Crea Evento</>}
-          </Button>
-          <p className="text-xs text-center text-muted-foreground mt-3">
-            {formData.is_mandatory
-              ? '🔴 I produttori del mercato verranno notificati automaticamente'
-              : '🔵 I produttori riceveranno una notifica con possibilità di accettare o declinare'}
-          </p>
-        </div>
+                <div>
+                  <label className="text-sm font-semibold text-foreground mb-1.5 block">
+                    Descrizione <span className="text-muted-foreground font-normal">(opzionale)</span>
+                  </label>
+                  <textarea
+                    value={formData.description}
+                    onChange={e => set('description', e.target.value)}
+                    placeholder="Aggiungi dettagli sull'evento..."
+                    className="w-full px-3 py-2.5 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary resize-none"
+                    rows="3"
+                  />
+                </div>
+              </div>
+            </Card>
+
+            {/* Mercato */}
+            <Card className="p-6 border border-border/50">
+              <h2 className="font-heading text-base font-semibold text-foreground mb-4 flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-primary" /> Mercato di Riferimento
+              </h2>
+              <SearchableList
+                items={marketItems}
+                value={formData.market_id}
+                onChange={(id) => set('market_id', id)}
+                placeholder="Seleziona il mercato..."
+                searchPlaceholder="Cerca mercato per nome o città..."
+                className={errors.market_id ? 'ring-2 ring-destructive rounded-xl' : ''}
+              />
+              {errors.market_id && (
+                <p className="text-xs text-destructive mt-1.5 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" /> {errors.market_id}
+                </p>
+              )}
+              {selectedMarket && (
+                <div className="mt-3 flex items-center gap-2 text-xs text-primary bg-primary/5 border border-primary/20 px-3 py-2 rounded-lg">
+                  <CheckCircle className="w-3 h-3" />
+                  <span>Mercato selezionato: <strong>{selectedMarket.name}</strong>{selectedMarket.city ? `, ${selectedMarket.city}` : ''}</span>
+                </div>
+              )}
+            </Card>
+
+            {/* Data e orari */}
+            <Card className="p-6 border border-border/50">
+              <h2 className="font-heading text-base font-semibold text-foreground mb-4 flex items-center gap-2">
+                <Clock className="w-4 h-4 text-primary" /> Data e Orari
+              </h2>
+              <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <label className="text-sm font-semibold text-foreground mb-1.5 block">
+                    Data evento <span className="text-destructive">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.event_date}
+                    onChange={e => set('event_date', e.target.value)}
+                    className={`w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary ${
+                      errors.event_date ? 'border-destructive ring-1 ring-destructive' : 'border-input'
+                    }`}
+                  />
+                  {errors.event_date && (
+                    <p className="text-xs text-destructive mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" /> {errors.event_date}
+                    </p>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-semibold text-foreground mb-1.5 block">Orario inizio</label>
+                    <input
+                      type="time"
+                      value={formData.time_start}
+                      onChange={e => set('time_start', e.target.value)}
+                      className="w-full px-3 py-2.5 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-semibold text-foreground mb-1.5 block">Orario fine</label>
+                    <input
+                      type="time"
+                      value={formData.time_end}
+                      onChange={e => set('time_end', e.target.value)}
+                      className="w-full px-3 py-2.5 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                    />
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            {/* Tipo evento */}
+            <Card className="p-6 border border-border/50">
+              <h2 className="font-heading text-base font-semibold text-foreground mb-4 flex items-center gap-2">
+                <Info className="w-4 h-4 text-primary" /> Tipo Partecipazione
+              </h2>
+              <div className="grid grid-cols-1 gap-3">
+                {MANDATORY_OPTIONS.map(opt => (
+                  <button
+                    key={String(opt.value)}
+                    type="button"
+                    onClick={() => set('is_mandatory', opt.value)}
+                    className={`flex items-start gap-4 p-4 rounded-xl border-2 text-left transition-all duration-150 ${
+                      formData.is_mandatory === opt.value ? opt.activeColor : opt.color + ' hover:opacity-80'
+                    }`}
+                  >
+                    <span className="text-2xl mt-0.5">{opt.icon}</span>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-sm text-foreground">{opt.label}</p>
+                        {formData.is_mandatory === opt.value && (
+                          <CheckCircle className="w-4 h-4 text-primary" />
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5">{opt.description}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </Card>
+
+            {/* CTA */}
+            <div className="pb-6">
+              <Button
+                onClick={handleSubmit}
+                disabled={createMutation.isPending}
+                className="w-full h-13 text-base font-semibold gap-2 shadow-lg shadow-primary/20"
+                size="lg"
+              >
+                {createMutation.isPending
+                  ? <><Loader2 className="w-5 h-5 animate-spin" /> Creazione in corso...</>
+                  : <><CalendarPlus className="w-5 h-5" /> Crea Evento</>}
+              </Button>
+              <p className="text-xs text-center text-muted-foreground mt-3">
+                {formData.is_mandatory
+                  ? '🔴 I produttori del mercato verranno notificati automaticamente'
+                  : '🔵 I produttori riceveranno una notifica con possibilità di accettare o declinare'}
+              </p>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Dialog presenze/assenze per azienda */}

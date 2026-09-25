@@ -12,7 +12,7 @@ const ROOT_PATHS = ['/staff', '/staff/bisogni', '/staff/crea-evento', '/staff/dd
 const navItems = [
   { path: '/staff', label: 'Dashboard', icon: Bell, section: 'dashboard' },
   { path: '/staff/bisogni', label: 'Bisogni', icon: AlertCircle, section: 'bisogni' },
-  { path: '/staff/crea-evento', label: 'Evento', icon: CalendarPlus, section: 'evento' },
+  { path: '/staff/crea-evento', label: 'Eventi', icon: CalendarPlus, section: 'evento' },
   { path: '/staff/ddt', label: 'Controllo', icon: LayoutDashboard, section: 'ddt' },
   { path: '/staff/profilo', label: 'Profilo', icon: User, section: 'profilo' },
 ];
