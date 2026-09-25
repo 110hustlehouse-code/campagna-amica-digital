@@ -56,8 +56,8 @@ export default function StaffHome() {
     const fetchStaff = async () => {
       try {
         const staff = await getMyStaffMember();
-        if (staff.length > 0) {
-          setStaffMember(staff[0]);
+        if (staff) {
+          setStaffMember(staff);
         }
       } catch (err) {
         console.error('Error fetching staff:', err);

@@ -169,7 +169,7 @@ export default function StaffDashboard() {
           </div>
           <div className="flex items-start gap-3">
             <HeaderIconButton
-              to="/staff/segnalazioni-ddt"
+              to="/staff/ddt"
               icon={FileWarning}
               label="DDT"
               count={missingDdtReports.length}

@@ -55,9 +55,9 @@ export default function CreateEvent() {
     const fetchStaff = async () => {
       if (!user?.email) return;
       const staff = await getMyStaffMember();
-      if (staff.length > 0) {
-        setStaffMember(staff[0]);
-        setFormData(prev => ({ ...prev, market_id: staff[0].market_id || '' }));
+      if (staff) {
+        setStaffMember(staff);
+        setFormData(prev => ({ ...prev, market_id: staff.market_id || '' }));
       }
     };
     fetchStaff();

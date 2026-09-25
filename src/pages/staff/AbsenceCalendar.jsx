@@ -21,10 +21,7 @@ export default function AbsenceCalendar() {
 
   const { data: staffProfile } = useQuery({
     queryKey: ['staffProfile', me?.email],
-    queryFn: async () => {
-      const list = await getMyStaffMember();
-      return list[0] || null;
-    },
+    queryFn: getMyStaffMember,
     enabled: !!me?.email,
   });
 

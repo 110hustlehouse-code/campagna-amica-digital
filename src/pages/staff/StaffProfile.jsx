@@ -127,11 +127,11 @@ export default function StaffProfile() {
         const userData = await getMyProfile();
         setUser(userData);
         const staff = await getMyStaffMember();
-        if (staff.length > 0) {
-          setStaffMember(staff[0]);
-          setSelectedMarket(staff[0].market_id || '');
-          setNewPosition(staff[0].position || 'market_manager');
-          setNewPhone(staff[0].phone || '');
+        if (staff) {
+          setStaffMember(staff);
+          setSelectedMarket(staff.market_id || '');
+          setNewPosition(staff.position || 'market_manager');
+          setNewPhone(staff.phone || '');
         }
       } catch (err) {
         console.error(err);

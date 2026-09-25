@@ -50,10 +50,7 @@ export default function StallRentals() {
 
   const { data: staffProfile } = useQuery({
     queryKey: ['staffProfile', user?.email],
-    queryFn: async () => {
-      const list = await getMyStaffMember();
-      return list[0] || null;
-    },
+    queryFn: getMyStaffMember,
     enabled: !!user?.email,
   });
 
