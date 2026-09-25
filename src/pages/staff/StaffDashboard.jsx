@@ -8,6 +8,7 @@ import { getNeedsByMarket } from '@/api/needs';
 import { getRentalsByMarket } from '@/api/rentals';
 import { getCompaniesByMarket } from '@/api/companies';
 import { getMyNotifications, segnaLetta } from '@/api/notifications';
+import { getSegnalazioniStagionaliMercato, risolviSegnalazioneStagionale } from '@/api/segnalazioniStagionali';
 import { format, startOfToday } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { AlertCircle, TrendingUp, Clock, CalendarPlus, ChevronDown, Users, CalendarOff, Leaf, FileWarning } from 'lucide-react';
@@ -17,6 +18,9 @@ import NeedsSection from '@/components/staff/NeedsSection';
 import RentalsSection from '@/components/staff/RentalsSection';
 import EventsSection from '@/components/staff/EventsSection';
 import RsvpSection from '@/components/staff/RsvpSection.jsx';
+
+const MESI_NOMI = ['', 'gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'];
+
 
 function AbsenceButton({ needs }) {
   const absences = (needs || []).filter(n => n.title?.includes('Assenza segnalata') && n.status === 'open');
@@ -79,17 +83,16 @@ export default function StaffDashboard() {
     return () => { u1(); u2(); u3(); u4(); };
   }, [staffReady, staffMarketId, qc]);
 
-  // Notifiche fuori stagione non lette per questo staff
+  // Segnalazioni prodotti fuori stagione rilevate su DDT emesso, per questo mercato
   const { data: seasonalAlerts = [] } = useQuery({
-    queryKey: ['seasonal-alerts', me?.email],
-    queryFn: () => getMyNotifications(true),
-    enabled: !!me?.email,
-    select: (data) => data.filter(n => n.title?.includes('fuori stagione')),
+    queryKey: ['seasonal-alerts', staffMarketId],
+    queryFn: () => getSegnalazioniStagionaliMercato(staffMarketId),
+    enabled: staffReady,
   });
 
   const markAlertRead = async (id) => {
-    await segnaLetta(id);
-    qc.invalidateQueries({ queryKey: ['seasonal-alerts', me?.email] });
+    await risolviSegnalazioneStagionale(id);
+    qc.invalidateQueries({ queryKey: ['seasonal-alerts', staffMarketId] });
   };
 
   // 4. Bisogni filtrati per mercato (tutti gli stati per la dashboard)
@@ -220,7 +223,7 @@ export default function StaffDashboard() {
                 <div className="px-5 pb-5 space-y-4">
                   {Object.entries(byCompany).map(([companyId, alerts]) => {
                     const company = companies.find(c => c.id === companyId);
-                    const companyName = company?.name || alerts[0]?.message?.match(/"([^"]+)" ha reso/)?.[1] || 'Azienda sconosciuta';
+                    const companyName = company?.name || 'Azienda sconosciuta';
                     return (
                       <div key={companyId}>
                         <p className="text-xs font-bold text-orange-600 uppercase tracking-wide mb-2">{companyName}</p>
@@ -228,8 +231,10 @@ export default function StaffDashboard() {
                           {alerts.map(alert => (
                             <div key={alert.id} className="flex items-start justify-between gap-3 p-3 rounded-xl bg-orange-50 border border-orange-100">
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm font-semibold text-orange-800 leading-tight">{alert.title.replace('⚠️ Prodotto fuori stagione: ', '')}</p>
-                                <p className="text-xs text-orange-700 mt-1 leading-relaxed">{alert.message?.split('fuori stagione a ')[1] || alert.message}</p>
+                                <p className="text-sm font-semibold text-orange-800 leading-tight">{alert.product_name}</p>
+                                <p className="text-xs text-orange-700 mt-1 leading-relaxed">
+                                  "{alert.seasonal_match}" fuori stagione — stagione: {(alert.season_months || []).map(m => MESI_NOMI[m]).join(', ')}
+                                </p>
                               </div>
                               <button
                                 onClick={() => markAlertRead(alert.id)}
