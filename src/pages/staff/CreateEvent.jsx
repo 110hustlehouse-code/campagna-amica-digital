@@ -1,19 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { getMyStaffMember, createMessage } from '@/api/staff';
+import { getMyStaffMember, createMessage, getPublishedMessagesAll } from '@/api/staff';
 import { getMarkets } from '@/api/markets';
+import { getRsvpsByMarket } from '@/api/events';
+import { getCompaniesByMarket } from '@/api/companies';
 import { invokeFunction } from '@/api/functions';
 import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   CalendarPlus, MapPin, Clock, AlertCircle, CheckCircle,
-  Loader2, ChevronLeft, Info,
+  Loader2, ChevronLeft, Info, Search, ThumbsUp, ThumbsDown, HelpCircle, Calendar,
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import SearchableList from '@/components/staff/SearchableList';
+import { format } from 'date-fns';
+import { it } from 'date-fns/locale';
 
 const MANDATORY_OPTIONS = [
   {
@@ -40,6 +45,8 @@ export default function CreateEvent() {
   const { toast } = useToast();
   const [staffMember, setStaffMember] = useState(null);
   const [errors, setErrors] = useState({});
+  const [selectedEventForRsvp, setSelectedEventForRsvp] = useState(null);
+  const [searchAzienda, setSearchAzienda] = useState('');
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -71,6 +78,46 @@ export default function CreateEvent() {
   const marketItems = markets.map(m => ({
     id: m.id, label: m.name, sublabel: m.city || '',
   }));
+
+  const staffMarketId = staffMember?.market_id;
+
+  const { data: publishedMessages = [] } = useQuery({
+    queryKey: ['staff-messages-published'],
+    queryFn: () => getPublishedMessagesAll(200),
+  });
+
+  const myEvents = useMemo(() => publishedMessages
+    .filter(m => m.type === 'event' && m.market_id === staffMarketId)
+    .sort((a, b) => new Date(b.event_date) - new Date(a.event_date)),
+  [publishedMessages, staffMarketId]);
+
+  const { data: rsvps = [] } = useQuery({
+    queryKey: ['event-rsvps', staffMarketId],
+    queryFn: () => getRsvpsByMarket(staffMarketId),
+    enabled: !!staffMarketId,
+  });
+
+  const { data: marketCompanies = [] } = useQuery({
+    queryKey: ['companies-market', staffMarketId],
+    queryFn: () => getCompaniesByMarket(staffMarketId),
+    enabled: !!staffMarketId,
+  });
+
+  const eventRsvps = useMemo(() => {
+    if (!selectedEventForRsvp) return [];
+    return rsvps.filter(r => r.message_id === selectedEventForRsvp.id);
+  }, [rsvps, selectedEventForRsvp]);
+
+  const filteredCompanies = useMemo(() => {
+    const q = searchAzienda.trim().toLowerCase();
+    return marketCompanies.filter(c => !q || c.name?.toLowerCase().includes(q));
+  }, [marketCompanies, searchAzienda]);
+
+  const statoAzienda = (companyId) => eventRsvps.find(r => r.company_id === companyId)?.status || 'pending';
+
+  const presenti = filteredCompanies.filter(c => statoAzienda(c.id) === 'accepted');
+  const assenti = filteredCompanies.filter(c => statoAzienda(c.id) === 'declined');
+  const inAttesa = filteredCompanies.filter(c => statoAzienda(c.id) === 'pending');
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
@@ -147,6 +194,58 @@ export default function CreateEvent() {
       </div>
 
       <div className="px-6 py-8 max-w-2xl mx-auto space-y-6">
+
+        {/* I Tuoi Eventi — elenco con tracciamento presenze/assenze */}
+        {myEvents.length > 0 && (
+          <Card className="p-6 border border-border/50">
+            <h2 className="font-heading text-base font-semibold text-foreground mb-4 flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-primary" /> I Tuoi Eventi
+            </h2>
+            <div className="space-y-2">
+              {myEvents.map((ev) => {
+                const evRsvps = rsvps.filter((r) => r.message_id === ev.id);
+                const nAccepted = evRsvps.filter((r) => r.status === 'accepted').length;
+                const nDeclined = evRsvps.filter((r) => r.status === 'declined').length;
+                return (
+                  <button
+                    key={ev.id}
+                    type="button"
+                    onClick={() => { setSelectedEventForRsvp(ev); setSearchAzienda(''); }}
+                    disabled={ev.is_mandatory}
+                    className="w-full text-left p-3 rounded-xl border border-border/50 bg-white hover:border-primary/40 hover:bg-primary/5 transition-colors disabled:cursor-default disabled:hover:border-border/50 disabled:hover:bg-white"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-semibold text-sm text-foreground">{ev.title}</p>
+                      {ev.is_mandatory ? (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 shrink-0">
+                          Obbligatorio
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary shrink-0">
+                          Facoltativo
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {format(new Date(ev.event_date), 'd MMM yyyy', { locale: it })}
+                    </p>
+                    {!ev.is_mandatory && (
+                      <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-3">
+                        <span className="flex items-center gap-1 text-primary font-medium">
+                          <ThumbsUp className="w-3 h-3" /> {nAccepted} presenti
+                        </span>
+                        <span className="flex items-center gap-1 text-destructive font-medium">
+                          <ThumbsDown className="w-3 h-3" /> {nDeclined} assenti
+                        </span>
+                        <span className="text-primary/70 underline">tocca per dettagli</span>
+                      </p>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </Card>
+        )}
 
         {/* Titolo */}
         <Card className="p-6 border border-border/50">
@@ -309,6 +408,79 @@ export default function CreateEvent() {
           </p>
         </div>
       </div>
+
+      {/* Dialog presenze/assenze per azienda */}
+      {selectedEventForRsvp && (
+        <Dialog open onOpenChange={() => setSelectedEventForRsvp(null)}>
+          <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="font-heading text-lg">{selectedEventForRsvp.title}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="relative">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  className="pl-9"
+                  placeholder="Cerca azienda..."
+                  value={searchAzienda}
+                  onChange={(e) => setSearchAzienda(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <p className="text-xs font-bold text-primary uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                  <ThumbsUp className="w-3.5 h-3.5" /> Presenti previsti ({presenti.length})
+                </p>
+                {presenti.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">Nessuna azienda</p>
+                ) : (
+                  <div className="space-y-1.5">
+                    {presenti.map((c) => (
+                      <div key={c.id} className="text-sm px-3 py-2 rounded-lg bg-primary/5 border border-primary/10">
+                        {c.name}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <p className="text-xs font-bold text-destructive uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                  <ThumbsDown className="w-3.5 h-3.5" /> Assenti previsti ({assenti.length})
+                </p>
+                {assenti.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">Nessuna azienda</p>
+                ) : (
+                  <div className="space-y-1.5">
+                    {assenti.map((c) => (
+                      <div key={c.id} className="text-sm px-3 py-2 rounded-lg bg-destructive/5 border border-destructive/10">
+                        {c.name}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                  <HelpCircle className="w-3.5 h-3.5" /> In attesa di risposta ({inAttesa.length})
+                </p>
+                {inAttesa.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">Nessuna azienda</p>
+                ) : (
+                  <div className="space-y-1.5">
+                    {inAttesa.map((c) => (
+                      <div key={c.id} className="text-sm px-3 py-2 rounded-lg bg-muted/40 border border-border">
+                        {c.name}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
