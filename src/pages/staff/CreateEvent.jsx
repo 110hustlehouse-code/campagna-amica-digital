@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getMyStaffMember, createMessage, getPublishedMessagesAll } from '@/api/staff';
+import { getMyStaffMember, createMessage, updateMessage, deleteMessage, getPublishedMessagesAll } from '@/api/staff';
 import { getMarkets } from '@/api/markets';
 import { getRsvpsByMarket } from '@/api/events';
 import { getCompaniesByMarket } from '@/api/companies';
@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import {
   CalendarPlus, MapPin, Clock, AlertCircle, CheckCircle,
   Loader2, ChevronLeft, Info, Search, ThumbsUp, ThumbsDown, HelpCircle, Calendar,
-  Download, History as HistoryIcon,
+  Download, History as HistoryIcon, Pencil, Trash2,
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import SearchableList from '@/components/staff/SearchableList';
@@ -56,6 +56,7 @@ export default function CreateEvent() {
   const [staffMember, setStaffMember] = useState(null);
   const [errors, setErrors] = useState({});
   const [activeTab, setActiveTab] = useState('upcoming');
+  const [editingId, setEditingId] = useState(null);
   const [selectedEventForRsvp, setSelectedEventForRsvp] = useState(null);
   const [searchAzienda, setSearchAzienda] = useState('');
   const [formData, setFormData] = useState({
@@ -140,24 +141,31 @@ export default function CreateEvent() {
   const assenti = filteredCompanies.filter(c => statoAzienda(c.id) === 'declined');
   const inAttesa = filteredCompanies.filter(c => statoAzienda(c.id) === 'pending');
 
-  const createMutation = useMutation({
+  const saveMutation = useMutation({
     mutationFn: async (data) => {
-      // 1. Save StaffMessage as event (with market_id for filtering)
       const market = markets.find(m => m.id === data.market_id);
-      const msg = await createMessage({
+      const payload = {
         title: data.title,
         description: data.description,
-        type: 'event',
         is_mandatory: data.is_mandatory,
         market_id: data.market_id,
         location: market?.name || '',
         event_date: data.event_date,
         time_start: data.time_start,
         time_end: data.time_end,
+      };
+
+      if (editingId) {
+        return updateMessage(editingId, payload);
+      }
+
+      const msg = await createMessage({
+        ...payload,
+        type: 'event',
         is_published: true,
       });
 
-      // 2. Trigger notifications via backend function
+      // Notifica i produttori solo alla creazione di un evento nuovo
       await invokeFunction('notifyProducersNewCommunication', {
         message_id: msg.id,
         market_id: data.market_id,
@@ -170,7 +178,7 @@ export default function CreateEvent() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['staff-messages-published'] });
       qc.invalidateQueries({ queryKey: ['event-rsvps'] });
-      toast({ title: '✅ Evento creato correttamente' });
+      toast({ title: editingId ? '✅ Evento aggiornato' : '✅ Evento creato correttamente' });
       setFormData({
         title: '',
         description: '',
@@ -180,7 +188,20 @@ export default function CreateEvent() {
         time_end: '',
         is_mandatory: true,
       });
+      setEditingId(null);
       setActiveTab('upcoming');
+    },
+    onError: (err) => {
+      toast({ title: 'Errore', description: err.message, variant: 'destructive' });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => deleteMessage(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['staff-messages-published'] });
+      qc.invalidateQueries({ queryKey: ['event-rsvps'] });
+      toast({ title: 'Evento eliminato' });
     },
     onError: (err) => {
       toast({ title: 'Errore', description: err.message, variant: 'destructive' });
@@ -198,7 +219,7 @@ export default function CreateEvent() {
 
   const handleSubmit = () => {
     if (!validate()) return;
-    createMutation.mutate(formData);
+    saveMutation.mutate(formData);
   };
 
   const set = (key, val) => {
