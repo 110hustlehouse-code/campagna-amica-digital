@@ -38,7 +38,7 @@ const StallRentals = lazy(() => import('./pages/staff/StallRentals.jsx'));
 const CompanyNeeds = lazy(() => import('./pages/staff/CompanyNeeds.jsx'));
 const AbsenceCalendar = lazy(() => import('./pages/staff/AbsenceCalendar.jsx'));
 const CreateEvent = lazy(() => import('./pages/staff/CreateEvent.jsx'));
-const StaffDDT = lazy(() => import('./pages/staff/StaffDDT.jsx'));
+const StaffControlPanel = lazy(() => import('./pages/staff/StaffControlPanel.jsx'));
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard.jsx'));
 const AdminDDT = lazy(() => import('./pages/admin/AdminDDT.jsx'));
 const AdminAndamento = lazy(() => import('./pages/admin/AdminAndamento.jsx'));
@@ -151,7 +151,7 @@ const AuthenticatedApp = () => {
         <Route path="/staff/crea-evento" element={<Suspense fallback={<PageLoader />}><CreateEvent /></Suspense>} />
         <Route path="/staff/profilo" element={<Suspense fallback={<PageLoader />}><StaffProfile /></Suspense>} />
         <Route path="/staff/assenze" element={<Suspense fallback={<PageLoader />}><AbsenceCalendar /></Suspense>} />
-        <Route path="/staff/ddt" element={<Suspense fallback={<PageLoader />}><StaffDDT /></Suspense>} />
+        <Route path="/staff/ddt" element={<Suspense fallback={<PageLoader />}><StaffControlPanel /></Suspense>} />
         <Route path="/staff/segnalazioni-ddt" element={<Suspense fallback={<PageLoader />}><StaffDdtReports /></Suspense>} />
       </Route>
     </Routes>

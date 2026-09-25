@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
-import { Bell, AlertCircle, DollarSign, CalendarPlus, User, FileText } from 'lucide-react';
+import { Bell, AlertCircle, DollarSign, CalendarPlus, User, LayoutDashboard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getMyStaffMember, contaBisogniAperti } from '@/api/staff';
 import PageTransition from '../shared/PageTransition';
@@ -13,7 +13,7 @@ const navItems = [
   { path: '/staff', label: 'Dashboard', icon: Bell, section: 'dashboard' },
   { path: '/staff/bisogni', label: 'Bisogni', icon: AlertCircle, section: 'bisogni' },
   { path: '/staff/crea-evento', label: 'Evento', icon: CalendarPlus, section: 'evento' },
-  { path: '/staff/ddt', label: 'DDT', icon: FileText, section: 'ddt' },
+  { path: '/staff/ddt', label: 'Controllo', icon: LayoutDashboard, section: 'ddt' },
   { path: '/staff/profilo', label: 'Profilo', icon: User, section: 'profilo' },
 ];
 
