@@ -194,11 +194,7 @@ export default function ProducerProducts() {
                 <Truck className="w-4 h-4" /> Fornitori
               </Link>
             </Button>
-            <Button asChild variant="outline" className="rounded-xl gap-1">
-              <Link to="/produttore/rivenditori">
-                <Store className="w-4 h-4" /> Rivenditori
-              </Link>
-            </Button>
+
           </div>
         </div>
         <div className="flex items-center gap-3">

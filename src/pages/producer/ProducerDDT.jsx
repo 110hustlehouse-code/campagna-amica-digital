@@ -3,7 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import {
-  FileText, Plus, Trash2, Send, CheckCircle2, XCircle, Loader2, Printer, Package, ArrowLeft,
+  FileText, Plus, Trash2, Send, CheckCircle2, XCircle, Loader2, Printer, Package,
+  ArrowLeft, ChevronDown, ChevronUp, RotateCcw, Sparkles,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -21,7 +22,7 @@ import { getMyCompany } from '@/api/companies';
 import { getMarkets } from '@/api/markets';
 import { getProductsByCompany } from '@/api/products';
 import {
-  getDdtByCompany, getDdt, creaBozzaDdt, emettiDdt, annullaDdt, firmaDdt, numeroCompleto,
+  getDdtByCompany, getDdt, getUltimoDdt, creaBozzaDdt, emettiDdt, annullaDdt, firmaDdt, numeroCompleto,
   ETICHETTE_STATO, ETICHETTE_CAUSALE,
 } from '@/api/ddt';
 
@@ -32,8 +33,6 @@ const COLORI_STATO = {
   annullato:  'bg-red-50 text-red-700 border-red-200',
 };
 
-const RIGA_VUOTA = { product_id: '', product_name: '', quantity: '', unit: 'kg', lot: '', expiry_date: '' };
-
 export default function ProducerDDT() {
   const qc = useQueryClient();
   const navigate = useNavigate();
@@ -42,12 +41,18 @@ export default function ProducerDDT() {
   const [dettaglio, setDettaglio] = useState(null);
   const [annullamento, setAnnullamento] = useState(null);
   const [motivo, setMotivo] = useState('');
+  const [mostraAvanzate, setMostraAvanzate] = useState(false);
+  const [righeAvanzateAperte, setRigheAvanzateAperte] = useState({});
 
   const [testata, setTestata] = useState({
     market_id: '', market_event_id: '', causale: 'trasferimento_interno', trasporto_a_mezzo: 'mittente',
     numero_colli: '', peso_kg: '', note: '',
   });
-  const [righe, setRighe] = useState([{ ...RIGA_VUOTA }]);
+  // Mappa product_id -> { quantity, unit, lot, expiry_date }. Solo i
+  // prodotti con una quantità inserita finiscono nel DDT: il produttore
+  // scorre il proprio catalogo e tocca solo quello che porta oggi,
+  // invece di aggiungere righe una per una da un menu.
+  const [quantita, setQuantita] = useState({});
 
   const { data: azienda } = useQuery({ queryKey: ['my-company'], queryFn: getMyCompany });
   const { data: mercati = [] } = useQuery({ queryKey: ['markets'], queryFn: getMarkets });
@@ -62,14 +67,49 @@ export default function ProducerDDT() {
     enabled: !!azienda?.id,
   });
 
-  // I mercati in cui l'azienda è presente: sono le destinazioni abituali.
   const mieiMercati = mercati.filter((m) => (azienda?.market_ids || []).includes(m.id));
+
+  const { data: ultimoDdt } = useQuery({
+    queryKey: ['ultimo-ddt', azienda?.id, testata.market_id],
+    queryFn: () => getUltimoDdt(azienda.id, testata.market_id),
+    enabled: !!azienda?.id && !!testata.market_id && nuovo,
+  });
+
+  const impostaQuantita = (productId, campo, valore) => {
+    setQuantita((q) => ({
+      ...q,
+      [productId]: { ...(q[productId] || { quantity: '', unit: 'kg', lot: '', expiry_date: '' }), [campo]: valore },
+    }));
+  };
+
+  const ripetiUltimo = () => {
+    if (!ultimoDdt) return;
+    const nuove = {};
+    for (const r of ultimoDdt.righe) {
+      if (!r.product_id) continue;
+      nuove[r.product_id] = {
+        quantity: String(r.quantity ?? ''),
+        unit: r.unit || 'kg',
+        lot: r.lot || '',
+        expiry_date: r.expiry_date || '',
+      };
+    }
+    setQuantita(nuove);
+    toast({ title: 'Quantità precompilate dall\'ultimo DDT', description: 'Controlla e correggi dove serve.' });
+  };
+
+  const apriNuovo = () => {
+    setQuantita({});
+    setMostraAvanzate(false);
+    setRigheAvanzateAperte({});
+    setNuovo(true);
+  };
 
   const creaMutation = useMutation({
     mutationFn: async () => {
       const mercato = mercati.find((m) => m.id === testata.market_id);
-      const valide = righe.filter((r) => r.product_name.trim() && Number(r.quantity) > 0);
-      if (valide.length === 0) throw new Error('Aggiungi almeno una riga con descrizione e quantità');
+      const valide = Object.entries(quantita).filter(([, v]) => Number(v.quantity) > 0);
+      if (valide.length === 0) throw new Error('Indica la quantità di almeno un prodotto');
 
       const oggi = new Date().toISOString().slice(0, 10);
 
@@ -77,7 +117,8 @@ export default function ProducerDDT() {
         {
           company_id: azienda.id,
           market_id: testata.market_id,
-          market_event_id: testata.market_event_id || null,          issue_date: oggi,
+          market_event_id: testata.market_event_id || null,
+          issue_date: oggi,
           transport_date: oggi,
           recipient_name: mercato?.name || 'Mercato',
           recipient_address: mercato?.address || null,
@@ -89,20 +130,23 @@ export default function ProducerDDT() {
           signature_required: true,
           annotazioni: testata.note || null,
         },
-        valide.map((r) => ({
-          product_id: r.product_id || null,
-          product_name: r.product_name.trim(),
-          quantity: Number(r.quantity),
-          unit: r.unit,
-          lot: r.lot?.trim() || null,
-          expiry_date: r.expiry_date || null,
-        })),
+        valide.map(([productId, v]) => {
+          const prodotto = prodotti.find((p) => p.id === productId);
+          return {
+            product_id: productId,
+            product_name: prodotto?.name || '',
+            quantity: Number(v.quantity),
+            unit: v.unit,
+            lot: v.lot?.trim() || null,
+            expiry_date: v.expiry_date || null,
+          };
+        }),
       );
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['ddt'] });
       setNuovo(false);
-      setRighe([{ ...RIGA_VUOTA }]);
+      setQuantita({});
       setTestata((t) => ({ ...t, numero_colli: '', peso_kg: '', note: '' }));
       toast({ title: 'Bozza creata', description: 'Puoi modificarla finché non la emetti.' });
     },
@@ -143,18 +187,9 @@ export default function ProducerDDT() {
 
   const apriDettaglio = async (id) => setDettaglio(await getDdt(id));
 
-  const aggiornaRiga = (i, campo, valore) => {
-    setRighe((r) => r.map((riga, idx) => {
-      if (idx !== i) return riga;
-      if (campo === 'product_id') {
-        const p = prodotti.find((x) => x.id === valore);
-        return p
-          ? { ...riga, product_id: valore, product_name: p.name, unit: p.unit || 'kg' }
-          : { ...riga, product_id: '' };
-      }
-      return { ...riga, [campo]: valore };
-    }));
-  };
+  const toggleRigaAvanzata = (id) => setRigheAvanzateAperte((p) => ({ ...p, [id]: !p[id] }));
+
+  const numProdottiSelezionati = Object.values(quantita).filter((v) => Number(v.quantity) > 0).length;
 
   if (!azienda) {
     return (
@@ -185,7 +220,7 @@ export default function ProducerDDT() {
             </p>
           </div>
         </div>
-        <Button onClick={() => setNuovo(true)} className="shrink-0">
+        <Button onClick={apriNuovo} className="shrink-0">
           <Plus className="w-4 h-4 mr-1" /> Nuovo
         </Button>
       </div>
@@ -194,8 +229,8 @@ export default function ProducerDDT() {
         <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
       ) : documenti.length === 0 ? (
         <div className="text-center py-16 border rounded-2xl bg-muted/20">
-          <FileText className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
-          <p className="font-medium">Nessun documento</p>
+          <Package className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
+          <p className="font-medium">Nessun DDT ancora</p>
           <p className="text-sm text-muted-foreground mt-1">
             Il primo DDT si crea quando porti la merce al mercato.
           </p>
@@ -254,111 +289,138 @@ export default function ProducerDDT() {
           <DialogHeader><DialogTitle>Nuovo documento di trasporto</DialogTitle></DialogHeader>
 
           <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label>Destinazione</Label>
-                <Select value={testata.market_id}
-                        onValueChange={(v) => setTestata({ ...testata, market_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Scegli il mercato" /></SelectTrigger>
-                  <SelectContent>
-                    {(mieiMercati.length ? mieiMercati : mercati).map((m) => (
-                      <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label>Causale del trasporto</Label>
-                <Select value={testata.causale}
-                        onValueChange={(v) => setTestata({ ...testata, causale: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(ETICHETTE_CAUSALE).map(([k, v]) => (
-                      <SelectItem key={k} value={k}>{v}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="space-y-1.5">
+              <Label>Mercato</Label>
+              <Select value={testata.market_id}
+                      onValueChange={(v) => setTestata({ ...testata, market_id: v })}>
+                <SelectTrigger><SelectValue placeholder="Scegli il mercato" /></SelectTrigger>
+                <SelectContent>
+                  {(mieiMercati.length ? mieiMercati : mercati).map((m) => (
+                    <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
+
+            {ultimoDdt && (
+              <button
+                type="button"
+                onClick={ripetiUltimo}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-primary/30 bg-primary/5 text-primary text-sm font-semibold hover:bg-primary/10 transition-colors"
+              >
+                <RotateCcw className="w-4 h-4" /> Ripeti l'ultimo DDT per questo mercato
+              </button>
+            )}
 
             <div>
               <div className="flex items-center justify-between mb-2">
-                <Label>Merce trasportata</Label>
-                <Button size="sm" variant="outline"
-                        onClick={() => setRighe([...righe, { ...RIGA_VUOTA }])}>
-                  <Plus className="w-3.5 h-3.5 mr-1" /> Riga
-                </Button>
+                <Label>Cosa porti oggi</Label>
+                {numProdottiSelezionati > 0 && (
+                  <span className="text-xs font-semibold text-primary">
+                    {numProdottiSelezionati} {numProdottiSelezionati === 1 ? 'prodotto' : 'prodotti'} selezionati
+                  </span>
+                )}
               </div>
 
-              <div className="space-y-2">
-                {righe.map((r, i) => (
-                  <div key={i} className="border rounded-lg p-3 space-y-2 bg-muted/20">
-                    <div className="flex gap-2">
-                      <Select value={r.product_id} onValueChange={(v) => aggiornaRiga(i, 'product_id', v)}>
-                        <SelectTrigger className="flex-1">
-                          <SelectValue placeholder="Dal catalogo, o scrivi sotto" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {prodotti.map((p) => (
-                            <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {righe.length > 1 && (
-                        <Button size="icon" variant="ghost"
-                                onClick={() => setRighe(righe.filter((_, idx) => idx !== i))}>
-                          <Trash2 className="w-4 h-4 text-destructive" />
-                        </Button>
-                      )}
-                    </div>
+              {prodotti.length === 0 ? (
+                <p className="text-sm text-muted-foreground bg-muted/30 rounded-xl p-4 text-center">
+                  Non hai ancora prodotti nel catalogo. Aggiungili prima da Prodotti.
+                </p>
+              ) : (
+                <div className="space-y-1.5 max-h-96 overflow-y-auto">
+                  {prodotti.map((p) => {
+                    const v = quantita[p.id] || { quantity: '', unit: p.unit || 'kg', lot: '', expiry_date: '' };
+                    const attivo = Number(v.quantity) > 0;
+                    const avanzataAperta = righeAvanzateAperte[p.id];
+                    return (
+                      <div key={p.id}
+                           className={`rounded-xl border transition-colors ${attivo ? 'border-primary/40 bg-primary/5' : 'border-border/50 bg-card'}`}>
+                        <div className="flex items-center gap-2 p-2.5">
+                          <span className={`flex-1 text-sm truncate ${attivo ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>
+                            {p.name}
+                          </span>
+                          <Input
+                            type="number" step="0.001" placeholder="0"
+                            value={v.quantity}
+                            onChange={(e) => impostaQuantita(p.id, 'quantity', e.target.value)}
+                            className="w-20 h-9 text-center"
+                          />
+                          <Select value={v.unit} onValueChange={(val) => impostaQuantita(p.id, 'unit', val)}>
+                            <SelectTrigger className="w-24 h-9"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {['kg', 'lt', 'pz', 'confezione'].map((u) => (
+                                <SelectItem key={u} value={u}>{u}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {attivo && (
+                            <button type="button" onClick={() => toggleRigaAvanzata(p.id)}
+                                    className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted shrink-0">
+                              {avanzataAperta ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+                            </button>
+                          )}
+                        </div>
+                        {attivo && avanzataAperta && (
+                          <div className="grid grid-cols-2 gap-2 px-2.5 pb-2.5">
+                            <Input placeholder="Lotto" value={v.lot}
+                                   onChange={(e) => impostaQuantita(p.id, 'lot', e.target.value)}
+                                   className="h-9" />
+                            <Input type="date" value={v.expiry_date}
+                                   onChange={(e) => impostaQuantita(p.id, 'expiry_date', e.target.value)}
+                                   className="h-9" />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
 
-                    <Input placeholder="Descrizione della merce"
-                           value={r.product_name}
-                           onChange={(e) => aggiornaRiga(i, 'product_name', e.target.value)} />
+            <button
+              type="button"
+              onClick={() => setMostraAvanzate((v) => !v)}
+              className="w-full flex items-center justify-between py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <span>Dettagli avanzati (causale, colli, peso, note)</span>
+              {mostraAvanzate ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </button>
 
-                    <div className="grid grid-cols-3 gap-2">
-                      <Input type="number" step="0.001" placeholder="Quantità"
-                             value={r.quantity}
-                             onChange={(e) => aggiornaRiga(i, 'quantity', e.target.value)} />
-                      <Select value={r.unit} onValueChange={(v) => aggiornaRiga(i, 'unit', v)}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {['kg', 'lt', 'pz', 'confezione'].map((u) => (
-                            <SelectItem key={u} value={u}>{u}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Input placeholder="Lotto"
-                             value={r.lot}
-                             onChange={(e) => aggiornaRiga(i, 'lot', e.target.value)} />
-                      <Input type="date" placeholder="Scadenza"
-                             value={r.expiry_date}
-                             onChange={(e) => aggiornaRiga(i, 'expiry_date', e.target.value)} />
-                    </div>
+            {mostraAvanzate && (
+              <div className="space-y-3 border-t pt-3">
+                <div className="space-y-1.5">
+                  <Label>Causale del trasporto</Label>
+                  <Select value={testata.causale}
+                          onValueChange={(v) => setTestata({ ...testata, causale: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(ETICHETTE_CAUSALE).map(([k, v]) => (
+                        <SelectItem key={k} value={k}>{v}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label>Numero colli</Label>
+                    <Input type="number" value={testata.numero_colli}
+                           onChange={(e) => setTestata({ ...testata, numero_colli: e.target.value })} />
                   </div>
-                ))}
-              </div>
-            </div>
+                  <div className="space-y-1.5">
+                    <Label>Peso totale (kg)</Label>
+                    <Input type="number" step="0.1" value={testata.peso_kg}
+                           onChange={(e) => setTestata({ ...testata, peso_kg: e.target.value })} />
+                  </div>
+                </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label>Numero colli</Label>
-                <Input type="number" value={testata.numero_colli}
-                       onChange={(e) => setTestata({ ...testata, numero_colli: e.target.value })} />
+                <div className="space-y-1.5">
+                  <Label>Note</Label>
+                  <Textarea rows={2} value={testata.note}
+                            onChange={(e) => setTestata({ ...testata, note: e.target.value })} />
+                </div>
               </div>
-              <div className="space-y-1.5">
-                <Label>Peso totale (kg)</Label>
-                <Input type="number" step="0.1" value={testata.peso_kg}
-                       onChange={(e) => setTestata({ ...testata, peso_kg: e.target.value })} />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label>Note</Label>
-              <Textarea rows={2} value={testata.note}
-                        onChange={(e) => setTestata({ ...testata, note: e.target.value })} />
-            </div>
+            )}
 
             <p className="text-xs text-muted-foreground bg-muted/40 rounded-lg p-3">
               Il documento nasce come bozza e resta modificabile. Il numero
@@ -370,7 +432,7 @@ export default function ProducerDDT() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setNuovo(false)}>Annulla</Button>
             <Button onClick={() => creaMutation.mutate()}
-                    disabled={!testata.market_id || creaMutation.isPending}>
+                    disabled={!testata.market_id || numProdottiSelezionati === 0 || creaMutation.isPending}>
               {creaMutation.isPending && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}
               Crea bozza
             </Button>
@@ -401,94 +463,71 @@ export default function ProducerDDT() {
                   <div>
                     <p className="text-xs text-muted-foreground mb-0.5">Destinatario</p>
                     <p className="font-medium">{dettaglio.recipient_name}</p>
-                    {dettaglio.recipient_address && (
-                      <p className="text-xs text-muted-foreground">{dettaglio.recipient_address}</p>
+                    {dettaglio.recipient_city && (
+                      <p className="text-xs text-muted-foreground">{dettaglio.recipient_city}</p>
                     )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-0.5">Causale</p>
+                    <p className="font-medium">{ETICHETTE_CAUSALE[dettaglio.causale]}</p>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground mb-0.5">Data</p>
-                    <p>{format(new Date(dettaglio.issue_date), 'd MMMM yyyy', { locale: it })}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-0.5">Causale</p>
-                    <p>{ETICHETTE_CAUSALE[dettaglio.causale]}</p>
+                    <p className="font-medium">{format(new Date(dettaglio.issue_date), 'd MMMM yyyy', { locale: it })}</p>
                   </div>
                 </div>
 
                 <div>
-                  <p className="text-xs text-muted-foreground mb-1.5">Merce</p>
-                  <div className="border rounded-lg divide-y">
+                  <p className="text-xs text-muted-foreground mb-1.5">Merce trasportata</p>
+                  <div className="space-y-1.5">
                     {dettaglio.righe.map((r) => (
-                      <div key={r.id} className="p-2.5 flex justify-between gap-3">
-                        <span className="min-w-0 truncate">{r.product_name}</span>
-                        <span className="text-muted-foreground shrink-0">
-                          {r.quantity} {r.unit}
-                          {r.lot ? ` · lotto ${r.lot}` : ''}
-                          {r.expiry_date ? ` · scad. ${format(new Date(r.expiry_date), 'dd/MM/yy')}` : ''}
-                        </span>
+                      <div key={r.id} className="flex items-center justify-between border-b pb-1.5 last:border-0">
+                        <span>{r.product_name}</span>
+                        <span className="font-medium">{r.quantity} {r.unit}</span>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                {(dettaglio.numero_colli || dettaglio.peso_kg) && (
-                  <p className="text-xs text-muted-foreground">
-                    {dettaglio.numero_colli ? `${dettaglio.numero_colli} colli` : ''}
-                    {dettaglio.numero_colli && dettaglio.peso_kg ? ' · ' : ''}
-                    {dettaglio.peso_kg ? `${dettaglio.peso_kg} kg` : ''}
-                  </p>
-                )}
-
-                {dettaglio.annotazioni && <p className="text-xs">{dettaglio.annotazioni}</p>}
-
-                {dettaglio.status === 'cancelled' && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                    <p className="text-xs font-medium text-red-800">Documento annullato</p>
-                    {dettaglio.cancellation_reason && (
-                      <p className="text-xs text-red-700 mt-0.5">{dettaglio.cancellation_reason}</p>
-                    )}
+                {dettaglio.annotazioni && (
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-0.5">Note</p>
+                    <p>{dettaglio.annotazioni}</p>
                   </div>
                 )}
               </div>
 
               <DialogFooter>
-                {dettaglio.status !== 'draft' && (
-                  <Button variant="outline" onClick={() => window.print()}>
-                    <Printer className="w-4 h-4 mr-1" /> Stampa
-                  </Button>
-                )}
-                {dettaglio.signed_at && (
-                  <span className="text-xs text-emerald-700 self-center mr-auto">
-                    Firmato il {format(new Date(dettaglio.signed_at), 'd MMM yyyy', { locale: it })}
-                  </span>
-                )}
-                <Button onClick={() => setDettaglio(null)}>Chiudi</Button>
+                <Button variant="outline" onClick={() => window.print()} className="gap-1.5">
+                  <Printer className="w-4 h-4" /> Stampa
+                </Button>
               </DialogFooter>
             </>
           )}
         </DialogContent>
       </Dialog>
 
-      {/* ----------------------------------------------------- annullamento */}
+      {/* -------------------------------------------------- annullamento */}
       <Dialog open={!!annullamento} onOpenChange={() => setAnnullamento(null)}>
         <DialogContent className="max-w-md">
-          <DialogHeader><DialogTitle>Annullare il documento?</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Annulla DDT</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">
-              Un DDT emesso non si modifica: si annulla e se ne emette uno nuovo.
-              Il documento annullato resta negli archivi, come previsto.
+              L'annullamento è irreversibile e resta tracciato. Indica il motivo.
             </p>
-            <div className="space-y-1.5">
-              <Label>Motivo dell'annullamento</Label>
-              <Textarea rows={2} value={motivo} onChange={(e) => setMotivo(e.target.value)}
-                        placeholder="Es. quantità errata" />
-            </div>
+            <Textarea rows={3} value={motivo} onChange={(e) => setMotivo(e.target.value)}
+                      placeholder="Es. errore di battitura, merce non consegnata..." />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setAnnullamento(null)}>Torna indietro</Button>
-            <Button variant="destructive" disabled={!motivo.trim() || annullaMutation.isPending}
-                    onClick={() => annullaMutation.mutate({ id: annullamento.id, motivo })}>
-              Annulla il DDT
+            <Button variant="outline" onClick={() => setAnnullamento(null)}>Indietro</Button>
+            <Button variant="destructive"
+                    onClick={() => annullaMutation.mutate({ id: annullamento.id, motivo })}
+                    disabled={!motivo.trim() || annullaMutation.isPending}>
+              {annullaMutation.isPending && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}
+              Conferma annullamento
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -220,3 +220,16 @@ export async function haAncoraDdtDaFareOggi(companyId: string, marketIds: string
   }
   return false
 }
+/** L'ultimo DDT emesso per un'azienda su un mercato — usato per "Ripeti ultimo". */
+export async function getUltimoDdt(companyId: string, marketId: string): Promise<DdtCompleto | null> {
+  const { data, error } = await supabase
+    .from('delivery_notes')
+    .select('id')
+    .eq('company_id', companyId).eq('market_id', marketId).eq('status', 'issued')
+    .order('issue_date', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (error) throw error
+  if (!data) return null
+  return getDdt(data.id)
+}
