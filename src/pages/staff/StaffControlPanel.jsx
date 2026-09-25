@@ -1,24 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format, startOfMonth } from 'date-fns';
 import { it } from 'date-fns/locale';
-import { FileText, Leaf, Store, Download, FileSpreadsheet, Loader2 } from 'lucide-react';
+import {
+  FileText, Leaf, Store, Download, FileSpreadsheet, Loader2,
+  Plus, Building2, AlertTriangle, ChevronDown, ShieldQuestion, Send, ShieldAlert, Archive,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
 import { getMyStaffMember } from '@/api/staff';
-import { getDdtByMarket, numeroCompleto } from '@/api/ddt';
-import { getReportsByMarket } from '@/api/ddtReports';
+import { getDdtByMarket, getDdt, numeroCompleto } from '@/api/ddt';
+import { getReportsByMarket, agisciSuSegnalazione, creaSegnalazioneManuale, ETICHETTE_AZIONE } from '@/api/ddtReports';
+import { createWarningStaff } from '@/api/sanctions';
 import { getSegnalazioniStagionaliMercato, risolviSegnalazioneStagionale } from '@/api/segnalazioniStagionali';
 import { getRentalsByMarket, getAllRentals } from '@/api/rentals';
 import { getRegisteredCompanies } from '@/api/companies';
 import { getMarkets } from '@/api/markets';
 import { exportRowsToPdf, exportRowsToExcel } from '@/lib/reportExport';
 
-import StaffDDT from './StaffDDT';
-import StaffDdtReports from './StaffDdtReports';
 import StallRentals from './StallRentals';
 
 const TABS = [
@@ -257,15 +260,303 @@ export default function StaffControlPanel() {
 
       <div>
         {tab === 'ddt' && (
-          <div>
-            <StaffDdtReports />
-            <div className="border-t border-border/50 mt-2" />
-            <StaffDDT />
-          </div>
+          <DdtControlSection
+            marketId={marketId}
+            companies={companies}
+            segnalazioni={segnalazioniDdt}
+            documenti={documentiDdt}
+          />
         )}
         {tab === 'stagionale' && <SeasonalControlSection marketId={marketId} companies={companies} />}
         {tab === 'affitti' && <StallRentals />}
       </div>
+    </div>
+  );
+}
+
+function DdtControlSection({ marketId, companies, segnalazioni, documenti }) {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  const [openCompanies, setOpenCompanies] = useState(new Set());
+  const [azione, setAzione] = useState(null);
+  const [nota, setNota] = useState('');
+  const [nuovaSegnalazione, setNuovaSegnalazione] = useState(false);
+  const [aziendaSelezionata, setAziendaSelezionata] = useState('');
+  const [dettaglio, setDettaglio] = useState(null);
+
+  const nuovaSegnalazioneMutation = useMutation({
+    mutationFn: () => creaSegnalazioneManuale(aziendaSelezionata, marketId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['ddt-reports'] });
+      setNuovaSegnalazione(false);
+      setAziendaSelezionata('');
+      toast({ title: 'Segnalazione creata' });
+    },
+    onError: (e) => toast({ title: 'Errore', description: e.message, variant: 'destructive' }),
+  });
+
+  const agisciMutation = useMutation({
+    mutationFn: async ({ id, tipo, nota, report }) => {
+      if (tipo === 'warn') {
+        await createWarningStaff(report.company_id, report.market_id, nota || 'DDT non emesso', id, user.id);
+        await agisciSuSegnalazione(id, 'warn', nota || null, user.id);
+      } else {
+        await agisciSuSegnalazione(id, tipo, nota || null, user.id);
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['ddt-reports'] });
+      setAzione(null);
+      setNota('');
+      toast({ title: 'Fatto' });
+    },
+    onError: (e) => toast({ title: 'Errore', description: e.message, variant: 'destructive' }),
+  });
+
+  const apriAzione = (report, tipo) => { setAzione({ report, tipo }); setNota(''); };
+  const conferma = () => agisciMutation.mutate({ id: azione.report.id, tipo: azione.tipo, nota, report: azione.report });
+  const apriDettaglio = async (id) => setDettaglio(await getDdt(id));
+
+  const toggleCompany = (id) => {
+    setOpenCompanies((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  // Raggruppa segnalazioni aperte + DDT emessi per azienda
+  const gruppi = useMemo(() => {
+    const map = {};
+    segnalazioni.forEach((s) => {
+      const cid = s.company_id;
+      if (!map[cid]) {
+        map[cid] = {
+          companyId: cid,
+          companyName: s.companies?.name || companies.find((c) => c.id === cid)?.name || 'Azienda',
+          segnalazioni: [],
+          documenti: [],
+        };
+      }
+      map[cid].segnalazioni.push(s);
+    });
+    documenti.forEach((d) => {
+      const cid = d.company_id;
+      if (!cid) return;
+      if (!map[cid]) {
+        map[cid] = {
+          companyId: cid,
+          companyName: companies.find((c) => c.id === cid)?.name || d.mittente_ragione_sociale || 'Azienda',
+          segnalazioni: [],
+          documenti: [],
+        };
+      }
+      map[cid].documenti.push(d);
+    });
+    return Object.values(map).sort((a, b) => a.companyName.localeCompare(b.companyName));
+  }, [segnalazioni, documenti, companies]);
+
+  if (!marketId) {
+    return (
+      <div className="p-8 text-center">
+        <p className="text-muted-foreground">Nessun mercato associato al tuo profilo.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-4 md:p-6 max-w-4xl mx-auto">
+      <div className="flex items-center justify-between mb-5 gap-3">
+        <div>
+          <h2 className="font-heading text-xl font-bold">Controllo DDT per Azienda</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">Attuale + storico, raggruppati per azienda</p>
+        </div>
+        <Button size="sm" onClick={() => setNuovaSegnalazione(true)} className="gap-1.5 shrink-0">
+          <Plus className="w-3.5 h-3.5" /> Segnala
+        </Button>
+      </div>
+
+      {gruppi.length === 0 ? (
+        <div className="text-center py-16 border rounded-2xl bg-muted/20">
+          <p className="font-medium">Nessuna attività DDT questo mese</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {gruppi.map((g) => {
+            const isOpen = openCompanies.has(g.companyId);
+            const haSegnalazioniAperte = g.segnalazioni.length > 0;
+            return (
+              <div key={g.companyId} className="rounded-xl border-2 border-border/50 bg-white overflow-hidden shadow-sm">
+                <button
+                  onClick={() => toggleCompany(g.companyId)}
+                  className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/30 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <Building2 className="w-4 h-4 text-primary" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-semibold text-sm text-foreground">{g.companyName}</p>
+                      <p className="text-xs text-muted-foreground">{g.documenti.length} DDT questo mese</p>
+                    </div>
+                    {haSegnalazioniAperte && (
+                      <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700">
+                        <AlertTriangle className="w-2.5 h-2.5" /> Senza DDT
+                      </span>
+                    )}
+                  </div>
+                  <ChevronDown className={cn('w-4 h-4 text-muted-foreground transition-transform', isOpen && 'rotate-180')} />
+                </button>
+
+                {isOpen && (
+                  <div className="border-t border-border/40 px-4 py-4 space-y-4">
+                    <div>
+                      <p className="text-xs font-bold text-amber-700 uppercase tracking-wide mb-2">Attuale</p>
+                      {g.segnalazioni.length === 0 ? (
+                        <p className="text-xs text-muted-foreground">Nessuna segnalazione aperta</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {g.segnalazioni.map((s) => (
+                            <div key={s.id} className="border rounded-lg p-3 bg-amber-50/50">
+                              <p className="text-xs text-muted-foreground mb-2">
+                                {format(new Date(s.data_evento), 'EEEE d MMMM', { locale: it })}
+                                {' · rilevato alle '}
+                                {format(new Date(s.detected_at), 'HH:mm')}
+                              </p>
+                              <div className="flex flex-wrap gap-2">
+                                <Button
+                                  size="sm" variant="outline" onClick={() => apriAzione(s, 'warn')}
+                                  className="gap-1.5 text-xs text-amber-700 border-amber-300 hover:bg-amber-50"
+                                >
+                                  <ShieldQuestion className="w-3 h-3" /> Ammonisci
+                                </Button>
+                                <Button size="sm" variant="outline" onClick={() => apriAzione(s, 'escalate')} className="gap-1.5 text-xs">
+                                  <Send className="w-3 h-3" /> Segnala
+                                </Button>
+                                <Button
+                                  size="sm" variant="outline" onClick={() => apriAzione(s, 'request_suspension')}
+                                  className="gap-1.5 text-xs text-destructive border-destructive/30 hover:bg-destructive/5"
+                                >
+                                  <ShieldAlert className="w-3 h-3" /> Sospendi
+                                </Button>
+                                <Button size="sm" variant="ghost" onClick={() => apriAzione(s, 'dismiss')} className="gap-1.5 text-xs">
+                                  <Archive className="w-3 h-3" /> Archivia
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <p className="text-xs font-bold text-primary uppercase tracking-wide mb-2">Storico ({g.documenti.length})</p>
+                      {g.documenti.length === 0 ? (
+                        <p className="text-xs text-muted-foreground">Nessun DDT emesso questo mese</p>
+                      ) : (
+                        <div className="space-y-1.5">
+                          {g.documenti.map((d) => (
+                            <button
+                              key={d.id}
+                              onClick={() => apriDettaglio(d.id)}
+                              className="w-full text-left border rounded-lg p-2.5 bg-card hover:border-primary/40 transition-colors text-xs"
+                            >
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="font-semibold">{numeroCompleto(d) ? `DDT ${numeroCompleto(d)}` : 'Bozza'}</span>
+                                <span className="text-muted-foreground">{format(new Date(d.issue_date), 'd MMM', { locale: it })}</span>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <Dialog open={nuovaSegnalazione} onOpenChange={setNuovaSegnalazione}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Segnala produttore senza DDT</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Segnala un'azienda del tuo mercato che oggi non ha emesso DDT né dichiarato assenza.
+            </p>
+            <select
+              value={aziendaSelezionata}
+              onChange={(e) => setAziendaSelezionata(e.target.value)}
+              className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm"
+            >
+              <option value="">Scegli azienda...</option>
+              {companies.map((a) => (
+                <option key={a.id} value={a.id}>{a.name}</option>
+              ))}
+            </select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNuovaSegnalazione(false)}>Annulla</Button>
+            <Button onClick={() => nuovaSegnalazioneMutation.mutate()} disabled={!aziendaSelezionata || nuovaSegnalazioneMutation.isPending}>
+              {nuovaSegnalazioneMutation.isPending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : null}
+              Segnala
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!azione} onOpenChange={(open) => !open && setAzione(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{azione?.tipo === 'warn' ? 'Ammonisci azienda' : (azione && ETICHETTE_AZIONE[azione.tipo])}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Textarea rows={3} placeholder="Nota (facoltativa)" value={nota} onChange={(e) => setNota(e.target.value)} />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAzione(null)}>Annulla</Button>
+            <Button onClick={conferma} disabled={agisciMutation.isPending}>
+              {agisciMutation.isPending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : null}
+              Conferma
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!dettaglio} onOpenChange={() => setDettaglio(null)}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          {dettaglio && (
+            <>
+              <DialogHeader>
+                <DialogTitle>{numeroCompleto(dettaglio) ? `DDT ${numeroCompleto(dettaglio)}` : 'Bozza'}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 text-sm">
+                <div>
+                  <p className="text-xs text-muted-foreground mb-0.5">Mittente</p>
+                  <p className="font-medium">
+                    {companies.find((c) => c.id === dettaglio.company_id)?.name || 'Azienda sconosciuta'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1.5">Merce</p>
+                  <div className="border rounded-lg divide-y">
+                    {(dettaglio.righe || []).map((r) => (
+                      <div key={r.id} className="p-2.5 flex justify-between gap-3">
+                        <span className="min-w-0 truncate">{r.product_name}</span>
+                        <span className="text-muted-foreground shrink-0">{r.quantity} {r.unit}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                {dettaglio.annotazioni && <p className="text-xs">{dettaglio.annotazioni}</p>}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
