@@ -9,6 +9,7 @@ import { getRentalsByMarket } from '@/api/rentals';
 import { getCompaniesByMarket } from '@/api/companies';
 import { getMyNotifications, segnaLetta } from '@/api/notifications';
 import { getSegnalazioniStagionaliMercato, risolviSegnalazioneStagionale } from '@/api/segnalazioniStagionali';
+import { getReportsByMarket } from '@/api/ddtReports';
 import { format, startOfToday } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { AlertCircle, TrendingUp, Clock, CalendarPlus, ChevronDown, Users, CalendarOff, Leaf, FileWarning } from 'lucide-react';
@@ -22,16 +23,16 @@ import RsvpSection from '@/components/staff/RsvpSection.jsx';
 const MESI_NOMI = ['', 'gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'];
 
 
-function AbsenceButton({ needs }) {
-  const absences = (needs || []).filter(n => n.title?.includes('Assenza segnalata') && n.status === 'open');
+function HeaderIconButton({ to, icon: Icon, label, count }) {
   return (
-    <Link to="/staff/assenze" className="relative flex-shrink-0">
-      <div className="w-11 h-11 rounded-2xl bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center hover:bg-white/30 transition-colors">
-        <CalendarOff className="w-5 h-5 text-white" />
+    <Link to={to} className="relative flex-shrink-0 flex flex-col items-center gap-1 group">
+      <div className="w-11 h-11 rounded-2xl bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center group-hover:bg-white/30 transition-colors">
+        <Icon className="w-5 h-5 text-white" />
       </div>
-      {absences.length > 0 && (
+      <span className="text-[9px] font-bold uppercase tracking-wide text-white/90 leading-none">{label}</span>
+      {count > 0 && (
         <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 border-2 border-white text-white text-[9px] font-bold flex items-center justify-center">
-          {absences.length}
+          {count}
         </span>
       )}
     </Link>
@@ -103,6 +104,14 @@ export default function StaffDashboard() {
     refetchInterval: 5000, // poll: il realtime da solo non è affidabile ovunque
   });
 
+  // Conteggio DDT mancanti aperti, per il badge del bottone in header
+  const { data: missingDdtReports = [] } = useQuery({
+    queryKey: ['dash-missing-ddt', staffMarketId],
+    queryFn: () => getReportsByMarket(staffMarketId, true),
+    enabled: staffReady,
+    refetchInterval: 5000,
+  });
+
   // 5. Affitti del mercato (tutti gli stati)
   const { data: rentals = [] } = useQuery({
     queryKey: ['dash-rentals', staffMarketId],
@@ -120,15 +129,20 @@ export default function StaffDashboard() {
     enabled: staffReady,
   });
 
+  // Le assenze sono segnalazioni a parte (sezione dedicata), non bisogni:
+  // vivono nella stessa tabella producer_needs ma non vanno mai mostrate
+  // insieme a "mancano buste", "serve manutenzione" ecc.
+  const realNeeds = useMemo(() => needs.filter(n => !n.title?.includes('Assenza segnalata')), [needs]);
+
   // Metriche calcolate
   const openNeeds = useMemo(() => {
-    return [...needs].filter(n => n.status === 'open').sort((a, b) => {
+    return [...realNeeds].filter(n => n.status === 'open').sort((a, b) => {
       const order = { high: 0, medium: 1, low: 2 };
       return (order[a.priority] ?? 1) - (order[b.priority] ?? 1);
     });
-  }, [needs]);
+  }, [realNeeds]);
 
-  const urgentNeeds = useMemo(() => needs.filter(n => n.priority === 'high' && n.status === 'open'), [needs]);
+  const urgentNeeds = useMemo(() => realNeeds.filter(n => n.priority === 'high' && n.status === 'open'), [realNeeds]);
 
   const upcomingRentals = useMemo(() => {
     const now = new Date();
@@ -153,13 +167,19 @@ export default function StaffDashboard() {
             <h1 className="font-heading text-4xl font-bold text-white drop-shadow-lg">Mercati</h1>
             <p className="text-white/90 text-sm mt-2 font-medium">{format(today, 'EEEE, d MMMM yyyy', { locale: it })}</p>
           </div>
-          <div className="flex items-center gap-2">
-            <Link to="/staff/segnalazioni-ddt" className="flex-shrink-0">
-              <div className="w-11 h-11 rounded-2xl bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center hover:bg-white/30 transition-colors">
-                <FileWarning className="w-5 h-5 text-white" />
-              </div>
-            </Link>
-            <AbsenceButton needs={needs} />
+          <div className="flex items-start gap-3">
+            <HeaderIconButton
+              to="/staff/segnalazioni-ddt"
+              icon={FileWarning}
+              label="DDT"
+              count={missingDdtReports.length}
+            />
+            <HeaderIconButton
+              to="/staff/assenze"
+              icon={CalendarOff}
+              label="Assenze"
+              count={needs.filter(n => n.title?.includes('Assenza segnalata') && n.status === 'open').length}
+            />
           </div>
         </div>
       </div>

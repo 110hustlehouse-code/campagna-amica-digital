@@ -197,8 +197,11 @@ export default function CompanyNeeds() {
   };
 
   // Active: open/in_progress | History: resolved/closed
-  const activeNeeds = needs.filter(n => n.status === 'open' || n.status === 'in_progress');
-  const historyNeeds = needs.filter(n => n.status === 'resolved' || n.status === 'closed');
+  // Le assenze vivono nella stessa tabella ma sono segnalazioni a parte
+  // (sezione dedicata /staff/assenze), non bisogni operativi.
+  const realNeeds = needs.filter(n => !n.title?.includes('Assenza segnalata'));
+  const activeNeeds = realNeeds.filter(n => n.status === 'open' || n.status === 'in_progress');
+  const historyNeeds = realNeeds.filter(n => n.status === 'resolved' || n.status === 'closed');
 
   const baseNeeds = showHistory ? historyNeeds : activeNeeds;
   const filteredNeeds = baseNeeds.filter(need => {
