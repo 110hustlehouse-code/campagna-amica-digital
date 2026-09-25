@@ -5,6 +5,7 @@ import { getMarkets } from '@/api/markets';
 import { getAllMarketEvents, getAssignmentsByCompany, getMyRsvps, assignStand } from '@/api/events';
 import { getProductsByCompany } from '@/api/products';
 import { getPublishedMessagesAll } from '@/api/staff';
+import { getNeedsByCompany, ETICHETTE_STATO, ETICHETTE_CATEGORIA } from '@/api/needs';
 import { invokeFunction } from '@/api/functions';
 import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -61,6 +62,12 @@ export default function ProducerMarkets() {
   const { data: myRsvps = [], refetch: refetchRsvps } = useQuery({
     queryKey: ['my-rsvps', myCompany?.id],
     queryFn: () => getMyRsvps(myCompany.id),
+    enabled: !!myCompany?.id,
+  });
+
+  const { data: myNeeds = [] } = useQuery({
+    queryKey: ['my-needs', myCompany?.id],
+    queryFn: () => getNeedsByCompany(myCompany.id),
     enabled: !!myCompany?.id,
   });
 
@@ -257,7 +264,7 @@ export default function ProducerMarkets() {
           </button>
           {expandedMessages && (
             <div className="px-4 pb-4 border-t border-border">
-              {otherMessages.length === 0 ? (
+              {otherMessages.length === 0 && myNeeds.length === 0 ? (
                 <div className="text-center py-6">
                   <Leaf className="w-6 h-6 text-muted-foreground/40 mx-auto mb-2" />
                   <p className="text-sm text-muted-foreground">Nessun messaggio</p>
@@ -297,6 +304,61 @@ export default function ProducerMarkets() {
                       </div>
                     </div>
                   ))}
+
+                  {myNeeds.length > 0 && (
+                    <div className={otherMessages.length > 0 ? 'pt-2 mt-2 border-t border-border' : ''}>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                        I tuoi bisogni segnalati
+                      </p>
+                      <div className="space-y-3">
+                        {myNeeds.map(need => {
+                          const styleByStatus = {
+                            open: 'bg-amber-50 border-amber-200',
+                            in_progress: 'bg-blue-50 border-blue-200',
+                            resolved: 'bg-green-50 border-green-200',
+                            closed: 'bg-muted border-border',
+                          };
+                          const iconByStatus = {
+                            open: <AlertCircle className="w-4 h-4 text-amber-600" />,
+                            in_progress: <Clock className="w-4 h-4 text-blue-600" />,
+                            resolved: <Check className="w-4 h-4 text-green-600" />,
+                            closed: <Check className="w-4 h-4 text-muted-foreground" />,
+                          };
+                          return (
+                            <div key={need.id} className={cn('rounded-xl border p-3', styleByStatus[need.status])}>
+                              <div className="flex items-start gap-2">
+                                <div className="mt-0.5 flex-shrink-0">{iconByStatus[need.status]}</div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center justify-between gap-2 mb-1">
+                                    <h3 className="font-semibold text-sm text-foreground">{need.title}</h3>
+                                    <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground shrink-0">
+                                      {ETICHETTE_STATO[need.status] || need.status}
+                                    </span>
+                                  </div>
+                                  {need.description && (
+                                    <p className="text-xs text-foreground/80 mb-1">{need.description}</p>
+                                  )}
+                                  <p className="text-[11px] text-muted-foreground mb-1">
+                                    {ETICHETTE_CATEGORIA[need.category] || need.category}
+                                    {' · '}
+                                    {format(new Date(need.created_at), 'd MMMM', { locale: it })}
+                                  </p>
+                                  {need.notes && (
+                                    <div className="mt-2 rounded-lg bg-white/70 border border-border px-2.5 py-1.5">
+                                      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">
+                                        Risposta staff
+                                      </p>
+                                      <p className="text-xs text-foreground/90">{need.notes}</p>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
