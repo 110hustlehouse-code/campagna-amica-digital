@@ -855,6 +855,41 @@ export type Database = {
           },
         ]
       }
+      need_responses: {
+        Row: {
+          author_id: string | null
+          author_name: string | null
+          created_at: string
+          id: string
+          message: string
+          need_id: string
+        }
+        Insert: {
+          author_id?: string | null
+          author_name?: string | null
+          created_at?: string
+          id?: string
+          message: string
+          need_id: string
+        }
+        Update: {
+          author_id?: string | null
+          author_name?: string | null
+          created_at?: string
+          id?: string
+          message?: string
+          need_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "need_responses_need_id_fkey"
+            columns: ["need_id"]
+            isOneToOne: false
+            referencedRelation: "producer_needs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       news_cache: {
         Row: {
           created_at: string

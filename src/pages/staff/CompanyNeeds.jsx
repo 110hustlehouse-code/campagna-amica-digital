@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getMyStaffMember } from '@/api/staff';
-import { getNeedsByMarket, getAllNeeds, createNeed, updateNeed, deleteNeed } from '@/api/needs';
+import { getNeedsByMarket, getAllNeeds, createNeed, updateNeed, deleteNeed, addNeedResponse } from '@/api/needs';
+import { exportRowsToExcel } from '@/lib/reportExport';
 import { getRegisteredCompanies } from '@/api/companies';
 import { getMarkets } from '@/api/markets';
 import { invokeFunction } from '@/api/functions';
@@ -147,6 +148,12 @@ export default function CompanyNeeds() {
   const quickReplyMutation = useMutation({
     mutationFn: async ({ id, message }) => {
       await updateNeed(id, { notes: message, status: 'in_progress' });
+      await addNeedResponse({
+        need_id: id,
+        author_id: user?.id || null,
+        author_name: staffMember?.name || user?.email || 'Staff',
+        message,
+      });
       // Find the need to get company_id
       const allNeeds = await getAllNeeds();
       const need = allNeeds.find(n => n.id === id);
@@ -160,6 +167,7 @@ export default function CompanyNeeds() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['company-needs'] });
+      qc.invalidateQueries({ queryKey: ['need-responses'] });
       toast({ title: 'Messaggio inviato' });
     },
   });
@@ -281,6 +289,31 @@ export default function CompanyNeeds() {
     doc.save(nomeFile);
   };
 
+  const handleExportExcel = () => {
+    const marketName = markets.find(m => m.id === staffMember?.market_id)?.name || 'Mercato';
+    const righe = historyNeeds.map(need => ({
+      azienda: companies.find(c => c.id === need.company_id)?.name || 'Azienda sconosciuta',
+      titolo: need.title || 'Senza titolo',
+      categoria: CATEGORY_LABELS[need.category] || need.category || '',
+      stato: STATUS_LABELS_PDF[need.status] || need.status,
+      data: need.updated_at ? format(new Date(need.updated_at), 'dd/MM/yyyy', { locale: it }) : '',
+      note: need.notes || '',
+    }));
+    exportRowsToExcel({
+      sheetName: 'Cronologia Bisogni',
+      columns: [
+        { key: 'azienda', label: 'Azienda' },
+        { key: 'titolo', label: 'Titolo' },
+        { key: 'categoria', label: 'Categoria' },
+        { key: 'stato', label: 'Stato' },
+        { key: 'data', label: 'Data' },
+        { key: 'note', label: 'Ultima risposta' },
+      ],
+      rows: righe,
+      filenamePrefix: `cronologia-bisogni-${marketName.replace(/\s+/g, '_')}`,
+    });
+  };
+
   const isOverdue = (need) => {
     if (!need.due_date) return false;
     return isBefore(new Date(need.due_date), startOfDay(new Date())) && need.status !== 'resolved';
@@ -318,14 +351,24 @@ export default function CompanyNeeds() {
               </Button>
             </div>
           </div>
-          <Button
-            variant="outline"
-            onClick={handleExportPdf}
-            className="bg-white/20 text-white border-white/40 hover:bg-white/30 flex-shrink-0"
-          >
-            <Download className="w-4 h-4 mr-2" />
-            PDF
-          </Button>
+          <div className="flex gap-2 flex-shrink-0">
+            <Button
+              variant="outline"
+              onClick={handleExportExcel}
+              className="bg-white/20 text-white border-white/40 hover:bg-white/30"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Excel
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleExportPdf}
+              className="bg-white/20 text-white border-white/40 hover:bg-white/30"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              PDF
+            </Button>
+          </div>
         </div>
       </div>
 

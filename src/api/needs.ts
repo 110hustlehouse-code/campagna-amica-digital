@@ -70,3 +70,26 @@ export async function deleteNeed(id: string): Promise<void> {
   const { error } = await supabase.from('producer_needs').delete().eq('id', id)
   if (error) throw error
 }
+
+/** Storico delle risposte dello staff a un bisogno (una riga per ogni risposta). */
+export type NeedResponse = Tables<'need_responses'>
+
+export async function getResponsesByNeed(needId: string): Promise<NeedResponse[]> {
+  return unwrapMany(
+    await supabase.from('need_responses').select('*')
+      .eq('need_id', needId).order('created_at', { ascending: true }),
+    'Risposte al bisogno')
+}
+
+export async function getResponsesByNeeds(needIds: string[]): Promise<NeedResponse[]> {
+  if (!needIds.length) return []
+  return unwrapMany(
+    await supabase.from('need_responses').select('*')
+      .in('need_id', needIds).order('created_at', { ascending: true }),
+    'Risposte ai bisogni')
+}
+
+export async function addNeedResponse(r: TablesInsert<'need_responses'>): Promise<NeedResponse> {
+  return unwrapOne(await supabase.from('need_responses').insert(r).select().single(),
+    'Invio risposta')
+}

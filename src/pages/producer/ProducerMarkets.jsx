@@ -5,7 +5,7 @@ import { getMarkets } from '@/api/markets';
 import { getAllMarketEvents, getAssignmentsByCompany, getMyRsvps, assignStand } from '@/api/events';
 import { getProductsByCompany } from '@/api/products';
 import { getPublishedMessagesAll } from '@/api/staff';
-import { getNeedsByCompany, ETICHETTE_STATO, ETICHETTE_CATEGORIA } from '@/api/needs';
+import { getNeedsByCompany, getResponsesByNeeds, ETICHETTE_STATO, ETICHETTE_CATEGORIA } from '@/api/needs';
 import { invokeFunction } from '@/api/functions';
 import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,7 @@ import { it } from 'date-fns/locale';
 
 export default function ProducerMarkets() {
   const { user } = useAuth();
+  const [openNeedIds, setOpenNeedIds] = useState({});
   const qc = useQueryClient();
   const { toast } = useToast();
   const [showRegister, setShowRegister] = useState(false);
@@ -70,6 +71,18 @@ export default function ProducerMarkets() {
     queryFn: () => getNeedsByCompany(myCompany.id),
     enabled: !!myCompany?.id,
   });
+
+  const needIds = myNeeds.map(n => n.id);
+  const { data: needResponses = [] } = useQuery({
+    queryKey: ['need-responses', needIds],
+    queryFn: () => getResponsesByNeeds(needIds),
+    enabled: needIds.length > 0,
+  });
+  const responsesByNeed = needResponses.reduce((acc, r) => {
+    (acc[r.need_id] ||= []).push(r);
+    return acc;
+  }, {});
+  const toggleNeed = (id) => setOpenNeedIds(prev => ({ ...prev, [id]: !prev[id] }));
 
   const rsvpStatus = Object.fromEntries(myRsvps.map(r => [r.message_id, r.status]));
   const subscribedMarketIds = myCompany?.market_ids || [];
@@ -343,14 +356,45 @@ export default function ProducerMarkets() {
                                     {' · '}
                                     {format(new Date(need.created_at), 'd MMMM', { locale: it })}
                                   </p>
-                                  {need.notes && (
-                                    <div className="mt-2 rounded-lg bg-white/70 border border-border px-2.5 py-1.5">
-                                      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">
-                                        Risposta staff
-                                      </p>
-                                      <p className="text-xs text-foreground/90">{need.notes}</p>
-                                    </div>
-                                  )}
+                                  {(() => {
+                                    const thread = responsesByNeed[need.id] || [];
+                                    const hasThread = thread.length > 0;
+                                    const isOpen = !!openNeedIds[need.id];
+                                    if (!hasThread && !need.notes) return null;
+                                    return (
+                                      <div className="mt-2">
+                                        <button
+                                          type="button"
+                                          onClick={() => toggleNeed(need.id)}
+                                          className="w-full flex items-center justify-between rounded-lg bg-white/70 border border-border px-2.5 py-1.5 text-left"
+                                        >
+                                          <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
+                                            Risposte staff{hasThread ? ` (${thread.length})` : ''}
+                                          </span>
+                                          <ChevronDown className={cn('w-3.5 h-3.5 text-muted-foreground transition-transform', isOpen && 'rotate-180')} />
+                                        </button>
+                                        {isOpen && (
+                                          <div className="mt-1.5 space-y-1.5">
+                                            {hasThread ? thread.map(r => (
+                                              <div key={r.id} className="rounded-lg bg-white/70 border border-border px-2.5 py-1.5">
+                                                <div className="flex items-center justify-between gap-2 mb-0.5">
+                                                  <span className="text-[10px] font-semibold text-muted-foreground">{r.author_name || 'Staff'}</span>
+                                                  <span className="text-[10px] text-muted-foreground">
+                                                    {format(new Date(r.created_at), 'd MMM HH:mm', { locale: it })}
+                                                  </span>
+                                                </div>
+                                                <p className="text-xs text-foreground/90">{r.message}</p>
+                                              </div>
+                                            )) : (
+                                              <div className="rounded-lg bg-white/70 border border-border px-2.5 py-1.5">
+                                                <p className="text-xs text-foreground/90">{need.notes}</p>
+                                              </div>
+                                            )}
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })()}
                                 </div>
                               </div>
                             </div>
