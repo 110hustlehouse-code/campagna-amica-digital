@@ -1819,6 +1819,127 @@ export type Database = {
           },
         ]
       }
+      seasonal_alert_reports: {
+        Row: {
+          company_id: string
+          created_at: string
+          delivery_note_id: string
+          delivery_note_item_id: string
+          id: string
+          market_id: string
+          month_detected: number
+          product_name: string
+          season_months: number[]
+          seasonal_match: string
+          staff_action_at: string | null
+          staff_note: string | null
+          staff_user_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          delivery_note_id: string
+          delivery_note_item_id: string
+          id?: string
+          market_id: string
+          month_detected: number
+          product_name: string
+          season_months: number[]
+          seasonal_match: string
+          staff_action_at?: string | null
+          staff_note?: string | null
+          staff_user_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          delivery_note_id?: string
+          delivery_note_item_id?: string
+          id?: string
+          market_id?: string
+          month_detected?: number
+          product_name?: string
+          season_months?: number[]
+          seasonal_match?: string
+          staff_action_at?: string | null
+          staff_note?: string | null
+          staff_user_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seasonal_alert_reports_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seasonal_alert_reports_delivery_note_id_fkey"
+            columns: ["delivery_note_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_notes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seasonal_alert_reports_delivery_note_item_id_fkey"
+            columns: ["delivery_note_item_id"]
+            isOneToOne: true
+            referencedRelation: "delivery_note_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seasonal_alert_reports_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "markets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seasonal_alert_reports_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "v_markets_territorio"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seasonal_alert_reports_staff_user_id_fkey"
+            columns: ["staff_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seasonal_products: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          match_key: string
+          months: number[]
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          match_key: string
+          months: number[]
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          match_key?: string
+          months?: number[]
+        }
+        Relationships: []
+      }
       staff_members: {
         Row: {
           created_at: string
@@ -2737,6 +2858,3 @@ export const Constants = {
     Enums: {},
   },
 } as const
-
-export type Views<T extends keyof Database['public']['Views']> =
-  Database['public']['Views'][T]['Row']

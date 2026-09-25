@@ -1,9 +1,9 @@
 /** Mercati e gerarchia territoriale. */
 import { supabase, unwrapMany, unwrapOne } from './client'
-import type { Tables, TablesInsert, TablesUpdate, Views } from './types'
+import type { Tables, TablesInsert, TablesUpdate } from './types'
 
 export type Market = Tables<'markets'>
-export type MarketTerritorio = Views<'v_markets_territorio'>
+export type MarketTerritorio = Tables<'v_markets_territorio'>
 
 export async function getMarkets(): Promise<Market[]> {
   return unwrapMany(

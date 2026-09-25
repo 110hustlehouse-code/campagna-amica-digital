@@ -69,10 +69,10 @@ export default function CompanyNeeds() {
     const fetchStaff = async () => {
       try {
         const staff = await getMyStaffMember();
-        if (staff.length > 0) {
-          setStaffMember(staff[0]);
+        if (staff) {
+          setStaffMember(staff);
           // Auto-set the market from staff member
-          setFormData(prev => ({ ...prev, market_id: staff[0].market_id || '' }));
+          setFormData(prev => ({ ...prev, market_id: staff.market_id || '' }));
         }
       } catch (err) {
         console.error('Error fetching staff:', err);

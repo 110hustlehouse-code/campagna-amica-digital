@@ -11,7 +11,7 @@ export async function getSegnalazioniStagionaliMercato(marketId: string) {
     .eq('market_id', marketId)
     .eq('status', 'open')
     .order('created_at', { ascending: false })
-  return unwrapMany(await query) as Promise<SeasonalAlertReport[]>
+  return unwrapMany(await query, 'Segnalazioni stagionalità') as SeasonalAlertReport[]
 }
 
 export async function risolviSegnalazioneStagionale(id: string, staffNote?: string) {
