@@ -30,7 +30,6 @@ export default function ProducerListinoAI() {
 
   const handleFile = async (file) => {
     await startUpload(file, myCompany?.id);
-    qc.invalidateQueries({ queryKey: ['my-products'] });
   };
 
   if (!myCompany) return (

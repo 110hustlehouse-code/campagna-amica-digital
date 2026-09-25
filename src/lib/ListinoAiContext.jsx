@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useRef, useCallback, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { uploadFile } from '@/api/storage';
 import { invokeFunction } from '@/api/functions';
 
@@ -19,6 +20,7 @@ const MILESTONES = [
  * mai smontato durante la navigazione fra le sezioni produttore.
  */
 export function ListinoAiProvider({ children }) {
+  const qc = useQueryClient();
   const [status, setStatus] = useState('idle'); // idle | analyzing | done | error
   const [activeStep, setActiveStep] = useState(0);
   const [progress, setProgress] = useState(0);
@@ -56,6 +58,7 @@ export function ListinoAiProvider({ children }) {
 
   const startUpload = useCallback(async (file, companyId) => {
     if (!file || !companyId) return;
+    qc.invalidateQueries({ queryKey: ['my-company'] });
     setStatus('analyzing');
     setResult(null);
     setErrorMsg('');
@@ -84,6 +87,11 @@ export function ListinoAiProvider({ children }) {
         return;
       }
       setResult(res.data);
+      // Invalidato QUI, nello stesso istante in cui lo stato passa a
+      // "done" — non nella pagina Listino AI, che a questo punto
+      // potrebbe già essere stata smontata dal redirect automatico,
+      // creando una corsa tra invalidazione e nuovo mount di Prodotti.
+      qc.invalidateQueries({ queryKey: ['my-products'] });
       setStatus('done');
       setProgress(100);
       setActiveStep(3);
@@ -92,7 +100,7 @@ export function ListinoAiProvider({ children }) {
       setStatus('error');
       setErrorMsg(err.message || 'Errore durante l\'analisi');
     }
-  }, [avviaTimeline]);
+  }, [avviaTimeline, qc]);
 
   const reset = useCallback(() => {
     timersRef.current.forEach(clearTimeout);
