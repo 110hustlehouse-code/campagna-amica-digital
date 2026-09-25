@@ -167,7 +167,7 @@ export default function ProducerHome() {
             <div className="w-10 h-10 rounded-2xl overflow-hidden border-2 border-white/50 shadow-lg bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
               {myCompany?.logo_url
                 ? <img src={myCompany.logo_url} alt="logo" className="w-full h-full object-cover" />
-                : <Leaf className="w-5 h-5 text-white" />
+                : <img src="https://otefhryrnajzfyaiwmja.supabase.co/storage/v1/object/public/public-assets/marchi/campagna-amica-digital.png" alt="Campagna Amica Digital" className="w-full h-full object-cover p-1" />
               }
             </div>
             <div>

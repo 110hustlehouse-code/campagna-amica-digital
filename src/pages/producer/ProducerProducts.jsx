@@ -174,44 +174,55 @@ export default function ProducerProducts() {
   const active = products.filter((p) => p.available !== false).length;
     return (
     <div className="min-h-screen bg-background">
-      {/* Intestazione pagina */}
-      <div className="bg-gradient-to-r from-primary/5 to-secondary/5 border-b border-primary/20 px-5 pt-12 pb-5">
-        <div className="flex items-start justify-between gap-4 mb-4">
-          <div>
-            <div className="inline-flex items-center gap-1.5 bg-primary/10 border border-primary/20 rounded-full px-3 py-1 mb-2">
-              <Award className="w-3.5 h-3.5 text-primary" />
-              <span className="text-primary text-xs font-bold uppercase tracking-widest">Listino prodotti</span>
-            </div>
-            <h1 className="font-heading text-3xl font-bold text-foreground">Il mio Catalogo</h1>
+      {/* Hero banner — stesso stile dell'identità visiva dell'app (Aziende lato cliente) */}
+      <div className="relative bg-primary overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-white translate-x-16 -translate-y-16" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full bg-secondary -translate-x-8 translate-y-8" />
+        </div>
+        <div className="relative px-6 md:px-6 pt-10 pb-6">
+          <div className="inline-flex items-center gap-1.5 bg-secondary rounded-full pl-1.5 pr-3 py-1 mb-3 shadow">
+            <img
+              src="https://otefhryrnajzfyaiwmja.supabase.co/storage/v1/object/public/public-assets/marchi/campagna-amica-digital.png"
+              alt="" className="w-4 h-4 rounded-full object-cover"
+            />
+            <span className="text-primary font-bold text-[10px] tracking-widest uppercase">Listino prodotti</span>
           </div>
-          <div className="flex gap-2">
+
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h1 className="font-heading text-3xl md:text-4xl font-bold text-white leading-tight">
+                Il mio Catalogo
+              </h1>
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                <span className="inline-block bg-white/20 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                  {active} attivi · {products.length} totali
+                </span>
+              </div>
+            </div>
             <button
               onClick={() => setShowConfirmClear(true)}
-              className="w-9 h-9 rounded-xl border border-border flex items-center justify-center hover:bg-muted transition-colors"
+              className="w-9 h-9 rounded-xl bg-white/15 backdrop-blur-sm border border-white/20 flex items-center justify-center hover:bg-white/25 transition-colors flex-shrink-0"
             >
-              <Trash2 className="w-4 h-4 text-muted-foreground" />
+              <Trash2 className="w-4 h-4 text-white" />
             </button>
-            <Button asChild variant="outline" className="rounded-xl gap-1">
+          </div>
+
+          <div className="flex gap-2 mt-4">
+            <Button asChild size="sm" className="bg-white/15 backdrop-blur-sm border border-white/20 text-white hover:bg-white/25 rounded-xl gap-1.5">
+              <Link to="/produttore/ddt">
+                <FileText className="w-4 h-4" /> DDT
+              </Link>
+            </Button>
+            <Button asChild size="sm" className="bg-white/15 backdrop-blur-sm border border-white/20 text-white hover:bg-white/25 rounded-xl gap-1.5">
               <Link to="/produttore/fornitori">
                 <Truck className="w-4 h-4" /> Fornitori
               </Link>
             </Button>
-
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <p className="text-sm text-muted-foreground flex items-center gap-1">
-            <Leaf className="w-3.5 h-3.5 text-primary" />
-            {active} attivi · {products.length} totali
-          </p>
-          <Button asChild variant="outline" size="sm" className="rounded-lg gap-1">
-            <Link to="/produttore/ddt">
-              <FileText className="w-4 h-4" /> DDT
-            </Link>
-          </Button>
-        </div>
       </div>
-
+      
       <div className="px-5 pt-4 pb-24 space-y-4">
         {products.length > 0 && (
           <div className="relative">
