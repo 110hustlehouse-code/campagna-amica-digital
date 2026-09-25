@@ -14,8 +14,10 @@ export default function ReviewModal({ open, onClose, company }) {
 
   const submitReview = useMutation({
     mutationFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       await scriviRecensione({
         company_id: company.id,
+        user_id: user?.id,
         rating,
         message: text,
       });
@@ -26,6 +28,9 @@ export default function ReviewModal({ open, onClose, company }) {
       setText('');
       toast.success('Recensione inviata all\'azienda');
       onClose();
+    },
+    onError: (e) => {
+      toast.error('Errore nell\'invio della recensione', { description: e.message });
     },
   });
 
