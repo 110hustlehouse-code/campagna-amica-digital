@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getMyStaffMember, createMessage, getPublishedMessagesAll } from '@/api/staff';
 import { getMarkets } from '@/api/markets';
 import { getRsvpsByMarket } from '@/api/events';
@@ -52,6 +52,7 @@ export default function CreateEvent() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const qc = useQueryClient();
   const [staffMember, setStaffMember] = useState(null);
   const [errors, setErrors] = useState({});
   const [activeTab, setActiveTab] = useState('upcoming');
@@ -167,6 +168,8 @@ export default function CreateEvent() {
       return msg;
     },
     onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['staff-messages-published'] });
+      qc.invalidateQueries({ queryKey: ['event-rsvps'] });
       toast({ title: '✅ Evento creato correttamente' });
       setFormData({
         title: '',
@@ -265,26 +268,70 @@ export default function CreateEvent() {
     });
   };
 
-  const EventRow = ({ ev }) => {
+  const EventRow = ({ ev, editable = false }) => {
     const { nAccepted, nDeclined } = contaEvento(ev);
+    const clickable = !ev.is_mandatory;
     return (
-      <button
-        type="button"
-        onClick={() => { setSelectedEventForRsvp(ev); setSearchAzienda(''); }}
-        disabled={ev.is_mandatory}
-        className="w-full text-left p-3 rounded-xl border border-border/50 bg-white hover:border-primary/40 hover:bg-primary/5 transition-colors disabled:cursor-default disabled:hover:border-border/50 disabled:hover:bg-white"
+      <div
+        role={clickable ? 'button' : undefined}
+        tabIndex={clickable ? 0 : undefined}
+        onClick={() => { if (clickable) { setSelectedEventForRsvp(ev); setSearchAzienda(''); } }}
+        className={cn(
+          'w-full text-left p-3 rounded-xl border border-border/50 bg-white transition-colors',
+          clickable && 'hover:border-primary/40 hover:bg-primary/5 cursor-pointer'
+        )}
       >
         <div className="flex items-center justify-between gap-2">
           <p className="font-semibold text-sm text-foreground">{ev.title}</p>
-          {ev.is_mandatory ? (
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 shrink-0">
-              Obbligatorio
-            </span>
-          ) : (
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary shrink-0">
-              Facoltativo
-            </span>
-          )}
+          <div className="flex items-center gap-1.5 shrink-0">
+            {ev.is_mandatory ? (
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700">
+                Obbligatorio
+              </span>
+            ) : (
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary">
+                Facoltativo
+              </span>
+            )}
+            {editable && (
+              <>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEditingId(ev.id);
+                    setFormData({
+                      title: ev.title || '',
+                      description: ev.description || '',
+                      market_id: ev.market_id || '',
+                      event_date: ev.event_date ? ev.event_date.slice(0, 10) : '',
+                      time_start: ev.time_start || '',
+                      time_end: ev.time_end || '',
+                      is_mandatory: !!ev.is_mandatory,
+                    });
+                    setActiveTab('create');
+                  }}
+                  className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                  title="Modifica evento"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (window.confirm(`Eliminare l'evento "${ev.title}"?`)) {
+                      deleteMutation.mutate(ev.id);
+                    }
+                  }}
+                  className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                  title="Elimina evento"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </>
+            )}
+          </div>
         </div>
         <p className="text-xs text-muted-foreground mt-1">
           {format(new Date(ev.event_date), 'd MMM yyyy', { locale: it })}
@@ -300,7 +347,7 @@ export default function CreateEvent() {
             <span className="text-primary/70 underline">tocca per dettagli</span>
           </p>
         )}
-      </button>
+      </div>
     );
   };
 
@@ -325,7 +372,21 @@ export default function CreateEvent() {
             <button
               key={t.key}
               type="button"
-              onClick={() => setActiveTab(t.key)}
+              onClick={() => {
+                if (t.key === 'create') {
+                  setEditingId(null);
+                  setFormData({
+                    title: '',
+                    description: '',
+                    market_id: staffMember?.market_id || '',
+                    event_date: '',
+                    time_start: '',
+                    time_end: '',
+                    is_mandatory: true,
+                  });
+                }
+                setActiveTab(t.key);
+              }}
               className={cn(
                 'flex-1 px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wide transition-colors',
                 activeTab === t.key ? 'bg-secondary text-primary shadow-md' : 'text-white/80 hover:bg-white/10'
@@ -350,7 +411,7 @@ export default function CreateEvent() {
               <p className="text-sm text-muted-foreground text-center py-6">Nessun evento in programma</p>
             ) : (
               <div className="space-y-2">
-                {upcomingEvents.map((ev) => <EventRow key={ev.id} ev={ev} />)}
+                {upcomingEvents.map((ev) => <EventRow key={ev.id} ev={ev} editable />)}
               </div>
             )}
           </Card>
@@ -386,7 +447,7 @@ export default function CreateEvent() {
             {/* Titolo */}
             <Card className="p-6 border border-border/50">
               <h2 className="font-heading text-base font-semibold text-foreground mb-4 flex items-center gap-2">
-                <CalendarPlus className="w-4 h-4 text-primary" /> Dettagli Evento
+                <CalendarPlus className="w-4 h-4 text-primary" /> {editingId ? 'Modifica Evento' : 'Dettagli Evento'}
               </h2>
               <div className="space-y-4">
                 <div>
@@ -529,18 +590,43 @@ export default function CreateEvent() {
             <div className="pb-6">
               <Button
                 onClick={handleSubmit}
-                disabled={createMutation.isPending}
+                disabled={saveMutation.isPending}
                 className="w-full h-13 text-base font-semibold gap-2 shadow-lg shadow-primary/20"
                 size="lg"
               >
-                {createMutation.isPending
-                  ? <><Loader2 className="w-5 h-5 animate-spin" /> Creazione in corso...</>
-                  : <><CalendarPlus className="w-5 h-5" /> Crea Evento</>}
+                {saveMutation.isPending
+                  ? <><Loader2 className="w-5 h-5 animate-spin" /> {editingId ? 'Salvataggio...' : 'Creazione in corso...'}</>
+                  : editingId
+                    ? <><CheckCircle className="w-5 h-5" /> Salva Modifiche</>
+                    : <><CalendarPlus className="w-5 h-5" /> Crea Evento</>}
               </Button>
+              {editingId && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingId(null);
+                    setFormData({
+                      title: '',
+                      description: '',
+                      market_id: staffMember?.market_id || '',
+                      event_date: '',
+                      time_start: '',
+                      time_end: '',
+                      is_mandatory: true,
+                    });
+                    setActiveTab('upcoming');
+                  }}
+                  className="w-full text-center text-xs text-muted-foreground mt-2 underline"
+                >
+                  Annulla modifica
+                </button>
+              )}
               <p className="text-xs text-center text-muted-foreground mt-3">
-                {formData.is_mandatory
-                  ? '🔴 I produttori del mercato verranno notificati automaticamente'
-                  : '🔵 I produttori riceveranno una notifica con possibilità di accettare o declinare'}
+                {editingId
+                  ? 'Le modifiche non inviano una nuova notifica ai produttori'
+                  : formData.is_mandatory
+                    ? '🔴 I produttori del mercato verranno notificati automaticamente'
+                    : '🔵 I produttori riceveranno una notifica con possibilità di accettare o declinare'}
               </p>
             </div>
           </>
