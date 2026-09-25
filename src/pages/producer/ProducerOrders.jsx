@@ -5,7 +5,7 @@ import { getMyCompany } from '@/api/companies';
 import { getOrdersByCompany, updateOrderStatus } from '@/api/orders';
 import { getProdottiCopertiDaDdt } from '@/api/ddt';
 import { getReviews } from '@/api/reviews';
-import { invokeFunction } from '@/api/functions';
+import { invokeFunction, invokeFunctionBinaria } from '@/api/functions';
 import { useAuth } from '@/lib/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -188,12 +188,12 @@ export default function ProducerOrders() {
 
   const exportPDF = async () => {
     try {
-      const response = await invokeFunction('exportOrdersPDF', {
+      const pdfBytes = await invokeFunctionBinaria('exportOrdersPDF', {
         orders,
         companyName: myCompany?.name || 'La mia azienda'
       });
-      
-      const blob = new Blob([response.data], { type: 'application/pdf' });
+
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -204,6 +204,7 @@ export default function ProducerOrders() {
       document.body.removeChild(a);
     } catch (error) {
       console.error('Errore esportazione:', error);
+      toast({ title: 'Errore', description: 'Impossibile generare il PDF', variant: 'destructive' });
     }
   };
 
