@@ -2213,6 +2213,7 @@ export type Database = {
       }
       suppliers: {
         Row: {
+          bag_size: string | null
           category: string | null
           company_id: string
           contact_name: string | null
@@ -2222,9 +2223,12 @@ export type Database = {
           name: string
           notes: string | null
           phone: string | null
+          supplier_company_id: string | null
+          supplier_type: string | null
           updated_at: string
         }
         Insert: {
+          bag_size?: string | null
           category?: string | null
           company_id: string
           contact_name?: string | null
@@ -2234,9 +2238,12 @@ export type Database = {
           name: string
           notes?: string | null
           phone?: string | null
+          supplier_company_id?: string | null
+          supplier_type?: string | null
           updated_at?: string
         }
         Update: {
+          bag_size?: string | null
           category?: string | null
           company_id?: string
           contact_name?: string | null
@@ -2246,12 +2253,21 @@ export type Database = {
           name?: string
           notes?: string | null
           phone?: string | null
+          supplier_company_id?: string | null
+          supplier_type?: string | null
           updated_at?: string
         }
         Relationships: [
           {
             foreignKeyName: "suppliers_company_id_fkey"
             columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suppliers_supplier_company_id_fkey"
+            columns: ["supplier_company_id"]
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
@@ -2721,7 +2737,6 @@ export const Constants = {
     Enums: {},
   },
 } as const
-
 
 export type Views<T extends keyof Database['public']['Views']> =
   Database['public']['Views'][T]['Row']

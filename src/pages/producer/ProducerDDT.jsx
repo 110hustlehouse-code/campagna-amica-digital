@@ -3,8 +3,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import {
-  FileText, Plus, Trash2, Send, CheckCircle2, XCircle, Loader2, Printer, Package,
+  FileText, Plus, Trash2, Send, CheckCircle2, XCircle, Loader2, Printer, Package, ArrowLeft,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -35,6 +36,7 @@ const RIGA_VUOTA = { product_id: '', product_name: '', quantity: '', unit: 'kg',
 
 export default function ProducerDDT() {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [nuovo, setNuovo] = useState(false);
   const [dettaglio, setDettaglio] = useState(null);
@@ -165,15 +167,23 @@ export default function ProducerDDT() {
 
   return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto pb-24">
-      <div className="flex items-center justify-between mb-5">
-        <div>
-          <h1 className="font-heading text-2xl font-bold flex items-center gap-2">
-            <FileText className="w-6 h-6 text-primary" />
-            Documenti di trasporto
-          </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Accompagnano la merce dall'azienda al banco
-          </p>
+      <div className="flex items-center justify-between mb-5 gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <button
+            onClick={() => navigate('/produttore/prodotti')}
+            className="w-9 h-9 rounded-xl border border-border flex items-center justify-center hover:bg-muted transition-colors shrink-0"
+          >
+            <ArrowLeft className="w-4 h-4 text-muted-foreground" />
+          </button>
+          <div className="min-w-0">
+            <h1 className="font-heading text-2xl font-bold flex items-center gap-2">
+              <FileText className="w-6 h-6 text-primary shrink-0" />
+              Documenti di trasporto
+            </h1>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Accompagnano la merce dall'azienda al banco
+            </p>
+          </div>
         </div>
         <Button onClick={() => setNuovo(true)} className="shrink-0">
           <Plus className="w-4 h-4 mr-1" /> Nuovo

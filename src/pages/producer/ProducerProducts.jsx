@@ -140,10 +140,15 @@ export default function ProducerProducts() {
   });
 
   const clearAll = async () => {
-    await deleteProducts(products.map((p) => p.id));
-    qc.invalidateQueries({ queryKey: ['my-products'] });
-    setShowConfirmClear(false);
-    toast({ title: 'Listino svuotato' });
+    try {
+      await deleteProducts(products.map((p) => p.id));
+      qc.invalidateQueries({ queryKey: ['my-products'] });
+      toast({ title: 'Listino svuotato' });
+    } catch (err) {
+      toast({ title: 'Errore', description: err.message, variant: 'destructive' });
+    } finally {
+      setShowConfirmClear(false);
+    }
   };
 
   const handleImageUpload = async (file) => {
