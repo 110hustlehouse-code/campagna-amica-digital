@@ -227,6 +227,7 @@ export async function getUltimoDdt(companyId: string, marketId: string): Promise
     .select('id')
     .eq('company_id', companyId).eq('market_id', marketId).eq('status', 'issued')
     .order('issue_date', { ascending: false })
+    .order('created_at', { ascending: false }) // spareggio: più DDT nello stesso giorno, prendi il più recente per davvero
     .limit(1)
     .maybeSingle()
   if (error) throw error

@@ -4,7 +4,7 @@ import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import {
   FileText, Plus, Trash2, Send, CheckCircle2, XCircle, Loader2, Printer, Package,
-  ArrowLeft, ChevronDown, ChevronUp, RotateCcw, Sparkles,
+  ArrowLeft, ChevronDown, ChevronUp, RotateCcw, Sparkles, Search, X,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -48,6 +48,7 @@ export default function ProducerDDT() {
     market_id: '', market_event_id: '', causale: 'trasferimento_interno', trasporto_a_mezzo: 'mittente',
     numero_colli: '', peso_kg: '', note: '',
   });
+  const [ricercaProdotti, setRicercaProdotti] = useState('');
   // Mappa product_id -> { quantity, unit, lot, expiry_date }. Solo i
   // prodotti con una quantità inserita finiscono nel DDT: il produttore
   // scorre il proprio catalogo e tocca solo quello che porta oggi,
@@ -327,38 +328,76 @@ export default function ProducerDDT() {
                   Non hai ancora prodotti nel catalogo. Aggiungili prima da Prodotti.
                 </p>
               ) : (
+                <>
+                  {prodotti.length > 5 && (
+                    <div className="relative mb-2">
+                      <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        placeholder="Cerca un prodotto..."
+                        value={ricercaProdotti}
+                        onChange={(e) => setRicercaProdotti(e.target.value)}
+                        className="pl-9 pr-8 h-9"
+                      />
+                      {ricercaProdotti && (
+                        <button type="button" onClick={() => setRicercaProdotti('')}
+                                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 hover:bg-muted rounded">
+                          <X className="w-3.5 h-3.5 text-muted-foreground" />
+                        </button>
+                      )}
+                    </div>
+                  )}
                 <div className="space-y-1.5 max-h-96 overflow-y-auto">
-                  {prodotti.map((p) => {
+                  {prodotti
+                    .filter((p) => p.name?.toLowerCase().includes(ricercaProdotti.toLowerCase()))
+                    .map((p) => {
                     const v = quantita[p.id] || { quantity: '', unit: p.unit || 'kg', lot: '', expiry_date: '' };
                     const attivo = Number(v.quantity) > 0;
                     const avanzataAperta = righeAvanzateAperte[p.id];
                     return (
                       <div key={p.id}
                            className={`rounded-xl border transition-colors ${attivo ? 'border-primary/40 bg-primary/5' : 'border-border/50 bg-card'}`}>
-                        <div className="flex items-center gap-2 p-2.5">
-                          <span className={`flex-1 text-sm truncate ${attivo ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>
-                            {p.name}
-                          </span>
-                          <Input
-                            type="number" step="0.001" placeholder="0"
-                            value={v.quantity}
-                            onChange={(e) => impostaQuantita(p.id, 'quantity', e.target.value)}
-                            className="w-20 h-9 text-center"
-                          />
-                          <Select value={v.unit} onValueChange={(val) => impostaQuantita(p.id, 'unit', val)}>
-                            <SelectTrigger className="w-24 h-9"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              {['kg', 'lt', 'pz', 'confezione'].map((u) => (
-                                <SelectItem key={u} value={u}>{u}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          {attivo && (
-                            <button type="button" onClick={() => toggleRigaAvanzata(p.id)}
-                                    className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted shrink-0">
-                              {avanzataAperta ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
-                            </button>
-                          )}
+                        <div className="p-2.5 space-y-1.5">
+                          <div className="flex items-center gap-2">
+                            <span className={`flex-1 text-sm truncate ${attivo ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>
+                              {p.name}
+                            </span>
+                            <Input
+                              type="number" step="0.001" placeholder="0"
+                              value={v.quantity}
+                              onChange={(e) => impostaQuantita(p.id, 'quantity', e.target.value)}
+                              className="w-20 h-9 text-center"
+                            />
+                            <Select value={v.unit} onValueChange={(val) => impostaQuantita(p.id, 'unit', val)}>
+                              <SelectTrigger className="w-24 h-9"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                {['kg', 'lt', 'pz', 'confezione'].map((u) => (
+                                  <SelectItem key={u} value={u}>{u}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            {attivo && (
+                              <button type="button" onClick={() => toggleRigaAvanzata(p.id)}
+                                      className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted shrink-0">
+                                {avanzataAperta ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+                              </button>
+                            )}
+                          </div>
+                          <div className="flex gap-1.5 flex-wrap">
+                            {(v.unit === 'pz' || v.unit === 'confezione' ? [5, 10, 20, 50] : [1, 5, 10, 20]).map((n) => (
+                              <button
+                                key={n}
+                                type="button"
+                                onClick={() => impostaQuantita(p.id, 'quantity', String(n))}
+                                className={`px-2.5 py-1 rounded-full text-xs font-semibold border transition-colors ${
+                                  String(v.quantity) === String(n)
+                                    ? 'bg-primary text-white border-primary'
+                                    : 'bg-white text-muted-foreground border-border hover:border-primary/50'
+                                }`}
+                              >
+                                {n}
+                              </button>
+                            ))}
+                          </div>
                         </div>
                         {attivo && avanzataAperta && (
                           <div className="grid grid-cols-2 gap-2 px-2.5 pb-2.5">
@@ -374,6 +413,7 @@ export default function ProducerDDT() {
                     );
                   })}
                 </div>
+                </>
               )}
             </div>
 
