@@ -10,11 +10,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Edit2, Trash2, AlertCircle, CheckCircle, Clock, MoreHorizontal, MessageCircle, History, CreditCard, BanknoteIcon } from 'lucide-react';
+import { Loader2, Edit2, Trash2, AlertCircle, CheckCircle, Clock, MoreHorizontal, MessageCircle, History, CreditCard, BanknoteIcon, Download } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { format, isBefore, startOfDay } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { jsPDF } from 'jspdf';
 
 const CATEGORY_LABELS = {
   bags: 'Buste',
@@ -225,6 +226,61 @@ export default function CompanyNeeds() {
     return acc;
   }, {});
 
+  const STATUS_LABELS_PDF = { open: 'Aperto', in_progress: 'In Corso', resolved: 'Risolto', closed: 'Chiuso' };
+
+  const handleExportPdf = () => {
+    const doc = new jsPDF();
+    const marketName = markets.find(m => m.id === staffMember?.market_id)?.name || 'Mercato';
+    const pageWidth = doc.internal.pageSize.getWidth();
+    let y = 20;
+
+    doc.setFontSize(16);
+    doc.setFont(undefined, 'bold');
+    doc.text('Cronologia Bisogni', 14, y);
+    y += 8;
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Mercato: ${marketName}`, 14, y);
+    y += 6;
+    doc.text(`Generato il: ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: it })}`, 14, y);
+    y += 10;
+
+    const historyByCompany = historyNeeds.reduce((acc, need) => {
+      const company = companies.find(c => c.id === need.company_id);
+      const key = company?.name || 'Azienda sconosciuta';
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(need);
+      return acc;
+    }, {});
+
+    if (historyNeeds.length === 0) {
+      doc.setFontSize(10);
+      doc.text('Nessun bisogno in cronologia.', 14, y);
+    }
+
+    Object.entries(historyByCompany).forEach(([companyName, companyNeeds]) => {
+      if (y > 270) { doc.addPage(); y = 20; }
+      doc.setFontSize(12);
+      doc.setFont(undefined, 'bold');
+      doc.text(companyName, 14, y);
+      y += 7;
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'normal');
+      companyNeeds.forEach(need => {
+        if (y > 275) { doc.addPage(); y = 20; }
+        const dataStr = need.updated_at ? format(new Date(need.updated_at), 'dd/MM/yyyy', { locale: it }) : '';
+        const riga = `• ${need.title || 'Senza titolo'} — ${CATEGORY_LABELS[need.category] || need.category || ''} — ${STATUS_LABELS_PDF[need.status] || need.status} — ${dataStr}`;
+        const lines = doc.splitTextToSize(riga, pageWidth - 28);
+        doc.text(lines, 18, y);
+        y += lines.length * 5 + 2;
+      });
+      y += 4;
+    });
+
+    const nomeFile = `cronologia-bisogni-${marketName.replace(/\s+/g, '_')}-${format(new Date(), 'yyyyMMdd')}.pdf`;
+    doc.save(nomeFile);
+  };
+
   const isOverdue = (need) => {
     if (!need.due_date) return false;
     return isBefore(new Date(need.due_date), startOfDay(new Date())) && need.status !== 'resolved';
@@ -242,24 +298,34 @@ export default function CompanyNeeds() {
     <div className="min-h-screen bg-background">
       {/* Intestazione */}
       <div className="bg-gradient-to-r from-primary via-primary/95 to-secondary border-b-4 border-secondary px-6 pt-12 pb-8 shadow-lg">
-        <div>
-          <div className="inline-flex items-center gap-1.5 bg-secondary rounded-full px-4 py-1.5 mb-3 shadow-md">
-            <span className="text-primary font-bold text-xs tracking-widest uppercase">📋 Esigenze Aziende</span>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="inline-flex items-center gap-1.5 bg-secondary rounded-full px-4 py-1.5 mb-3 shadow-md">
+              <span className="text-primary font-bold text-xs tracking-widest uppercase">📋 Esigenze Aziende</span>
+            </div>
+            <h1 className="font-heading text-4xl font-bold text-white drop-shadow-lg">Traccia bisogni</h1>
+            <p className="text-white/90 text-sm mt-2 font-medium">
+              Monitora i bisogni auto-generati dal tuo mercato di riferimento
+            </p>
+            <div className="mt-4">
+              <Button
+                variant={showHistory ? 'secondary' : 'outline'}
+                onClick={() => setShowHistory(!showHistory)}
+                className={showHistory ? 'bg-secondary text-primary font-bold' : 'bg-white/20 text-white border-white/40 hover:bg-white/30'}
+              >
+                <History className="w-4 h-4 mr-2" />
+                {showHistory ? 'Mostra Attivi' : 'Cronologia Bisogni'}
+              </Button>
+            </div>
           </div>
-          <h1 className="font-heading text-4xl font-bold text-white drop-shadow-lg">Traccia bisogni</h1>
-          <p className="text-white/90 text-sm mt-2 font-medium">
-            Monitora i bisogni auto-generati dal tuo mercato di riferimento
-          </p>
-          <div className="mt-4">
-            <Button
-              variant={showHistory ? 'secondary' : 'outline'}
-              onClick={() => setShowHistory(!showHistory)}
-              className={showHistory ? 'bg-secondary text-primary font-bold' : 'bg-white/20 text-white border-white/40 hover:bg-white/30'}
-            >
-              <History className="w-4 h-4 mr-2" />
-              {showHistory ? 'Mostra Attivi' : 'Cronologia Bisogni'}
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            onClick={handleExportPdf}
+            className="bg-white/20 text-white border-white/40 hover:bg-white/30 flex-shrink-0"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            PDF
+          </Button>
         </div>
       </div>
 
