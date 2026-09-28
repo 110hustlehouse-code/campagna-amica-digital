@@ -1,3 +1,4 @@
+import PageHeader from '@/components/layout/PageHeader';
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -14,14 +15,13 @@ export default function ChatHub() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="bg-gradient-to-r from-primary via-primary/95 to-secondary border-b-4 border-secondary px-6 pt-12 pb-8 shadow-lg">
-        <BackButton variant="ghost" className="bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 mb-3" />
-        <div className="inline-flex items-center gap-1.5 bg-secondary rounded-full px-4 py-1.5 mb-3 shadow-md">
-          <span className="text-primary font-bold text-xs tracking-widest uppercase">💬 Comunicazioni</span>
-        </div>
-        <h1 className="font-heading text-3xl font-bold text-white drop-shadow-lg">Chat</h1>
-        <p className="text-white/80 text-sm mt-1">Scegli con chi parlare</p>
-      </div>
+      <PageHeader
+        back
+        badge="💬 Comunicazioni"
+        title="Chat"
+        titleClassName="text-3xl"
+        subtitle="Scegli con chi parlare"
+      />
 
       <div className="px-6 py-6 max-w-2xl mx-auto space-y-3">
         <Link

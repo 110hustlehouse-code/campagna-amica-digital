@@ -1,3 +1,4 @@
+import PageHeader from '@/components/layout/PageHeader';
 import React, { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/AuthContext';
@@ -115,19 +116,14 @@ export default function RepresentativeChannel() {
 
   return (
     <div className="fixed inset-0 z-[60] bg-background flex flex-col overflow-hidden">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-primary via-primary/95 to-secondary border-b-4 border-secondary px-6 pt-12 pb-6 shadow-lg flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <BackButton variant="ghost" className="bg-white/20 backdrop-blur-sm text-white hover:bg-white/30" />
-          <div className="flex items-center gap-2">
-            <Megaphone className="w-6 h-6 text-white" />
-            <div>
-              <h1 className="font-heading text-2xl font-bold text-white drop-shadow-lg leading-tight">Rappresentante Produttori</h1>
-              <p className="text-white/80 text-xs">{representatives[0]?.full_name}</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        back
+        flexShrink
+        compact
+        icon={Megaphone}
+        title="Rappresentante Produttori"
+        subtitle={representatives[0]?.full_name}
+      />
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">

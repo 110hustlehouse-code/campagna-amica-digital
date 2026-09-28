@@ -1,3 +1,4 @@
+import PageHeader from '@/components/layout/PageHeader';
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getMyProfile } from '@/api/auth';
@@ -99,30 +100,24 @@ export default function AbsenceCalendar() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="bg-gradient-to-r from-primary via-primary/95 to-secondary px-6 pt-12 pb-8 shadow-lg">
-        <div className="flex items-center gap-3 mb-3">
-          <Link to="/staff" className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center">
-            <ArrowLeft className="w-4 h-4 text-white" />
-          </Link>
-          <div className="inline-flex items-center gap-1.5 bg-secondary rounded-full px-4 py-1.5 shadow-md">
-            <span className="text-primary font-bold text-xs tracking-widest uppercase">📅 Calendario Assenze</span>
-          </div>
-        </div>
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h1 className="font-heading text-3xl font-bold text-white drop-shadow-lg">Assenze Produttori</h1>
-            <p className="text-white/80 text-sm mt-1">Assenze segnalate dai produttori del tuo mercato</p>
-          </div>
-          <div className="flex gap-2 flex-shrink-0">
+      <PageHeader
+        back
+        border={false}
+        badge="📅 Calendario Assenze"
+        title="Assenze Produttori"
+        titleClassName="text-3xl"
+        subtitle="Assenze segnalate dai produttori del tuo mercato"
+        actions={(
+          <>
             <Button variant="outline" size="sm" onClick={handleExportExcel} disabled={absences.length === 0} className="gap-1.5 bg-white/20 text-white border-white/40 hover:bg-white/30">
               <Download className="w-4 h-4" /> Excel
             </Button>
             <Button variant="outline" size="sm" onClick={handleExportPdf} disabled={absences.length === 0} className="gap-1.5 bg-white/20 text-white border-white/40 hover:bg-white/30">
               <FileText className="w-4 h-4" /> PDF
             </Button>
-          </div>
-        </div>
-      </div>
+          </>
+        )}
+      />
 
       <div className="px-6 py-6 space-y-4">
         {/* Toolbar */}

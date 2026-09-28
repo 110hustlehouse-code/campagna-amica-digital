@@ -14,6 +14,7 @@ import { Loader2, Plus, Edit2, Trash2, Search, Users, CheckCircle, AlertCircle, 
 import { Link } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
 import SearchableList from '@/components/staff/SearchableList';
+import PageHeader from '@/components/layout/PageHeader';
 
 const POSITION_LABELS = {
   market_manager: 'Responsabile Mercato',
@@ -135,23 +136,16 @@ export default function StaffMembers() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-primary via-primary/95 to-secondary border-b-4 border-secondary px-6 pt-12 pb-8 shadow-lg">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <div className="inline-flex items-center gap-1.5 bg-secondary rounded-full px-4 py-1.5 mb-3 shadow-md">
-              <span className="text-primary font-bold text-xs tracking-widest uppercase">👥 Team Management</span>
-            </div>
-            <h1 className="font-heading text-4xl font-bold text-white drop-shadow-lg">Team staff</h1>
-            <p className="text-white/80 text-sm mt-1">Cerca, modifica e gestisci i membri del team</p>
-          </div>
-          {isMarketManager && (
-            <Button onClick={openNewDialog} className="rounded-xl gap-2 h-11 shrink-0">
-              <Plus className="w-4 h-4" /> Nuovo
-            </Button>
-          )}
-        </div>
-      </div>
+      <PageHeader
+        badge="👥 Team Management"
+        title="Team staff"
+        subtitle="Cerca, modifica e gestisci i membri del team"
+        actions={isMarketManager && (
+          <Button onClick={openNewDialog} className="rounded-xl gap-2 h-11 shrink-0">
+            <Plus className="w-4 h-4" /> Nuovo
+          </Button>
+        )}
+      />
 
       <div className="px-6 py-6 max-w-4xl mx-auto">
 

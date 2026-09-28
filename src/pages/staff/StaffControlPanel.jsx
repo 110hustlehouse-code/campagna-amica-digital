@@ -1,3 +1,4 @@
+import PageHeader from '@/components/layout/PageHeader';
 import React, { useState, useMemo } from 'react';
 import BackButton from '@/components/shared/BackButton';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -213,13 +214,13 @@ export default function StaffControlPanel() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <div className="bg-gradient-to-r from-primary via-primary/95 to-secondary border-b-4 border-secondary px-6 pt-12 pb-6 shadow-lg">
-        <BackButton variant="ghost" className="bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 mb-3" />
-        <div className="inline-flex items-center gap-1.5 bg-secondary rounded-full px-4 py-1.5 mb-3 shadow-md">
-          <span className="text-primary font-bold text-xs tracking-widest uppercase">🎛️ Pannello di Controllo</span>
-        </div>
-        <h1 className="font-heading text-3xl font-bold text-white drop-shadow-lg mb-4">Controllo Mercato</h1>
-
+      <PageHeader
+        back
+        compact
+        badge="🎛️ Pannello di Controllo"
+        title="Controllo Mercato"
+        titleClassName="text-3xl"
+      >
         <div className="flex items-center gap-2 bg-white/15 rounded-2xl p-1.5">
           {TABS.map((t) => {
             const Icon = t.icon;
@@ -258,7 +259,7 @@ export default function StaffControlPanel() {
             <FileSpreadsheet className="w-3.5 h-3.5" /> Excel
           </Button>
         </div>
-      </div>
+      </PageHeader>
 
       <div>
         {tab === 'ddt' && (

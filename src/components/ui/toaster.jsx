@@ -15,15 +15,11 @@ export function Toaster() {
     <ToastProvider>
       {toasts
         .filter((t) => t.open !== false)
-        .map(function ({ id, title, description, action, onOpenChange, ...props }) {
+        .map(function ({ id, title, description, action, duration, open, onOpenChange, ...props }) {
           return (
-            <Toast key={id} {...props}>
-              <div className="grid gap-1">
-                {title && <ToastTitle>{title}</ToastTitle>}
-                {description && (
-                  <ToastDescription>{description}</ToastDescription>
-                )}
-              </div>
+            <Toast key={id} duration={duration} {...props}>
+              {title && <ToastTitle>{title}</ToastTitle>}
+              {description && <ToastDescription>{description}</ToastDescription>}
               {action}
               <ToastClose onClick={() => dismiss(id)} />
             </Toast>

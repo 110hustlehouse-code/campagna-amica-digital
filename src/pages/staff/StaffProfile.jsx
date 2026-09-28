@@ -1,3 +1,4 @@
+import PageHeader from '@/components/layout/PageHeader';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -221,14 +222,11 @@ export default function StaffProfile() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-primary via-primary/95 to-secondary border-b-4 border-secondary px-6 pt-12 pb-8 shadow-lg">
-        <div className="inline-flex items-center gap-1.5 bg-secondary rounded-full px-4 py-1.5 mb-3 shadow-md">
-          <span className="text-primary font-bold text-xs tracking-widest uppercase">👤 Account</span>
-        </div>
-        <h1 className="font-heading text-4xl font-bold text-white drop-shadow-lg">Il tuo Profilo</h1>
-        <p className="text-white/80 text-sm mt-1">Gestisci le tue informazioni e il mercato di riferimento</p>
-      </div>
+      <PageHeader
+        badge="👤 Account"
+        title="Il tuo Profilo"
+        subtitle="Gestisci le tue informazioni e il mercato di riferimento"
+      />
 
       <div className="px-6 py-8 max-w-2xl mx-auto space-y-6">
 

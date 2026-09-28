@@ -1,3 +1,4 @@
+import PageHeader from '@/components/layout/PageHeader';
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getMyStaffMember, getAllStaffMessages, createMessage, updateMessage, deleteMessage } from '@/api/staff';
@@ -198,21 +199,12 @@ export default function StaffHome() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Intestazione istituzionale */}
-      <div className="bg-gradient-to-r from-primary via-primary/95 to-secondary border-b-4 border-secondary px-6 pt-12 pb-8 shadow-lg">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <div className="inline-flex items-center gap-1.5 bg-secondary rounded-full px-4 py-1.5 mb-3 shadow-md">
-              <span className="text-primary font-bold text-xs tracking-widest uppercase">📢 Comunicazioni Staff</span>
-            </div>
-            <h1 className="font-heading text-4xl font-bold text-white drop-shadow-lg">Comunicazioni</h1>
-            <p className="text-white/90 text-sm mt-2 font-medium">
-              Crea, gestisci e pubblica comunicazioni per i produttori certificati
-            </p>
-          </div>
-          <div className="hidden md:block text-white/20 text-6xl">🌾</div>
-        </div>
-      </div>
+      <PageHeader
+        badge="📢 Comunicazioni Staff"
+        title="Comunicazioni"
+        subtitle="Crea, gestisci e pubblica comunicazioni per i produttori certificati"
+        actions={<div className="hidden md:block text-white/20 text-6xl">🌾</div>}
+      />
 
       {/* Content */}
       <div className="px-6 py-8 max-w-6xl mx-auto space-y-8">
