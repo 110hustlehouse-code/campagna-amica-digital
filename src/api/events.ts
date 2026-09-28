@@ -83,3 +83,14 @@ export async function getAssignmentsByCompany(companyId: string): Promise<Assign
     await supabase.from('company_market_assignments').select('*').eq('company_id', companyId),
     'Assegnazioni azienda')
 }
+
+export type EventReminder = Tables<'event_reminders'>
+
+/** I solleciti ricevuti da un'azienda — usati per mostrare nella scheda
+ * evento se e quando lo staff ha sollecitato una risposta. */
+export async function getRemindersByCompany(companyId: string): Promise<EventReminder[]> {
+  return unwrapMany(
+    await supabase.from('event_reminders').select('*').eq('company_id', companyId)
+      .order('sent_at', { ascending: false }),
+    'Solleciti ricevuti')
+}

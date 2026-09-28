@@ -576,6 +576,42 @@ export type Database = {
           },
         ]
       }
+      event_reminders: {
+        Row: {
+          company_id: string
+          event_id: string
+          id: string
+          sent_at: string
+        }
+        Insert: {
+          company_id: string
+          event_id: string
+          id?: string
+          sent_at?: string
+        }
+        Update: {
+          company_id?: string
+          event_id?: string
+          id?: string
+          sent_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_reminders_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_reminders_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "staff_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       favorites: {
         Row: {
           company_id: string | null
@@ -2893,3 +2929,4 @@ export const Constants = {
     Enums: {},
   },
 } as const
+export type Views<T extends keyof Database['public']['Views']> = Database['public']['Views'][T]['Row']

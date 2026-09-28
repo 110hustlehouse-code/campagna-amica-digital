@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getMyCompany } from '@/api/companies';
 import { getMarkets } from '@/api/markets';
-import { getAllMarketEvents, getAssignmentsByCompany, getMyRsvps, assignStand } from '@/api/events';
+import { getAllMarketEvents, getAssignmentsByCompany, getMyRsvps, assignStand, getRemindersByCompany } from '@/api/events';
 import { getProductsByCompany } from '@/api/products';
 import { getPublishedMessagesAll } from '@/api/staff';
 import { getNeedsByCompany, getResponsesByNeeds, ETICHETTE_STATO, ETICHETTE_CATEGORIA } from '@/api/needs';
@@ -27,6 +27,7 @@ export default function ProducerMarkets() {
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [expandedMessages, setExpandedMessages] = useState(false);
   const [expandedEvents, setExpandedEvents] = useState(false);
+  const [detailMsg, setDetailMsg] = useState(null);
 
   const { data: myCompany } = useQuery({
     queryKey: ['my-company', user?.email],
@@ -86,6 +87,13 @@ export default function ProducerMarkets() {
   const toggleNeed = (id) => setOpenNeedIds(prev => ({ ...prev, [id]: !prev[id] }));
 
   const rsvpStatus = Object.fromEntries(myRsvps.map(r => [r.message_id, r.status]));
+
+  const { data: myReminders = [] } = useQuery({
+    queryKey: ['event-reminders', myCompany?.id],
+    queryFn: () => getRemindersByCompany(myCompany.id),
+    enabled: !!myCompany?.id,
+  });
+  const remindersFor = (eventId) => myReminders.filter(r => r.event_id === eventId);
   const subscribedMarketIds = myCompany?.market_ids || [];
 
   const registerMutation = useMutation({
@@ -153,6 +161,14 @@ export default function ProducerMarkets() {
   const visibleEventMessages = eventTab === 'upcoming' ? upcomingEventMessages : pastEventMessages;
 
   const otherMessages = staffMessages.filter(msg => msg.type !== 'event');
+
+  const [commsTab, setCommsTab] = useState('current'); // 'current' | 'past'
+  const currentOtherMessages = otherMessages.filter(m => new Date(m.event_date) >= new Date());
+  const pastOtherMessages = otherMessages.filter(m => new Date(m.event_date) < new Date());
+  const currentNeeds = myNeeds.filter(n => n.status === 'open' || n.status === 'in_progress');
+  const pastNeeds = myNeeds.filter(n => n.status === 'resolved' || n.status === 'closed');
+  const visibleOtherMessages = commsTab === 'current' ? currentOtherMessages : pastOtherMessages;
+  const visibleNeeds = commsTab === 'current' ? currentNeeds : pastNeeds;
 
   return (
     <div className="min-h-screen bg-background">
@@ -231,7 +247,8 @@ export default function ProducerMarkets() {
                 return (
                   <div
                     key={msg.id}
-                    className="rounded-2xl border-2 border-border bg-white shadow-sm overflow-hidden"
+                    onClick={() => setDetailMsg(msg)}
+                    className="rounded-2xl border-2 border-border bg-white shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
                   >
                     <div className={cn(
                       'px-4 py-3 flex items-center gap-2',
@@ -276,7 +293,7 @@ export default function ProducerMarkets() {
                               <p className="text-xs text-muted-foreground flex-1 font-medium">Partecipi?</p>
                               <Button
                                 size="sm"
-                                onClick={() => rsvpMutation.mutate({ messageId: msg.id, status: 'accepted' })}
+                                onClick={(e) => { e.stopPropagation(); rsvpMutation.mutate({ messageId: msg.id, status: 'accepted' }); }}
                                 disabled={rsvpMutation.isPending}
                                 className="gap-1 bg-primary hover:bg-primary/90 text-white text-xs h-8"
                               >
@@ -285,7 +302,7 @@ export default function ProducerMarkets() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => rsvpMutation.mutate({ messageId: msg.id, status: 'declined' })}
+                                onClick={(e) => { e.stopPropagation(); rsvpMutation.mutate({ messageId: msg.id, status: 'declined' }); }}
                                 disabled={rsvpMutation.isPending}
                                 className="gap-1 text-xs h-8 border-destructive/30 text-destructive hover:bg-destructive/5"
                               >
@@ -324,14 +341,36 @@ export default function ProducerMarkets() {
           </button>
           {expandedMessages && (
             <div className="px-4 pb-4 border-t border-border">
-              {otherMessages.length === 0 && myNeeds.length === 0 ? (
+              <div className="flex gap-2 mt-3 mb-1">
+                <button
+                  onClick={() => setCommsTab('current')}
+                  className={cn(
+                    'px-3 py-1.5 rounded-full text-xs font-bold transition-colors',
+                    commsTab === 'current' ? 'bg-primary text-white' : 'bg-muted text-muted-foreground hover:bg-muted/70'
+                  )}
+                >
+                  Attuali ({currentOtherMessages.length + currentNeeds.length})
+                </button>
+                <button
+                  onClick={() => setCommsTab('past')}
+                  className={cn(
+                    'px-3 py-1.5 rounded-full text-xs font-bold transition-colors',
+                    commsTab === 'past' ? 'bg-primary text-white' : 'bg-muted text-muted-foreground hover:bg-muted/70'
+                  )}
+                >
+                  Passate ({pastOtherMessages.length + pastNeeds.length})
+                </button>
+              </div>
+              {visibleOtherMessages.length === 0 && visibleNeeds.length === 0 ? (
                 <div className="text-center py-6">
                   <Leaf className="w-6 h-6 text-muted-foreground/40 mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">Nessun messaggio</p>
+                  <p className="text-sm text-muted-foreground">
+                    {commsTab === 'current' ? 'Nessun messaggio attuale' : 'Nessun messaggio passato'}
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-3 pt-3">
-                  {otherMessages.map(msg => (
+                  {visibleOtherMessages.map(msg => (
                     <div
                       key={msg.id}
                       className={cn(
@@ -365,13 +404,13 @@ export default function ProducerMarkets() {
                     </div>
                   ))}
 
-                  {myNeeds.length > 0 && (
-                    <div className={otherMessages.length > 0 ? 'pt-2 mt-2 border-t border-border' : ''}>
+                  {visibleNeeds.length > 0 && (
+                    <div className={visibleOtherMessages.length > 0 ? 'pt-2 mt-2 border-t border-border' : ''}>
                       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
                         I tuoi bisogni segnalati
                       </p>
                       <div className="space-y-3">
-                        {myNeeds.map(need => {
+                        {visibleNeeds.map(need => {
                           const styleByStatus = {
                             open: 'bg-amber-50 border-amber-200',
                             in_progress: 'bg-blue-50 border-blue-200',
@@ -600,6 +639,76 @@ export default function ProducerMarkets() {
                   {registerMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Iscriviti'}
                 </Button>
               )}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Dettaglio evento — sollecito ricevuto (futuri) e presenza dichiarata (passati) */}
+      {detailMsg && (
+        <Dialog open onOpenChange={() => setDetailMsg(null)}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="font-heading text-lg">{detailMsg.title}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              {detailMsg.description && (
+                <p className="text-sm text-foreground/80">{detailMsg.description}</p>
+              )}
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <MapPin className="w-4 h-4" /> {detailMsg.location}
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Clock className="w-4 h-4" />
+                {format(new Date(detailMsg.event_date), 'EEEE d MMMM yyyy', { locale: it })}
+                {detailMsg.time_start && ` · ${detailMsg.time_start}`}
+              </div>
+
+              <div className="pt-3 border-t border-border space-y-2">
+                {(() => {
+                  const reminders = remindersFor(detailMsg.id);
+                  return (
+                    <div className="flex items-center gap-2 text-sm">
+                      <AlertCircle className={cn('w-4 h-4', reminders.length > 0 ? 'text-amber-600' : 'text-muted-foreground')} />
+                      {reminders.length === 0 ? (
+                        <span className="text-muted-foreground">Nessun sollecito ricevuto</span>
+                      ) : (
+                        <span className="text-foreground">
+                          Sollecitato {reminders.length > 1 ? `${reminders.length} volte` : 'una volta'}
+                          {' · ultima il '}
+                          {format(new Date(reminders[0].sent_at), 'd MMM yyyy, HH:mm', { locale: it })}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {new Date(detailMsg.event_date) < new Date() && detailMsg.is_mandatory === false && (() => {
+                  const rsvp = rsvpStatus[detailMsg.id];
+                  if (rsvp === 'accepted') {
+                    return (
+                      <div className="flex items-center gap-2 text-sm text-primary font-semibold">
+                        <Check className="w-4 h-4" /> Presenza dichiarata
+                      </div>
+                    );
+                  }
+                  if (rsvp === 'declined') {
+                    return (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground font-semibold">
+                        <X className="w-4 h-4" /> Assenza dichiarata
+                      </div>
+                    );
+                  }
+                  return (
+                    <div className="flex items-center gap-2 text-sm text-amber-700 font-semibold">
+                      <AlertCircle className="w-4 h-4" /> Nessuna risposta data
+                    </div>
+                  );
+                })()}
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDetailMsg(null)}>Chiudi</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
