@@ -3,9 +3,10 @@ import { useQuery } from '@tanstack/react-query';
 import { format, startOfMonth, startOfYear, subDays } from 'date-fns';
 import { it } from 'date-fns/locale';
 import {
-  ChevronRight, Home, Loader2, TrendingUp, Package, Building2, FileCheck,
+  ChevronRight, Home, Loader2, TrendingUp, Package, Building2, FileCheck, Search, X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   getRiepilogo, getTerritorio, livelloSuccessivo, ETICHETTA_LIVELLO,
 } from '@/api/admin';
@@ -28,6 +29,7 @@ export default function AdminDashboard() {
   const [periodo, setPeriodo] = useState('mese');
   // Il percorso di navigazione: ogni voce è un livello già attraversato.
   const [percorso, setPercorso] = useState([{ livello: 'italia', chiave: null, nome: 'Italia' }]);
+  const [ricerca, setRicerca] = useState('');
 
   const corrente = percorso[percorso.length - 1];
   const dal = format(PERIODI.find((p) => p.id === periodo).dal(), 'yyyy-MM-dd');
@@ -48,9 +50,14 @@ export default function AdminDashboard() {
   const scendi = (riga) => {
     if (!sotto) return;
     setPercorso([...percorso, { livello: sotto, chiave: riga.chiave, nome: riga.nome }]);
+    setRicerca('');
   };
 
-  const risali = (i) => setPercorso(percorso.slice(0, i + 1));
+  const risali = (i) => { setPercorso(percorso.slice(0, i + 1)); setRicerca(''); };
+
+  const righeFiltrate = ricerca.trim()
+    ? righe.filter((r) => r.nome?.toLowerCase().includes(ricerca.trim().toLowerCase()))
+    : righe;
 
   const TESSERE = [
     { icona: Building2, valore: numero(riepilogo?.mercati_attivi), etichetta: 'mercati attivi' },
@@ -123,11 +130,32 @@ export default function AdminDashboard() {
           </span>
         </div>
 
+        {righe.length > 0 && (
+          <div className="px-4 py-2.5 border-b bg-muted/10 relative">
+            <Search className="absolute left-7 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+            <Input
+              value={ricerca}
+              onChange={(e) => setRicerca(e.target.value)}
+              placeholder={`Cerca in ${ETICHETTA_LIVELLO[corrente.livello]?.toLowerCase() ?? ''}...`}
+              className="pl-8 pr-8 h-8 text-sm"
+            />
+            {ricerca && (
+              <button onClick={() => setRicerca('')} className="absolute right-7 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        )}
+
         {isLoading ? (
           <div className="flex justify-center py-12"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>
         ) : righe.length === 0 ? (
           <p className="text-center text-sm text-muted-foreground py-12">
             Nessun dato per questo territorio nel periodo scelto.
+          </p>
+        ) : righeFiltrate.length === 0 ? (
+          <p className="text-center text-sm text-muted-foreground py-12">
+            Nessun risultato per "{ricerca}".
           </p>
         ) : (
           <div className="divide-y">
@@ -139,7 +167,7 @@ export default function AdminDashboard() {
               <span className="col-span-1 text-right">kg</span>
             </div>
 
-            {righe.map((r) => (
+            {righeFiltrate.map((r) => (
               <button key={r.chiave}
                       onClick={() => scendi(r)}
                       disabled={!sotto}

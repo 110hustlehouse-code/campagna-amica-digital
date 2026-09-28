@@ -8,14 +8,13 @@
 import { supabase, DataError } from './client'
 
 /** I livelli in cui si puo' scendere, nell'ordine. */
-export const LIVELLI = ['italia', 'regione', 'provincia', 'comune', 'quartiere'] as const
+export const LIVELLI = ['italia', 'regione', 'comune', 'quartiere'] as const
 export type Livello = (typeof LIVELLI)[number]
 
 /** Cosa si vede a ciascun livello: l'etichetta di quello sotto. */
 export const ETICHETTA_LIVELLO: Record<Livello, string> = {
   italia: 'Regioni',
-  regione: 'Province',
-  provincia: 'Comuni',
+  regione: 'Città',
   comune: 'Quartieri',
   quartiere: 'Mercati',
 }
