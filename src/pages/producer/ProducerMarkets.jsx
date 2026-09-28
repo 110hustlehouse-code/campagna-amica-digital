@@ -26,6 +26,7 @@ export default function ProducerMarkets() {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [expandedMessages, setExpandedMessages] = useState(false);
+  const [expandedEvents, setExpandedEvents] = useState(false);
 
   const { data: myCompany } = useQuery({
     queryKey: ['my-company', user?.email],
@@ -178,12 +179,21 @@ export default function ProducerMarkets() {
       <div className="px-5 pt-5 pb-24 space-y-5">
 
         {/* I Tuoi Eventi — sezione propria, non mescolata alle altre comunicazioni.
-            Divisa in Futuri/Passati per la stessa intuibilità della sezione
+            A tendina come "Comunicazioni interne staff" qui sotto, e divisa
+            in Futuri/Passati per la stessa intuibilità della sezione
             equivalente lato staff (Crea/In programma/Storico). */}
-        <div>
-          <h2 className="font-heading text-lg font-bold text-foreground mb-3 flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-primary" /> I Tuoi Eventi
-          </h2>
+        <div className="rounded-2xl border-2 border-border bg-white shadow-sm overflow-hidden">
+          <button
+            onClick={() => setExpandedEvents(!expandedEvents)}
+            className="w-full flex items-center justify-between px-4 py-4 hover:bg-muted/30 transition-colors"
+          >
+            <h2 className="font-heading text-base font-bold text-foreground flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-primary" /> I Tuoi Eventi
+            </h2>
+            <ChevronDown className={cn('w-5 h-5 text-muted-foreground transition-transform', expandedEvents && 'rotate-180')} />
+          </button>
+          {expandedEvents && (
+          <div className="px-4 pb-4 border-t border-border pt-3">
 
           <div className="flex gap-2 mb-3">
             <button
@@ -298,6 +308,8 @@ export default function ProducerMarkets() {
                 );
               })}
             </div>
+          )}
+          </div>
           )}
         </div>
 
