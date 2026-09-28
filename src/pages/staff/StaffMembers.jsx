@@ -3,12 +3,15 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAllStaffMembers, addStaffMember, updateStaffMember, deleteStaffMember, getMyStaffMember } from '@/api/staff';
 import { getMarkets } from '@/api/markets';
+import { getCompaniesByMarket } from '@/api/companies';
+import { getRepresentativesByMarket, addRepresentative, removeRepresentative } from '@/api/marketRepresentatives';
 import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Plus, Edit2, Trash2, Search, Users, CheckCircle, AlertCircle, X, ChevronRight } from 'lucide-react';
+import { Loader2, Plus, Edit2, Trash2, Search, Users, CheckCircle, AlertCircle, X, ChevronRight, Megaphone, MessageCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
 import SearchableList from '@/components/staff/SearchableList';
 
@@ -276,6 +279,11 @@ export default function StaffMembers() {
             })}
           </div>
         )}
+
+        {/* Rappresentante produttori */}
+        {isMarketManager && myMarketId && (
+          <RepresentativesSection marketId={myMarketId} addedBy={user?.id} />
+        )}
       </div>
 
       {/* Dialog */}
@@ -351,6 +359,160 @@ export default function StaffMembers() {
               <Button variant="outline" onClick={resetForm} disabled={saveMutation.isPending}>Annulla</Button>
               <Button onClick={handleSubmit} disabled={saveMutation.isPending}>
                 {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Salva'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+    </div>
+  );
+}
+
+
+function RepresentativesSection({ marketId, addedBy }) {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  const [showAdd, setShowAdd] = useState(false);
+  const [companySearch, setCompanySearch] = useState('');
+  const [selectedCompanyId, setSelectedCompanyId] = useState('');
+  const [repName, setRepName] = useState('');
+
+  const { data: representatives = [] } = useQuery({
+    queryKey: ['market-representatives', marketId],
+    queryFn: () => getRepresentativesByMarket(marketId),
+    enabled: !!marketId,
+  });
+
+  const { data: companies = [] } = useQuery({
+    queryKey: ['companies-for-representative', marketId],
+    queryFn: () => getCompaniesByMarket(marketId),
+    enabled: showAdd && !!marketId,
+  });
+
+  const filteredCompanies = companySearch.trim()
+    ? companies.filter(c => c.name?.toLowerCase().includes(companySearch.toLowerCase()))
+    : companies;
+
+  const addMutation = useMutation({
+    mutationFn: () => {
+      const company = companies.find(c => c.id === selectedCompanyId);
+      if (!company?.owner_id) throw new Error('Azienda senza account collegato');
+      return addRepresentative({
+        market_id: marketId,
+        user_id: company.owner_id,
+        full_name: repName.trim() || company.name,
+        source_company_id: company.id,
+        added_by: addedBy || null,
+      });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['market-representatives', marketId] });
+      setShowAdd(false);
+      setSelectedCompanyId('');
+      setRepName('');
+      setCompanySearch('');
+      toast({ title: 'Rappresentante aggiunto' });
+    },
+    onError: (e) => toast({ title: 'Errore', description: e.message, variant: 'destructive' }),
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: removeRepresentative,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['market-representatives', marketId] });
+      toast({ title: 'Rappresentante rimosso' });
+    },
+  });
+
+  return (
+    <div className="mt-8 pt-6 border-t border-border">
+      <div className="flex items-center justify-between gap-3 mb-4">
+        <div>
+          <h2 className="font-heading text-lg font-bold flex items-center gap-2">
+            <Megaphone className="w-5 h-5 text-primary" /> Rappresentante produttori
+          </h2>
+          <p className="text-xs text-muted-foreground mt-0.5">Canale diretto con l'amministrazione, indipendente dall'azienda</p>
+        </div>
+        <div className="flex gap-2 shrink-0">
+          {representatives.length > 0 && (
+            <Link to="/staff/rappresentante-chat">
+              <Button size="sm" variant="outline" className="gap-1.5">
+                <MessageCircle className="w-3.5 h-3.5" /> Chat
+              </Button>
+            </Link>
+          )}
+          <Button size="sm" onClick={() => setShowAdd(true)} className="gap-1.5">
+            <Plus className="w-3.5 h-3.5" /> Aggiungi
+          </Button>
+        </div>
+      </div>
+
+      {representatives.length === 0 ? (
+        <p className="text-sm text-muted-foreground">Nessun rappresentante designato per questo mercato.</p>
+      ) : (
+        <div className="space-y-2">
+          {representatives.map(rep => (
+            <div key={rep.id} className="flex items-center justify-between gap-3 rounded-xl border border-border bg-white px-4 py-3">
+              <div>
+                <p className="font-semibold text-sm text-foreground">{rep.full_name}</p>
+                <p className="text-xs text-muted-foreground">Aggiunto il {new Date(rep.created_at).toLocaleDateString('it-IT')}</p>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => removeMutation.mutate(rep.id)}
+                disabled={removeMutation.isPending}
+                className="gap-1.5 text-xs text-destructive border-destructive/30 hover:bg-destructive/5"
+              >
+                <Trash2 className="w-3 h-3" /> Rimuovi
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {showAdd && (
+        <Dialog open onOpenChange={() => !addMutation.isPending && setShowAdd(false)}>
+          <DialogContent className="max-w-md mx-4 rounded-2xl">
+            <DialogHeader>
+              <DialogTitle className="font-heading text-xl">Designa rappresentante</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div>
+                <label className="text-sm font-semibold text-foreground mb-2 block">Cerca azienda (per risalire alla persona)</label>
+                <Input
+                  value={companySearch}
+                  onChange={(e) => setCompanySearch(e.target.value)}
+                  placeholder="Nome azienda..."
+                />
+                <div className="max-h-40 overflow-y-auto mt-2 space-y-1">
+                  {filteredCompanies.map(c => (
+                    <button
+                      key={c.id}
+                      onClick={() => { setSelectedCompanyId(c.id); if (!repName) setRepName(c.name); }}
+                      className={`w-full text-left px-3 py-2 rounded-lg text-sm ${
+                        selectedCompanyId === c.id ? 'bg-primary/10 border border-primary text-primary font-semibold' : 'hover:bg-muted/50'
+                      }`}
+                    >
+                      {c.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-foreground mb-2 block">Nome visualizzato</label>
+                <Input
+                  value={repName}
+                  onChange={(e) => setRepName(e.target.value)}
+                  placeholder="Nome della persona"
+                />
+                <p className="text-[11px] text-muted-foreground mt-1">Puoi modificarlo: il ruolo di rappresentante è personale, non legato all'azienda.</p>
+              </div>
+            </div>
+            <DialogFooter className="gap-2 mt-2">
+              <Button variant="outline" onClick={() => setShowAdd(false)} disabled={addMutation.isPending}>Annulla</Button>
+              <Button onClick={() => addMutation.mutate()} disabled={!selectedCompanyId || addMutation.isPending}>
+                {addMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Aggiungi'}
               </Button>
             </DialogFooter>
           </DialogContent>

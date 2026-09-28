@@ -34,6 +34,8 @@ const ProducerDDT = lazy(() => import('./pages/producer/ProducerDDT.jsx'));
 const StaffDashboard = lazy(() => import('./pages/staff/StaffDashboard.jsx'));
 const StaffProfile = lazy(() => import('./pages/staff/StaffProfile.jsx'));
 const StaffMembers = lazy(() => import('./pages/staff/StaffMembers.jsx'));
+const StaffChat = lazy(() => import('./pages/staff/StaffChat.jsx'));
+const RepresentativeChannel = lazy(() => import('./pages/staff/RepresentativeChannel.jsx'));
 const StallRentals = lazy(() => import('./pages/staff/StallRentals.jsx'));
 const CompanyNeeds = lazy(() => import('./pages/staff/CompanyNeeds.jsx'));
 const AbsenceCalendar = lazy(() => import('./pages/staff/AbsenceCalendar.jsx'));
@@ -55,6 +57,7 @@ const Stagionalita = lazy(() => import('./pages/Stagionalita.jsx'));
 const ClientProfile = lazy(() => import('./pages/ClientProfile.jsx'));
 const AdminSyncMarkets = lazy(() => import('./pages/AdminSyncMarkets.jsx'));
 const ProducerResellers = lazy(() => import('./pages/producer/ProducerResellers.jsx'));
+const RepresentativeChat = lazy(() => import('./pages/producer/RepresentativeChat.jsx'));
 const StaffDdtReports = lazy(() => import('./pages/staff/StaffDdtReports.jsx'));
 const AdminSegnalazioniDDT = lazy(() => import('./pages/admin/AdminSegnalazioniDDT.jsx'));
 
@@ -142,6 +145,7 @@ const AuthenticatedApp = () => {
         <Route path="/produttore/fornitori" element={<Suspense fallback={<PageLoader />}><ProducerSuppliers /></Suspense>} />
         <Route path="/produttore/ddt" element={<Suspense fallback={<PageLoader />}><ProducerDDT /></Suspense>} />
         <Route path="/produttore/rivenditori" element={<Suspense fallback={<PageLoader />}><ProducerResellers /></Suspense>} />
+        <Route path="/produttore/rappresentante-chat" element={<Suspense fallback={<PageLoader />}><RepresentativeChat /></Suspense>} />
       </Route>
       <Route element={<StaffLayout />}>
         <Route path="/staff" element={<Suspense fallback={<PageLoader />}><StaffDashboard /></Suspense>} />
@@ -151,6 +155,8 @@ const AuthenticatedApp = () => {
         <Route path="/staff/crea-evento" element={<Suspense fallback={<PageLoader />}><CreateEvent /></Suspense>} />
         <Route path="/staff/profilo" element={<Suspense fallback={<PageLoader />}><StaffProfile /></Suspense>} />
         <Route path="/staff/assenze" element={<Suspense fallback={<PageLoader />}><AbsenceCalendar /></Suspense>} />
+        <Route path="/staff/chat" element={<Suspense fallback={<PageLoader />}><StaffChat /></Suspense>} />
+        <Route path="/staff/rappresentante-chat" element={<Suspense fallback={<PageLoader />}><RepresentativeChannel /></Suspense>} />
         <Route path="/staff/ddt" element={<Suspense fallback={<PageLoader />}><StaffControlPanel /></Suspense>} />
         <Route path="/staff/segnalazioni-ddt" element={<Suspense fallback={<PageLoader />}><StaffDdtReports /></Suspense>} />
       </Route>

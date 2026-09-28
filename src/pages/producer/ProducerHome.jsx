@@ -10,12 +10,13 @@ import { getReviews } from '@/api/reviews';
 import { isPreferito } from '@/api/favorites';
 import { getAllMarketEvents, getAssignmentsByCompany, getRemindersByCompany, getMyRsvps } from '@/api/events';
 import { getMarkets } from '@/api/markets';
+import { getMyRepresentations } from '@/api/marketRepresentatives';
 import { useAuth } from '@/lib/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
   Package, ShoppingBag, Plus, Sparkles, Clock, ChevronRight,
-  Leaf, ArrowRight, Bell, Calendar, MapPin, Star, TrendingUp, AlertTriangle, X
+  Leaf, ArrowRight, Bell, Calendar, MapPin, Star, TrendingUp, AlertTriangle, X, Megaphone
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
@@ -103,6 +104,12 @@ export default function ProducerHome() {
   const { data: marketEvents = [] } = useQuery({
     queryKey: ['market-events'],
     queryFn: getAllMarketEvents,
+  });
+
+  const { data: myRepresentations = [] } = useQuery({
+    queryKey: ['my-representations', user?.id],
+    queryFn: getMyRepresentations,
+    enabled: !!user?.id,
   });
 
   const { data: markets = [] } = useQuery({
@@ -194,6 +201,15 @@ export default function ProducerHome() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {myRepresentations.length > 0 && (
+              <Link
+                to="/produttore/rappresentante-chat"
+                className="w-9 h-9 bg-white/20 backdrop-blur-sm text-white border border-white/30 hover:bg-white/30 rounded-xl flex items-center justify-center transition-colors"
+                title="Canale Amministrazione"
+              >
+                <Megaphone className="w-4 h-4" />
+              </Link>
+            )}
             <button
               onClick={() => setNotifOpen(true)}
               className="relative w-9 h-9 bg-white/20 backdrop-blur-sm text-white border border-white/30 hover:bg-white/30 rounded-xl flex items-center justify-center transition-colors"

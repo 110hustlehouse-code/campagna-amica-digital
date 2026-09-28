@@ -722,6 +722,58 @@ export type Database = {
           },
         ]
       }
+      market_representatives: {
+        Row: {
+          added_by: string | null
+          created_at: string
+          full_name: string
+          id: string
+          market_id: string
+          source_company_id: string | null
+          user_id: string
+        }
+        Insert: {
+          added_by?: string | null
+          created_at?: string
+          full_name: string
+          id?: string
+          market_id: string
+          source_company_id?: string | null
+          user_id: string
+        }
+        Update: {
+          added_by?: string | null
+          created_at?: string
+          full_name?: string
+          id?: string
+          market_id?: string
+          source_company_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "market_representatives_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "markets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "market_representatives_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "v_markets_territorio"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "market_representatives_source_company_id_fkey"
+            columns: ["source_company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       markets: {
         Row: {
           address: string | null
@@ -1776,6 +1828,48 @@ export type Database = {
           },
         ]
       }
+      representative_chat_messages: {
+        Row: {
+          author_id: string | null
+          author_name: string
+          created_at: string
+          id: string
+          market_id: string
+          message: string
+        }
+        Insert: {
+          author_id?: string | null
+          author_name: string
+          created_at?: string
+          id?: string
+          market_id: string
+          message: string
+        }
+        Update: {
+          author_id?: string | null
+          author_name?: string
+          created_at?: string
+          id?: string
+          market_id?: string
+          message?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "representative_chat_messages_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "markets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "representative_chat_messages_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "v_markets_territorio"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reseller_login_attempts: {
         Row: {
           attempted_at: string
@@ -2010,6 +2104,48 @@ export type Database = {
           months?: number[]
         }
         Relationships: []
+      }
+      staff_chat_messages: {
+        Row: {
+          author_id: string | null
+          author_name: string
+          created_at: string
+          id: string
+          market_id: string
+          message: string
+        }
+        Insert: {
+          author_id?: string | null
+          author_name: string
+          created_at?: string
+          id?: string
+          market_id: string
+          message: string
+        }
+        Update: {
+          author_id?: string | null
+          author_name?: string
+          created_at?: string
+          id?: string
+          market_id?: string
+          message?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_chat_messages_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "markets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_chat_messages_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "v_markets_territorio"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       staff_members: {
         Row: {
@@ -2691,8 +2827,16 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_direzione: { Args: never; Returns: boolean }
+      is_market_manager_for_market: {
+        Args: { p_market_id: string }
+        Returns: boolean
+      }
       is_market_open_on: {
         Args: { p_data: string; p_market_id: string }
+        Returns: boolean
+      }
+      is_market_representative: {
+        Args: { p_market_id: string }
         Returns: boolean
       }
       is_staff: { Args: never; Returns: boolean }
@@ -2929,4 +3073,3 @@ export const Constants = {
     Enums: {},
   },
 } as const
-export type Views<T extends keyof Database['public']['Views']> = Database['public']['Views'][T]['Row']
