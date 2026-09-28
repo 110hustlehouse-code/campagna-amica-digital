@@ -36,6 +36,7 @@ const StaffProfile = lazy(() => import('./pages/staff/StaffProfile.jsx'));
 const StaffMembers = lazy(() => import('./pages/staff/StaffMembers.jsx'));
 const StaffChat = lazy(() => import('./pages/staff/StaffChat.jsx'));
 const RepresentativeChannel = lazy(() => import('./pages/staff/RepresentativeChannel.jsx'));
+const ChatHub = lazy(() => import('./pages/staff/ChatHub.jsx'));
 const StallRentals = lazy(() => import('./pages/staff/StallRentals.jsx'));
 const CompanyNeeds = lazy(() => import('./pages/staff/CompanyNeeds.jsx'));
 const AbsenceCalendar = lazy(() => import('./pages/staff/AbsenceCalendar.jsx'));
@@ -157,6 +158,7 @@ const AuthenticatedApp = () => {
         <Route path="/staff/assenze" element={<Suspense fallback={<PageLoader />}><AbsenceCalendar /></Suspense>} />
         <Route path="/staff/chat" element={<Suspense fallback={<PageLoader />}><StaffChat /></Suspense>} />
         <Route path="/staff/rappresentante-chat" element={<Suspense fallback={<PageLoader />}><RepresentativeChannel /></Suspense>} />
+        <Route path="/staff/comunicazioni" element={<Suspense fallback={<PageLoader />}><ChatHub /></Suspense>} />
         <Route path="/staff/ddt" element={<Suspense fallback={<PageLoader />}><StaffControlPanel /></Suspense>} />
         <Route path="/staff/segnalazioni-ddt" element={<Suspense fallback={<PageLoader />}><StaffDdtReports /></Suspense>} />
       </Route>

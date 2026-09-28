@@ -356,7 +356,7 @@ export default function CompanyNeeds() {
           <div className="flex gap-2 flex-shrink-0">
             <Button
               variant="outline"
-              onClick={() => navigate('/staff/chat')}
+              onClick={() => navigate('/staff/comunicazioni')}
               className="bg-white/20 text-white border-white/40 hover:bg-white/30"
             >
               <MessageCircle className="w-4 h-4 mr-2" />

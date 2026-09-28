@@ -12,7 +12,7 @@ import { getSegnalazioniStagionaliMercato, risolviSegnalazioneStagionale } from 
 import { getReportsByMarket } from '@/api/ddtReports';
 import { format, startOfToday } from 'date-fns';
 import { it } from 'date-fns/locale';
-import { AlertCircle, TrendingUp, Clock, CalendarPlus, ChevronDown, Users, CalendarOff, Leaf, FileWarning } from 'lucide-react';
+import { AlertCircle, TrendingUp, Clock, CalendarPlus, ChevronDown, Users, CalendarOff, Leaf, FileWarning, MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import NeedsSection from '@/components/staff/NeedsSection';
@@ -182,6 +182,11 @@ export default function StaffDashboard() {
               icon={CalendarOff}
               label="Assenze"
               count={needs.filter(n => n.title?.includes('Assenza segnalata') && n.status === 'open').length}
+            />
+            <HeaderIconButton
+              to="/staff/comunicazioni"
+              icon={MessageCircle}
+              label="Chat"
             />
           </div>
         </div>
