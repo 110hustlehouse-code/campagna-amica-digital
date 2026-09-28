@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getMyStaffMember, createMessage, updateMessage, deleteMessage, getPublishedMessagesAll } from '@/api/staff';
+import { getMyStaffMember, createMessage, updateMessage, deleteMessage, getPublishedMessagesAll, publishMessage } from '@/api/staff';
 import { getMarkets } from '@/api/markets';
 import { getRsvpsByMarket } from '@/api/events';
 import { getCompaniesByMarket } from '@/api/companies';
@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import {
   CalendarPlus, MapPin, Clock, AlertCircle, CheckCircle,
   Loader2, ChevronLeft, Info, Search, ThumbsUp, ThumbsDown, HelpCircle, Calendar,
-  Download, History as HistoryIcon, Pencil, Trash2, Bell,
+  Download, History as HistoryIcon, Pencil, Trash2, Bell, Send,
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import SearchableList from '@/components/staff/SearchableList';
@@ -216,6 +216,17 @@ export default function CreateEvent() {
     },
   });
 
+  const publishMutation = useMutation({
+    mutationFn: (id) => publishMessage(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['staff-messages-published'] });
+      toast({ title: '✅ Evento pubblicato', description: 'Ora visibile ai clienti sulla scheda mercato.' });
+    },
+    onError: (err) => {
+      toast({ title: 'Errore', description: err.message, variant: 'destructive' });
+    },
+  });
+
   const validate = () => {
     const e = {};
     if (!formData.title.trim()) e.title = 'Il titolo è obbligatorio';
@@ -322,8 +333,28 @@ export default function CreateEvent() {
                 Facoltativo
               </span>
             )}
+            {ev.is_published && (
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700 flex items-center gap-1">
+                <CheckCircle className="w-3 h-3" /> Pubblicato
+              </span>
+            )}
             {editable && (
               <>
+                {!ev.is_published && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (window.confirm(`Pubblicare l'evento "${ev.title}" sulla scheda mercato visibile ai clienti?`)) {
+                        publishMutation.mutate(ev.id);
+                      }
+                    }}
+                    className="p-1.5 rounded-lg text-muted-foreground hover:text-green-600 hover:bg-green-50 transition-colors"
+                    title="Pubblica evento (visibile ai clienti)"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={(e) => {
