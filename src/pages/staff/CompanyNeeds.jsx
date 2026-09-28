@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Edit2, Trash2, AlertCircle, CheckCircle, Clock, MoreHorizontal, MessageCircle, History, CreditCard, BanknoteIcon, Download } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
 import { format, isBefore, startOfDay } from 'date-fns';
 import { it } from 'date-fns/locale';
@@ -42,6 +43,7 @@ const STATUS_ICONS = {
 };
 
 export default function CompanyNeeds() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const qc = useQueryClient();
   const { toast } = useToast();
@@ -352,6 +354,14 @@ export default function CompanyNeeds() {
             </div>
           </div>
           <div className="flex gap-2 flex-shrink-0">
+            <Button
+              variant="outline"
+              onClick={() => navigate('/staff/chat')}
+              className="bg-white/20 text-white border-white/40 hover:bg-white/30"
+            >
+              <MessageCircle className="w-4 h-4 mr-2" />
+              Chat
+            </Button>
             <Button
               variant="outline"
               onClick={handleExportExcel}
