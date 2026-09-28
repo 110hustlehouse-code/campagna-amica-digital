@@ -30,6 +30,8 @@ export interface RigaTerritorio {
   valore_merce: number
   ordini: number
   prodotti: number
+  lat: number | null
+  lon: number | null
 }
 
 export interface Riepilogo {

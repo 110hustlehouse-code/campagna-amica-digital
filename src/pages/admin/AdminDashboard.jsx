@@ -10,6 +10,8 @@ import { Input } from '@/components/ui/input';
 import {
   getRiepilogo, getTerritorio, livelloSuccessivo, ETICHETTA_LIVELLO,
 } from '@/api/admin';
+import ItalyMap from '@/components/admin/ItalyMap';
+import TerritorioPuntiMap from '@/components/admin/TerritorioPuntiMap';
 
 const PERIODI = [
   { id: 'mese',  label: 'Questo mese', dal: () => startOfMonth(new Date()) },
@@ -20,6 +22,12 @@ const PERIODI = [
 function numero(n) {
   return new Intl.NumberFormat('it-IT', { maximumFractionDigits: 0 }).format(n ?? 0);
 }
+const METRICHE_MAPPA = [
+  { chiave: 'mercati', etichetta: 'Mercati attivi' },
+  { chiave: 'ddt_emessi', etichetta: 'DDT emessi' },
+  { chiave: 'valore_merce', etichetta: 'Valore merce' },
+];
+
 function euro(n) {
   return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
     .format(n ?? 0);
@@ -30,6 +38,7 @@ export default function AdminDashboard() {
   // Il percorso di navigazione: ogni voce è un livello già attraversato.
   const [percorso, setPercorso] = useState([{ livello: 'italia', chiave: null, nome: 'Italia' }]);
   const [ricerca, setRicerca] = useState('');
+  const [metricaMappa, setMetricaMappa] = useState('mercati');
 
   const corrente = percorso[percorso.length - 1];
   const dal = format(PERIODI.find((p) => p.id === periodo).dal(), 'yyyy-MM-dd');
@@ -108,6 +117,41 @@ export default function AdminDashboard() {
         <div className="border border-amber-200 bg-amber-50 rounded-2xl p-4 text-sm text-amber-900">
           {riepilogo.ddt_annullati} documenti annullati nel periodo.
           Un numero alto può indicare errori ricorrenti in fase di emissione.
+        </div>
+      )}
+
+      {righe.length > 0 && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <h2 className="font-heading text-sm font-bold text-foreground">
+              Mappa {corrente.livello === 'italia' ? 'nazionale' : corrente.nome}
+            </h2>
+            <div className="flex gap-1">
+              {METRICHE_MAPPA.map((m) => (
+                <Button key={m.chiave} size="sm"
+                        variant={metricaMappa === m.chiave ? 'default' : 'outline'}
+                        onClick={() => setMetricaMappa(m.chiave)}>
+                  {m.etichetta}
+                </Button>
+              ))}
+            </div>
+          </div>
+          {corrente.livello === 'italia' ? (
+            <ItalyMap
+              righe={righe}
+              metrica={metricaMappa}
+              etichettaMetrica={METRICHE_MAPPA.find((m) => m.chiave === metricaMappa)?.etichetta}
+              onSelectRegione={scendi}
+            />
+          ) : (
+            <TerritorioPuntiMap
+              righe={righe}
+              metrica={metricaMappa}
+              etichettaMetrica={METRICHE_MAPPA.find((m) => m.chiave === metricaMappa)?.etichetta}
+              onSelectRiga={scendi}
+              cliccabile={!!sotto}
+            />
+          )}
         </div>
       )}
 
