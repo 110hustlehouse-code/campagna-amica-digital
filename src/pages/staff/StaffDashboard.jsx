@@ -89,6 +89,7 @@ export default function StaffDashboard() {
     queryKey: ['seasonal-alerts', staffMarketId],
     queryFn: () => getSegnalazioniStagionaliMercato(staffMarketId),
     enabled: staffReady,
+    refetchInterval: 5000,
   });
 
   const markAlertRead = async (id) => {
@@ -117,6 +118,7 @@ export default function StaffDashboard() {
     queryKey: ['dash-rentals', staffMarketId],
     queryFn: () => getRentalsByMarket(staffMarketId),
     enabled: staffReady,
+    refetchInterval: 5000,
   });
 
   // 6. Aziende del mercato dello staff
@@ -127,6 +129,7 @@ export default function StaffDashboard() {
       return aziende.filter(c => c.is_registered);
     },
     enabled: staffReady,
+    refetchInterval: 5000,
   });
 
   // Le assenze sono segnalazioni a parte (sezione dedicata), non bisogni:

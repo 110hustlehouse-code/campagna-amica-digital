@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getMyStaffMember } from '@/api/staff';
 import { getRentalsByMarket, getAllRentals, createRental, updateRental, deleteRental } from '@/api/rentals';
@@ -63,6 +64,23 @@ export default function StallRentals() {
       : getAllRentals(),
     enabled: !!staffProfile,
   });
+
+  // Deep-link da dashboard: ?rentalId=<id> seleziona e scrolla all'affitto
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    const rentalId = searchParams.get('rentalId');
+    if (rentalId && rentals.length > 0) {
+      const target = rentals.find(r => r.id === rentalId);
+      if (target) {
+        setSelectedRental(target);
+        setOpenCompanies(prev => new Set(prev).add(target.company_id));
+        setTimeout(() => {
+          document.getElementById(`rental-${target.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 150);
+        setSearchParams({}, { replace: true });
+      }
+    }
+  }, [rentals, searchParams]);
 
   const { data: companies = [] } = useQuery({
     queryKey: ['companies-list'],
@@ -425,6 +443,7 @@ function GroupedRentalList({ rentals, companies, markets, openCompanies, setOpen
           return (
             <div
               key={rental.id}
+              id={`rental-${rental.id}`}
               onClick={() => setSelectedRental(isSelected ? null : rental)}
               className={`rounded-xl border-2 p-4 cursor-pointer transition-all duration-150 ${
                 isSelected ? 'border-primary bg-primary/5 shadow-md'
@@ -471,6 +490,7 @@ function GroupedRentalList({ rentals, companies, markets, openCompanies, setOpen
                   return (
                     <div
                       key={rental.id}
+                      id={`rental-${rental.id}`}
                       onClick={() => setSelectedRental(isSelected ? null : rental)}
                       className={`p-4 cursor-pointer transition-all duration-150 ${
                         isSelected ? 'bg-primary/5' : expiring ? 'bg-amber-50' : 'hover:bg-muted/20'

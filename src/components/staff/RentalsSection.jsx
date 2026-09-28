@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Clock, AlertTriangle } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import { it } from 'date-fns/locale';
@@ -6,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
 export default function RentalsSection({ rentals, companies }) {
+  const navigate = useNavigate();
   const getCompanyName = (companyId) => {
     return companies.find(c => c.id === companyId)?.name || 'Sconosciuta';
   };
@@ -35,7 +37,8 @@ export default function RentalsSection({ rentals, companies }) {
           return (
             <Card
               key={rental.id}
-              className={`p-4 border-l-4 transition-all ${
+              onClick={() => navigate(`/staff/affitti?rentalId=${rental.id}`)}
+              className={`p-4 border-l-4 cursor-pointer transition-all ${
                 isUrgent
                   ? 'border-l-red-500 bg-red-50/30 hover:shadow-md'
                   : 'border-l-yellow-500 hover:shadow-md'
