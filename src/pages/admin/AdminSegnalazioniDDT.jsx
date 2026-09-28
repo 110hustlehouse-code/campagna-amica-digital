@@ -136,6 +136,9 @@ export default function AdminSegnalazioniDDT() {
   return (
     <div className="space-y-5">
       <div>
+        <div className="inline-flex items-center gap-1.5 bg-primary/10 rounded-full px-3 py-1 mb-2">
+          <span className="text-primary font-bold text-[11px] tracking-widest uppercase">Controllo qualita</span>
+        </div>
         <h1 className="font-heading text-2xl font-bold">Segnalazioni DDT</h1>
         <p className="text-sm text-muted-foreground mt-0.5">
           Segnalazioni inoltrate dallo staff, in attesa di un provvedimento
@@ -187,11 +190,11 @@ export default function AdminSegnalazioniDDT() {
           <p className="font-medium">Nessuna segnalazione in attesa</p>
         </div>
       ) : segnalazioniFiltrate.length === 0 && escalationsFiltrate.length === 0 ? (
-        <p className="text-sm text-muted-foreground py-6 text-center border rounded-xl">Nessun risultato per "{ricercaAttive}".</p>
+        <p className="text-sm text-muted-foreground py-6 text-center rounded-2xl border border-border/50">Nessun risultato per "{ricercaAttive}".</p>
       ) : (
         <div className="space-y-3">
           {segnalazioniFiltrate.map((s) => (
-            <div key={s.id} className="border rounded-xl p-4 bg-card">
+            <div key={s.id} className="rounded-2xl border border-border/50 p-4 bg-white shadow-sm">
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div>
                   <p className="font-semibold">{s.companies?.name || 'Azienda'}</p>
@@ -286,11 +289,11 @@ export default function AdminSegnalazioniDDT() {
         )}
 
         {cronologia.length === 0 ? (
-          <p className="text-sm text-muted-foreground py-4 text-center border rounded-xl">Nessun provvedimento emesso finora.</p>
+          <p className="text-sm text-muted-foreground py-4 text-center rounded-2xl border border-border/50">Nessun provvedimento emesso finora.</p>
         ) : cronologiaFiltrata.length === 0 ? (
-          <p className="text-sm text-muted-foreground py-4 text-center border rounded-xl">Nessun risultato per "{ricerca}".</p>
+          <p className="text-sm text-muted-foreground py-4 text-center rounded-2xl border border-border/50">Nessun risultato per "{ricerca}".</p>
         ) : (
-          <div className="border rounded-xl bg-card divide-y">
+          <div className="rounded-2xl border border-border/50 bg-white shadow-sm divide-y">
             {cronologiaFiltrata.map((s) => {
               const aperta = rigaAperta?.id === s.id;
               return (

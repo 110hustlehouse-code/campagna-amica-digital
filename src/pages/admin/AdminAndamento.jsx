@@ -83,7 +83,7 @@ function Tip({ active, payload, label, unita }) {
   const previsto = p.atteso != null;
   const banda = Array.isArray(p.banda) ? p.banda : null;
   return (
-    <div className="rounded-lg border bg-card shadow-sm px-3 py-2 text-xs">
+    <div className="rounded-lg border bg-white shadow-sm shadow-sm px-3 py-2 text-xs">
       <p className="font-semibold mb-1">{meseBreve(label)}</p>
       {p.reale != null && (
         <p className="tabular-nums">Reale: <strong>{formatta(p.reale, unita)}</strong></p>
@@ -286,6 +286,9 @@ Sotto ogni titolo due righe al massimo, ciascuna con una azione concreta e verif
     <div className="space-y-5">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
+          <div className="inline-flex items-center gap-1.5 bg-primary/10 rounded-full px-3 py-1 mb-2">
+            <span className="text-primary font-bold text-[11px] tracking-widest uppercase">Analisi territoriale</span>
+          </div>
           <h1 className="font-heading text-2xl font-bold">Andamento e previsioni</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             Serie storiche e proiezioni per territorio
@@ -303,7 +306,7 @@ Sotto ogni titolo due righe al massimo, ciascuna con una azione concreta e verif
       </div>
 
       {/* ------------------------------------------------- territorio */}
-      <div className="border rounded-xl bg-card px-4 py-3 flex items-center gap-1 flex-wrap text-sm">
+      <div className="rounded-2xl border border-border/50 bg-white shadow-sm px-4 py-3 flex items-center gap-1 flex-wrap text-sm">
         {percorso.map((p, i) => (
           <React.Fragment key={i}>
             {i > 0 && <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />}
@@ -343,7 +346,7 @@ Sotto ogni titolo due righe al massimo, ciascuna con una azione concreta e verif
       </div>
 
       {/* ------------------------------------------------- grafico */}
-      <div className="border rounded-xl bg-card overflow-hidden">
+      <div className="rounded-2xl border border-border/50 bg-white shadow-sm overflow-hidden">
         <div className="px-4 py-3 border-b flex items-start justify-between gap-4 flex-wrap">
           <div>
             <p className="font-semibold text-sm">{misura.label} — {corrente.nome}</p>
@@ -471,7 +474,7 @@ Sotto ogni titolo due righe al massimo, ciascuna con una azione concreta e verif
       {TESSERE.length > 0 && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {TESSERE.map((t) => (
-            <div key={t.l} className="border rounded-xl p-4 bg-card">
+            <div key={t.l} className="rounded-2xl border border-border/50 p-4 bg-white shadow-sm">
               <p className="text-2xl font-bold tabular-nums">{t.v}</p>
               <p className="text-xs text-muted-foreground">{t.l}</p>
               <p className="text-xs text-muted-foreground/70 mt-1">{t.sub}</p>
@@ -482,7 +485,7 @@ Sotto ogni titolo due righe al massimo, ciascuna con una azione concreta e verif
 
       {/* ------------------------------------------------- composizione */}
       {gruppiComp.length > 0 && (
-        <div className="border rounded-xl bg-card overflow-hidden">
+        <div className="rounded-2xl border border-border/50 bg-white shadow-sm overflow-hidden">
           <div className="px-4 py-3 border-b">
             <p className="font-semibold text-sm">Da dove arriva il valore</p>
             <p className="text-xs text-muted-foreground mt-0.5">
@@ -518,7 +521,7 @@ Sotto ogni titolo due righe al massimo, ciascuna con una azione concreta e verif
 
       {/* ------------------------------------------------- AI */}
       {analisi && (
-        <div className="border rounded-xl p-4 bg-primary/5 border-primary/20">
+        <div className="rounded-2xl border border-border/50 p-4 bg-primary/5 border-primary/20">
           <p className="text-xs font-medium text-primary mb-1.5 flex items-center gap-1">
             <Sparkles className="w-3.5 h-3.5" /> Idee su amministrazione, divulgazione e marketing
           </p>
