@@ -1,8 +1,9 @@
 // v2
 import React, { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getAllStaffMembers, addStaffMember, updateStaffMember, deleteStaffMember } from '@/api/staff';
+import { getAllStaffMembers, addStaffMember, updateStaffMember, deleteStaffMember, getMyStaffMember } from '@/api/staff';
 import { getMarkets } from '@/api/markets';
+import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -45,6 +46,21 @@ export default function StaffMembers() {
     queryKey: ['markets-list'],
     queryFn: getMarkets,
   });
+
+  const { user } = useAuth();
+  const { data: myStaffMember } = useQuery({
+    queryKey: ['staffProfile', user?.email],
+    queryFn: getMyStaffMember,
+    enabled: !!user?.email,
+  });
+  const myMarketId = myStaffMember?.market_id || '';
+  const myMarketName = markets.find(m => m.id === myMarketId)?.name || '';
+
+  const openNewDialog = () => {
+    setFormData({ market_id: myMarketId, email: '', full_name: '', phone: '', position: 'market_manager', is_active: true });
+    setEditingId(null);
+    setShowDialog(true);
+  };
 
   const marketItems = markets.map(m => ({
     id: m.id, label: m.name, sublabel: m.city || '',
@@ -125,7 +141,7 @@ export default function StaffMembers() {
             <h1 className="font-heading text-4xl font-bold text-white drop-shadow-lg">Team staff</h1>
             <p className="text-white/80 text-sm mt-1">Cerca, modifica e gestisci i membri del team</p>
           </div>
-          <Button onClick={() => setShowDialog(true)} className="rounded-xl gap-2 h-11 shrink-0">
+          <Button onClick={openNewDialog} className="rounded-xl gap-2 h-11 shrink-0">
             <Plus className="w-4 h-4" /> Nuovo
           </Button>
         </div>
@@ -166,7 +182,7 @@ export default function StaffMembers() {
               ? <p>Nessun membro trovato per "<strong>{searchQuery}</strong>"</p>
               : <div>
                   <p className="text-lg font-semibold text-foreground mb-4">Nessuno staff registrato</p>
-                  <Button onClick={() => setShowDialog(true)} className="gap-2">
+                  <Button onClick={openNewDialog} className="gap-2">
                     <Plus className="w-4 h-4" /> Aggiungi Staff
                   </Button>
                 </div>
@@ -290,14 +306,11 @@ export default function StaffMembers() {
                 />
               </div>
               <div>
-                <label className="text-sm font-semibold text-foreground mb-2 block">Mercato *</label>
-                <SearchableList
-                  items={marketItems}
-                  value={formData.market_id}
-                  onChange={(id) => setFormData({ ...formData, market_id: id })}
-                  placeholder="Seleziona mercato..."
-                  searchPlaceholder="Cerca mercato..."
-                />
+                <label className="text-sm font-semibold text-foreground mb-2 block">Mercato</label>
+                <div className="px-3 py-2.5 rounded-xl border border-border bg-muted/40 text-sm text-foreground font-medium">
+                  {myMarketName || 'Il tuo mercato'}
+                </div>
+                <p className="text-[11px] text-muted-foreground mt-1">Puoi gestire solo lo staff del tuo mercato.</p>
               </div>
               <div>
                 <label className="text-sm font-semibold text-foreground mb-2 block">Ruolo *</label>
