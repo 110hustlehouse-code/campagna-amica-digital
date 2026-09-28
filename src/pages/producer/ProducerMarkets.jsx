@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getMyCompany } from '@/api/companies';
 import { getMarkets } from '@/api/markets';
-import { getAllMarketEvents, getAssignmentsByCompany, getMyRsvps, assignStand, getRemindersByCompany } from '@/api/events';
+import { getAssignmentsByCompany, getMyRsvps, getRemindersByCompany } from '@/api/events';
 import { getProductsByCompany } from '@/api/products';
 import { getPublishedMessagesAll } from '@/api/staff';
 import { getNeedsByCompany, getResponsesByNeeds, ETICHETTE_STATO, ETICHETTE_CATEGORIA } from '@/api/needs';
@@ -22,9 +22,6 @@ export default function ProducerMarkets() {
   const [openNeedIds, setOpenNeedIds] = useState({});
   const qc = useQueryClient();
   const { toast } = useToast();
-  const [showRegister, setShowRegister] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState(null);
-  const [selectedProducts, setSelectedProducts] = useState([]);
   const [expandedMessages, setExpandedMessages] = useState(false);
   const [expandedEvents, setExpandedEvents] = useState(false);
   const [detailMsg, setDetailMsg] = useState(null);
@@ -38,11 +35,6 @@ export default function ProducerMarkets() {
   const { data: markets = [] } = useQuery({
     queryKey: ['all-markets'],
     queryFn: getMarkets,
-  });
-
-  const { data: marketEvents = [] } = useQuery({
-    queryKey: ['market-events'],
-    queryFn: getAllMarketEvents,
   });
 
   const { data: products = [] } = useQuery({
@@ -96,30 +88,7 @@ export default function ProducerMarkets() {
   const remindersFor = (eventId) => myReminders.filter(r => r.event_id === eventId);
   const subscribedMarketIds = myCompany?.market_ids || [];
 
-  const registerMutation = useMutation({
-    mutationFn: async () => {
-      if (!selectedProducts.length) {
-        throw new Error('Seleziona almeno un prodotto');
-      }
-      const data = {
-        company_id: myCompany.id,
-        market_event_id: selectedEvent.id,
-        assigned_product_ids: selectedProducts,
-        status: 'pending',
-      };
-      return assignStand(data);
-    },
-    onSuccess: () => {
-      qc.invalidateQueries(['my-assignments']);
-      setShowRegister(false);
-      setSelectedEvent(null);
-      setSelectedProducts([]);
-      toast({ title: 'Iscrizione inviata!' });
-    },
-    onError: (err) => {
-      toast({ title: 'Errore', description: err.message });
-    },
-  });
+
 
   const getMarketName = (marketId) => markets.find(m => m.id === marketId)?.name || 'Mercato';
 
@@ -139,10 +108,6 @@ export default function ProducerMarkets() {
       toast({ title: 'Errore', description: err.message, variant: 'destructive' });
     },
   });
-
-  const upcomingEvents = marketEvents
-    .filter(e => new Date(e.event_date) >= new Date())
-    .sort((a, b) => new Date(a.event_date) - new Date(b.event_date));
 
   // Gli eventi che il produttore vede davvero sono le comunicazioni staff di tipo "event"
   // (creati da /staff/crea-evento): market_events + assignments è un sistema a parte,
@@ -186,9 +151,6 @@ export default function ProducerMarkets() {
               {subscribedMarketIds.length} mercati · {eventMessages.length} eventi in programma
             </p>
           </div>
-          <Button onClick={() => setShowRegister(true)} variant="secondary" className="rounded-xl gap-1 shrink-0 font-bold">
-            Iscriviti a evento
-          </Button>
         </div>
       </div>
 
@@ -532,117 +494,6 @@ export default function ProducerMarkets() {
       </div>
 
       {/* Registrazione Dialog */}
-      {showRegister && (
-        <Dialog open onOpenChange={() => setShowRegister(false)}>
-          <DialogContent className="max-w-md mx-4 rounded-2xl">
-            <DialogHeader>
-              <DialogTitle className="font-heading text-xl">Iscriviti a evento</DialogTitle>
-            </DialogHeader>
-
-            {!selectedEvent ? (
-              <div className="space-y-2 max-h-96 overflow-y-auto">
-                {upcomingEvents.filter(event => subscribedMarketIds.includes(event.market_id)).length === 0 ? (
-                  <div className="text-center py-6">
-                    <p className="text-xs text-muted-foreground">Nessun evento nei tuoi mercati</p>
-                    <p className="text-xs text-muted-foreground mt-2">Aggiungi mercati nella sezione Azienda</p>
-                  </div>
-                ) : (
-                  upcomingEvents
-                    .filter(event => subscribedMarketIds.includes(event.market_id))
-                    .map(event => {
-                      const market = markets.find(m => m.id === event.market_id);
-                      const isRegistered = assignments.some(a => a.market_event_id === event.id);
-                      return (
-                        <button
-                          key={event.id}
-                          onClick={() => setSelectedEvent(event)}
-                          disabled={isRegistered}
-                          className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
-                            isRegistered
-                              ? 'border-primary/20 bg-primary/5 opacity-50 cursor-not-allowed'
-                              : 'border-primary/20 hover:border-primary bg-white hover:bg-primary/5'
-                          }`}
-                        >
-                          <p className="font-semibold text-sm text-foreground">{market?.name}</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            {format(new Date(event.event_date), 'd MMM HH:mm', { locale: it })}
-                          </p>
-                          {isRegistered && <p className="text-xs text-green-600 mt-1">✓ Iscritto</p>}
-                        </button>
-                      );
-                    })
-                )}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="bg-primary/10 rounded-lg p-3">
-                  <p className="text-sm font-semibold text-foreground">
-                    {getMarketName(selectedEvent.market_id)}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {format(new Date(selectedEvent.event_date), 'EEEE d MMMM', { locale: it })}
-                  </p>
-                </div>
-
-                <div>
-                  <label className="text-xs font-semibold text-foreground mb-2 block">
-                    Seleziona prodotti da esporre
-                  </label>
-                  <div className="space-y-2">
-                    {products.length === 0 ? (
-                      <p className="text-xs text-muted-foreground">Nessun prodotto disponibile</p>
-                    ) : (
-                      products.map(product => (
-                        <label key={product.id} className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-2 rounded-lg transition-colors">
-                          <input
-                            type="checkbox"
-                            checked={selectedProducts.includes(product.id)}
-                            onChange={e => {
-                              if (e.target.checked) {
-                                setSelectedProducts([...selectedProducts, product.id]);
-                              } else {
-                                setSelectedProducts(selectedProducts.filter(id => id !== product.id));
-                              }
-                            }}
-                            className="w-4 h-4"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm text-foreground">{product.name}</p>
-                            <p className="text-xs text-muted-foreground">€{product.price}/{product.unit}</p>
-                          </div>
-                        </label>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <DialogFooter className="gap-2 mt-4">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  if (selectedEvent) {
-                    setSelectedEvent(null);
-                  } else {
-                    setShowRegister(false);
-                  }
-                }}
-              >
-                {selectedEvent ? 'Indietro' : 'Annulla'}
-              </Button>
-              {selectedEvent && (
-                <Button
-                  onClick={() => registerMutation.mutate()}
-                  disabled={registerMutation.isPending || !selectedProducts.length}
-                >
-                  {registerMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Iscriviti'}
-                </Button>
-              )}
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
 
       {/* Dettaglio evento — sollecito ricevuto (futuri) e presenza dichiarata (passati) */}
       {detailMsg && (
