@@ -1,3 +1,4 @@
+import PageHeader from '@/components/layout/PageHeader';
 // v3 — fornitori vincolati a due sole tipologie
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -100,24 +101,19 @@ export default function ProducerSuppliers() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-primary/5 to-secondary/5 border-b border-primary/20 px-5 pt-12 pb-5">
-        <div className="flex items-center gap-3 mb-4">
-          <button
-            onClick={() => navigate('/produttore/prodotti')}
-            className="w-9 h-9 rounded-xl border border-border flex items-center justify-center hover:bg-muted transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4 text-muted-foreground" />
-          </button>
-          <div className="flex-1">
-            <h1 className="font-heading text-2xl font-bold text-foreground">Fornitori</h1>
-            <p className="text-xs text-muted-foreground mt-0.5">{suppliers.length} fornitori registrati</p>
-          </div>
+      <PageHeader
+        back
+        onBack={() => navigate('/produttore/prodotti')}
+        title="Fornitori"
+        titleClassName="text-2xl"
+        subtitle={`${suppliers.length} fornitori registrati`}
+        actions={(
           <Button onClick={() => setEditSupplier({ ...emptySupplier })} className="rounded-xl gap-1.5">
             <Plus className="w-4 h-4" /> Aggiungi
           </Button>
-        </div>
-
+        )}
+        className="px-5"
+      >
         {suppliers.length > 0 && (
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -135,7 +131,7 @@ export default function ProducerSuppliers() {
             )}
           </div>
         )}
-      </div>
+      </PageHeader>
 
       {/* List */}
       <div className="px-5 pt-4 pb-28 space-y-3">

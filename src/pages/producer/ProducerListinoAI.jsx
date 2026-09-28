@@ -1,3 +1,4 @@
+import PageHeader from '@/components/layout/PageHeader';
 import React, { useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getMyCompany } from '@/api/companies';
@@ -46,22 +47,14 @@ export default function ProducerListinoAI() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-       <div className="bg-gradient-to-r from-primary/5 to-secondary/5 border-b border-primary/20 px-5 pt-12 pb-5">
-         <div className="flex items-start gap-3">
-           <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-             <Sparkles className="w-5 h-5 text-primary" />
-           </div>
-           <div>
-             <div className="inline-flex items-center gap-1.5 bg-primary/10 border border-primary/20 rounded-full px-3 py-1 mb-2">
-               <Award className="w-3.5 h-3.5 text-primary" />
-               <span className="text-primary text-xs font-bold uppercase tracking-widest">Generatore listino</span>
-             </div>
-             <h1 className="font-heading text-2xl font-bold text-foreground">Listino AI</h1>
-             <p className="text-sm text-muted-foreground">Carica il file e l'AI fa il resto</p>
-           </div>
-         </div>
-       </div>
+      <PageHeader
+        compact
+        badge="✨ Generatore Listino"
+        title="Listino AI"
+        titleClassName="text-2xl"
+        subtitle="Carica il file e l'AI fa il resto"
+        className="px-5"
+      />
 
       <div className="px-5 pt-5 pb-24 space-y-5">
 

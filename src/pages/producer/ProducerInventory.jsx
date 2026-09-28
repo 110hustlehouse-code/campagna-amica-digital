@@ -1,3 +1,4 @@
+import PageHeader from '@/components/layout/PageHeader';
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getMyCompany } from '@/api/companies';
@@ -75,25 +76,18 @@ export default function ProducerInventory() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-primary/5 to-secondary/5 border-b border-primary/20 px-5 pt-12 pb-5">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <div className="inline-flex items-center gap-1.5 bg-primary/10 border border-primary/20 rounded-full px-3 py-1 mb-2">
-              <Package className="w-3.5 h-3.5 text-primary" />
-              <span className="text-primary text-xs font-bold uppercase tracking-widest">Gestione Disponibilità</span>
-            </div>
-            <h1 className="font-heading text-2xl font-bold text-foreground">Disponibilità Prodotti</h1>
-            <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
-              <Leaf className="w-3.5 h-3.5 text-primary" />
-              {stocks.length} articoli tracciati
-            </p>
-          </div>
+      <PageHeader
+        badge="📦 Gestione Disponibilità"
+        title="Disponibilità Prodotti"
+        titleClassName="text-2xl"
+        subtitle={`${stocks.length} articoli tracciati`}
+        actions={(
           <Button onClick={() => setEditStock({ product_id: '', quantity: '', min_threshold: '', notes: '' })} className="rounded-xl gap-1">
             <Plus className="w-4 h-4" /> Aggiungi
           </Button>
-        </div>
-      </div>
+        )}
+        className="px-5"
+      />
 
       <div className="px-5 pt-4 pb-24 space-y-3">
         {/* Alert scorte basse */}

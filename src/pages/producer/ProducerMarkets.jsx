@@ -1,3 +1,4 @@
+import PageHeader from '@/components/layout/PageHeader';
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getMyCompany } from '@/api/companies';
@@ -86,14 +87,6 @@ export default function ProducerMarkets() {
     enabled: !!myCompany?.id,
   });
   const remindersFor = (eventId) => myReminders.filter(r => r.event_id === eventId);
-  // Sollecito ancora "attivo" solo se il produttore non ha ancora risposto —
-  // stessa logica della Home, così i due pallini restano sempre coerenti.
-  const eventHasPendingReminder = (eventId) => {
-    if (remindersFor(eventId).length === 0) return false;
-    const status = rsvpStatus[eventId];
-    return status !== 'accepted' && status !== 'declined';
-  };
-  const hasPendingEventReminder = eventMessages.some(msg => eventHasPendingReminder(msg.id));
   const subscribedMarketIds = myCompany?.market_ids || [];
 
 
@@ -124,6 +117,15 @@ export default function ProducerMarkets() {
     .filter(msg => msg.type === 'event')
     .sort((a, b) => new Date(b.event_date) - new Date(a.event_date));
 
+  // Sollecito ancora "attivo" solo se il produttore non ha ancora risposto —
+  // stessa logica della Home, così i due pallini restano sempre coerenti.
+  const eventHasPendingReminder = (eventId) => {
+    if (remindersFor(eventId).length === 0) return false;
+    const status = rsvpStatus[eventId];
+    return status !== 'accepted' && status !== 'declined';
+  };
+  const hasPendingEventReminder = eventMessages.some(msg => eventHasPendingReminder(msg.id));
+
   const [eventTab, setEventTab] = useState('upcoming'); // 'upcoming' | 'past'
   const upcomingEventMessages = eventMessages
     .filter(msg => new Date(msg.event_date) >= new Date())
@@ -145,22 +147,22 @@ export default function ProducerMarkets() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-primary via-primary/95 to-secondary border-b-4 border-secondary px-5 pt-12 pb-6 shadow-lg">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <div className="inline-flex items-center gap-1.5 bg-secondary rounded-full px-4 py-1.5 mb-3 shadow-md">
-              <Calendar className="w-3.5 h-3.5 text-primary" />
-              <span className="text-primary text-xs font-bold uppercase tracking-widest">Gestione Mercati</span>
-            </div>
-            <h1 className="font-heading text-3xl font-bold text-white drop-shadow-lg">I tuoi Mercati</h1>
-            <p className="text-sm text-white/90 mt-2 flex items-center gap-1.5 font-medium">
-              <Leaf className="w-3.5 h-3.5" />
-              {subscribedMarketIds.length} mercati · {eventMessages.length} eventi in programma
-            </p>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        badge={(
+          <span className="inline-flex items-center gap-1.5">
+            <Calendar className="w-3.5 h-3.5" /> Gestione Mercati
+          </span>
+        )}
+        title="I tuoi Mercati"
+        titleClassName="text-3xl"
+        subtitle={(
+          <span className="inline-flex items-center gap-1.5">
+            <Leaf className="w-3.5 h-3.5" />
+            {subscribedMarketIds.length} mercati · {eventMessages.length} eventi in programma
+          </span>
+        )}
+        className="px-5"
+      />
 
       <div className="px-5 pt-5 pb-24 space-y-5">
 
