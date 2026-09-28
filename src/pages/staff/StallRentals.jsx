@@ -8,7 +8,8 @@ import { getMarkets } from '@/api/markets';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Loader2, Plus, Edit2, Trash2, Search, AlertCircle, X, ChevronDown, ChevronRight, Store, History, Building2, Clock, Ban } from 'lucide-react';
+import { Loader2, Plus, Edit2, Trash2, Search, AlertCircle, X, ChevronDown, ChevronRight, Store, History, Building2, Clock, Ban, Wallet, ShieldCheck, ShieldAlert } from 'lucide-react';
+import BackButton from '@/components/shared/BackButton';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/lib/AuthContext';
 import { format } from 'date-fns';
@@ -193,6 +194,7 @@ export default function StallRentals() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="bg-gradient-to-r from-primary via-primary/95 to-secondary border-b-4 border-secondary px-6 pt-12 pb-8 shadow-lg">
+        <BackButton variant="ghost" className="bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 mb-3" />
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="inline-flex items-center gap-1.5 bg-secondary rounded-full px-4 py-1.5 mb-3 shadow-md">
@@ -208,6 +210,48 @@ export default function StallRentals() {
       </div>
 
       <div className="px-6 py-6 max-w-6xl mx-auto">
+
+        {/* Metriche a vista */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          <div className="bg-white rounded-2xl border border-border p-4 shadow-sm flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <Store className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-xl font-bold text-foreground">{rentals.length}</p>
+              <p className="text-xs text-muted-foreground">Affitti totali</p>
+            </div>
+          </div>
+          <div className="bg-white rounded-2xl border border-border p-4 shadow-sm flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0">
+              <ShieldCheck className="w-5 h-5 text-green-600" />
+            </div>
+            <div>
+              <p className="text-xl font-bold text-foreground">{rentals.filter(r => r.status === 'active').length}</p>
+              <p className="text-xs text-muted-foreground">Attivi</p>
+            </div>
+          </div>
+          <div className="bg-white rounded-2xl border border-border p-4 shadow-sm flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0">
+              <ShieldAlert className="w-5 h-5 text-amber-600" />
+            </div>
+            <div>
+              <p className="text-xl font-bold text-foreground">{rentals.filter(r => getPaymentStatus(r)).length}</p>
+              <p className="text-xs text-muted-foreground">In scadenza</p>
+            </div>
+          </div>
+          <div className="bg-white rounded-2xl border border-border p-4 shadow-sm flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
+              <Wallet className="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-xl font-bold text-foreground">
+                {rentals.filter(r => r.status === 'active').reduce((sum, r) => sum + (Number(r.monthly_rent) || 0), 0).toLocaleString('it-IT')} €
+              </p>
+              <p className="text-xs text-muted-foreground">Incasso mensile</p>
+            </div>
+          </div>
+        </div>
 
         {/* Search Bar */}
         <div className="relative mb-6">
