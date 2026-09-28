@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import {
   CalendarPlus, MapPin, Clock, AlertCircle, CheckCircle,
   Loader2, ChevronLeft, Info, Search, ThumbsUp, ThumbsDown, HelpCircle, Calendar,
-  Download, History as HistoryIcon, Pencil, Trash2,
+  Download, History as HistoryIcon, Pencil, Trash2, Bell,
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import SearchableList from '@/components/staff/SearchableList';
@@ -194,6 +194,14 @@ export default function CreateEvent() {
     onError: (err) => {
       toast({ title: 'Errore', description: err.message, variant: 'destructive' });
     },
+  });
+
+  const solletciaMutation = useMutation({
+    mutationFn: ({ event_id, company_id }) => invokeFunction('notifySollecitoRsvp', { event_id, company_id }),
+    onSuccess: () => {
+      toast({ title: 'Sollecito inviato', description: 'Il produttore ha ricevuto una notifica.' });
+    },
+    onError: (e) => toast({ title: 'Errore', description: e.message, variant: 'destructive' }),
   });
 
   const deleteMutation = useMutation({
@@ -715,8 +723,15 @@ export default function CreateEvent() {
                 ) : (
                   <div className="space-y-1.5">
                     {inAttesa.map((c) => (
-                      <div key={c.id} className="text-sm px-3 py-2 rounded-lg bg-muted/40 border border-border">
-                        {c.name}
+                      <div key={c.id} className="flex items-center justify-between gap-2 text-sm px-3 py-2 rounded-lg bg-muted/40 border border-border">
+                        <span>{c.name}</span>
+                        <Button
+                          size="sm" variant="outline" className="h-7 text-xs shrink-0 gap-1"
+                          disabled={solletciaMutation.isPending}
+                          onClick={() => solletciaMutation.mutate({ event_id: selectedEventForRsvp.id, company_id: c.id })}
+                        >
+                          <Bell className="w-3 h-3" /> Sollecita
+                        </Button>
                       </div>
                     ))}
                   </div>

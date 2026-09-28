@@ -142,6 +142,15 @@ export default function ProducerMarkets() {
     .filter(msg => msg.type === 'event')
     .sort((a, b) => new Date(b.event_date) - new Date(a.event_date));
 
+  const [eventTab, setEventTab] = useState('upcoming'); // 'upcoming' | 'past'
+  const upcomingEventMessages = eventMessages
+    .filter(msg => new Date(msg.event_date) >= new Date())
+    .sort((a, b) => new Date(a.event_date) - new Date(b.event_date));
+  const pastEventMessages = eventMessages
+    .filter(msg => new Date(msg.event_date) < new Date())
+    .sort((a, b) => new Date(b.event_date) - new Date(a.event_date));
+  const visibleEventMessages = eventTab === 'upcoming' ? upcomingEventMessages : pastEventMessages;
+
   const otherMessages = staffMessages.filter(msg => msg.type !== 'event');
 
   return (
@@ -168,19 +177,45 @@ export default function ProducerMarkets() {
 
       <div className="px-5 pt-5 pb-24 space-y-5">
 
-        {/* I Tuoi Eventi — sezione propria, non mescolata alle altre comunicazioni */}
+        {/* I Tuoi Eventi — sezione propria, non mescolata alle altre comunicazioni.
+            Divisa in Futuri/Passati per la stessa intuibilità della sezione
+            equivalente lato staff (Crea/In programma/Storico). */}
         <div>
           <h2 className="font-heading text-lg font-bold text-foreground mb-3 flex items-center gap-2">
             <Calendar className="w-5 h-5 text-primary" /> I Tuoi Eventi
           </h2>
-          {eventMessages.length === 0 ? (
+
+          <div className="flex gap-2 mb-3">
+            <button
+              onClick={() => setEventTab('upcoming')}
+              className={cn(
+                'px-3 py-1.5 rounded-full text-xs font-bold transition-colors',
+                eventTab === 'upcoming' ? 'bg-primary text-white' : 'bg-muted text-muted-foreground hover:bg-muted/70'
+              )}
+            >
+              Futuri ({upcomingEventMessages.length})
+            </button>
+            <button
+              onClick={() => setEventTab('past')}
+              className={cn(
+                'px-3 py-1.5 rounded-full text-xs font-bold transition-colors',
+                eventTab === 'past' ? 'bg-primary text-white' : 'bg-muted text-muted-foreground hover:bg-muted/70'
+              )}
+            >
+              Passati ({pastEventMessages.length})
+            </button>
+          </div>
+
+          {visibleEventMessages.length === 0 ? (
             <div className="text-center py-10 rounded-2xl border-2 border-dashed border-border bg-muted/20">
               <Calendar className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">Nessun evento in programma</p>
+              <p className="text-sm text-muted-foreground">
+                {eventTab === 'upcoming' ? 'Nessun evento in programma' : 'Nessun evento passato'}
+              </p>
             </div>
           ) : (
             <div className="space-y-3">
-              {eventMessages.map(msg => {
+              {visibleEventMessages.map(msg => {
                 const rsvp = rsvpStatus[msg.id];
                 const isOptionalEvent = !msg.is_mandatory;
                 return (
