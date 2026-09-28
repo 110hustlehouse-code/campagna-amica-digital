@@ -86,6 +86,14 @@ export default function ProducerMarkets() {
     enabled: !!myCompany?.id,
   });
   const remindersFor = (eventId) => myReminders.filter(r => r.event_id === eventId);
+  // Sollecito ancora "attivo" solo se il produttore non ha ancora risposto —
+  // stessa logica della Home, così i due pallini restano sempre coerenti.
+  const eventHasPendingReminder = (eventId) => {
+    if (remindersFor(eventId).length === 0) return false;
+    const status = rsvpStatus[eventId];
+    return status !== 'accepted' && status !== 'declined';
+  };
+  const hasPendingEventReminder = eventMessages.some(msg => eventHasPendingReminder(msg.id));
   const subscribedMarketIds = myCompany?.market_ids || [];
 
 
@@ -167,6 +175,9 @@ export default function ProducerMarkets() {
           >
             <h2 className="font-heading text-base font-bold text-foreground flex items-center gap-2">
               <Calendar className="w-5 h-5 text-primary" /> I Tuoi Eventi
+              {hasPendingEventReminder && (
+                <span className="w-2.5 h-2.5 rounded-full bg-destructive" />
+              )}
             </h2>
             <ChevronDown className={cn('w-5 h-5 text-muted-foreground transition-transform', expandedEvents && 'rotate-180')} />
           </button>
@@ -222,7 +233,12 @@ export default function ProducerMarkets() {
                       )}>
                         <Calendar className={cn('w-4 h-4', msg.is_mandatory ? 'text-secondary-foreground' : 'text-primary')} />
                       </div>
-                      <h3 className="font-heading font-bold text-sm text-foreground flex-1 min-w-0 truncate">{msg.title}</h3>
+                      <h3 className="font-heading font-bold text-sm text-foreground flex-1 min-w-0 truncate flex items-center gap-1.5">
+                        {msg.title}
+                        {eventHasPendingReminder(msg.id) && (
+                          <span className="w-2 h-2 rounded-full bg-destructive flex-shrink-0" />
+                        )}
+                      </h3>
                       {msg.is_mandatory ? (
                         <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 border border-amber-200 shrink-0">
                           Obbligatorio

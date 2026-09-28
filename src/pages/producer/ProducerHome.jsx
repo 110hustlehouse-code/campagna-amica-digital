@@ -8,7 +8,7 @@ import { getOrdersByCompany } from '@/api/orders';
 import { getMyNotifications, segnaLetta } from '@/api/notifications';
 import { getReviews } from '@/api/reviews';
 import { isPreferito } from '@/api/favorites';
-import { getAllMarketEvents, getAssignmentsByCompany } from '@/api/events';
+import { getAllMarketEvents, getAssignmentsByCompany, getRemindersByCompany, getMyRsvps } from '@/api/events';
 import { getMarkets } from '@/api/markets';
 import { useAuth } from '@/lib/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
@@ -80,6 +80,24 @@ export default function ProducerHome() {
     queryKey: ['my-favorites', myCompany?.id],
     queryFn: () => isPreferito({ company_id: myCompany.id }).then(f => (f ? [f] : [])),
     enabled: !!myCompany?.id,
+  });
+
+  const { data: myReminders = [] } = useQuery({
+    queryKey: ['event-reminders', myCompany?.id],
+    queryFn: () => getRemindersByCompany(myCompany.id),
+    enabled: !!myCompany?.id,
+  });
+  const { data: myRsvps = [] } = useQuery({
+    queryKey: ['my-rsvps', myCompany?.id],
+    queryFn: () => getMyRsvps(myCompany.id),
+    enabled: !!myCompany?.id,
+  });
+  const rsvpStatusByEvent = Object.fromEntries(myRsvps.map(r => [r.message_id, r.status]));
+  // Sollecito ancora "attivo" solo se il produttore non ha ancora risposto
+  // a quell'evento — appena risponde, la condizione si aggiorna da sola.
+  const hasPendingReminder = myReminders.some(r => {
+    const status = rsvpStatusByEvent[r.event_id];
+    return status !== 'accepted' && status !== 'declined';
   });
 
   const { data: marketEvents = [] } = useQuery({
@@ -272,7 +290,10 @@ export default function ProducerHome() {
               </div>
             </Link>
             <Link to="/produttore/mercati" className="block">
-              <div className="bg-card rounded-2xl border border-border/40 p-4 flex flex-col gap-2 hover:shadow-md hover:border-primary/30 transition-all h-full">
+              <div className="relative bg-card rounded-2xl border border-border/40 p-4 flex flex-col gap-2 hover:shadow-md hover:border-primary/30 transition-all h-full">
+                {hasPendingReminder && (
+                  <span className="absolute top-3 right-3 w-2.5 h-2.5 rounded-full bg-destructive" />
+                )}
                 <div className="w-10 h-10 rounded-xl bg-secondary/15 flex items-center justify-center">
                   <Calendar className="w-5 h-5 text-secondary-foreground opacity-70" />
                 </div>
