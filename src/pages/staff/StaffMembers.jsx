@@ -55,6 +55,7 @@ export default function StaffMembers() {
   });
   const myMarketId = myStaffMember?.market_id || '';
   const myMarketName = markets.find(m => m.id === myMarketId)?.name || '';
+  const isMarketManager = myStaffMember?.position === 'market_manager';
 
   const openNewDialog = () => {
     setFormData({ market_id: myMarketId, email: '', full_name: '', phone: '', position: 'market_manager', is_active: true });
@@ -141,9 +142,11 @@ export default function StaffMembers() {
             <h1 className="font-heading text-4xl font-bold text-white drop-shadow-lg">Team staff</h1>
             <p className="text-white/80 text-sm mt-1">Cerca, modifica e gestisci i membri del team</p>
           </div>
-          <Button onClick={openNewDialog} className="rounded-xl gap-2 h-11 shrink-0">
-            <Plus className="w-4 h-4" /> Nuovo
-          </Button>
+          {isMarketManager && (
+            <Button onClick={openNewDialog} className="rounded-xl gap-2 h-11 shrink-0">
+              <Plus className="w-4 h-4" /> Nuovo
+            </Button>
+          )}
         </div>
       </div>
 
@@ -182,9 +185,11 @@ export default function StaffMembers() {
               ? <p>Nessun membro trovato per "<strong>{searchQuery}</strong>"</p>
               : <div>
                   <p className="text-lg font-semibold text-foreground mb-4">Nessuno staff registrato</p>
-                  <Button onClick={openNewDialog} className="gap-2">
-                    <Plus className="w-4 h-4" /> Aggiungi Staff
-                  </Button>
+                  {isMarketManager && (
+                    <Button onClick={openNewDialog} className="gap-2">
+                      <Plus className="w-4 h-4" /> Aggiungi Staff
+                    </Button>
+                  )}
                 </div>
             }
           </div>
@@ -239,25 +244,31 @@ export default function StaffMembers() {
                       {member.phone && (
                         <span className="text-xs text-muted-foreground">📞 {member.phone}</span>
                       )}
-                      <div className="flex gap-2 ml-auto">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={(e) => { e.stopPropagation(); handleEdit(member); }}
-                          className="gap-1.5 text-xs"
-                        >
-                          <Edit2 className="w-3 h-3" /> Modifica
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(member.id); }}
-                          disabled={deleteMutation.isPending}
-                          className="gap-1.5 text-xs text-destructive border-destructive/30 hover:bg-destructive/5"
-                        >
-                          <Trash2 className="w-3 h-3" /> Elimina
-                        </Button>
-                      </div>
+                      {isMarketManager ? (
+                        <div className="flex gap-2 ml-auto">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => { e.stopPropagation(); handleEdit(member); }}
+                            className="gap-1.5 text-xs"
+                          >
+                            <Edit2 className="w-3 h-3" /> Modifica
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(member.id); }}
+                            disabled={deleteMutation.isPending}
+                            className="gap-1.5 text-xs text-destructive border-destructive/30 hover:bg-destructive/5"
+                          >
+                            <Trash2 className="w-3 h-3" /> Elimina
+                          </Button>
+                        </div>
+                      ) : (
+                        <span className="ml-auto text-[11px] text-muted-foreground italic">
+                          Solo il responsabile mercato può modificare il team
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>
