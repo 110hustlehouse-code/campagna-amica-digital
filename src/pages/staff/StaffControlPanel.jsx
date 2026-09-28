@@ -270,7 +270,7 @@ export default function StaffControlPanel() {
           />
         )}
         {tab === 'stagionale' && <SeasonalControlSection marketId={marketId} companies={companies} />}
-        {tab === 'affitti' && <StallRentals />}
+        {tab === 'affitti' && <StallRentals embedded />}
       </div>
     </div>
   );
