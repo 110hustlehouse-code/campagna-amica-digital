@@ -7,10 +7,12 @@ import { getCompaniesByMarket } from '@/api/companies';
 import { useAuth } from '@/lib/AuthContext';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
-import { AlertTriangle, CheckCircle, Building2, ArrowLeft } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Building2, ArrowLeft, Download, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
+import { exportRowsToPdf, exportRowsToExcel } from '@/lib/reportExport';
+import { ETICHETTE_STATO } from '@/api/absences';
 
 export default function AbsenceCalendar() {
   const { toast } = useToast();
@@ -60,6 +62,41 @@ export default function AbsenceCalendar() {
 
   const getCompany = (id) => companies.find(c => c.id === id);
 
+  const buildExportRows = () => absences
+    .slice()
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .map(a => ({
+      azienda: getCompany(a.company_id)?.name || 'Azienda sconosciuta',
+      data: a.created_at ? format(new Date(a.created_at), 'dd/MM/yyyy HH:mm', { locale: it }) : '—',
+      stato: ETICHETTE_STATO[a.status] || a.status,
+      motivo: a.reason || '—',
+    }));
+
+  const exportColumns = [
+    { key: 'azienda', label: 'Azienda' },
+    { key: 'data', label: 'Data' },
+    { key: 'stato', label: 'Stato' },
+    { key: 'motivo', label: 'Motivo' },
+  ];
+
+  const handleExportPdf = () => {
+    exportRowsToPdf({
+      title: 'Cronologia Presenze/Assenze',
+      columns: exportColumns,
+      rows: buildExportRows(),
+      filenamePrefix: 'cronologia-assenze',
+    });
+  };
+
+  const handleExportExcel = () => {
+    exportRowsToExcel({
+      sheetName: 'Assenze',
+      columns: exportColumns,
+      rows: buildExportRows(),
+      filenamePrefix: 'cronologia-assenze',
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="bg-gradient-to-r from-primary via-primary/95 to-secondary px-6 pt-12 pb-8 shadow-lg">
@@ -71,13 +108,25 @@ export default function AbsenceCalendar() {
             <span className="text-primary font-bold text-xs tracking-widest uppercase">📅 Calendario Assenze</span>
           </div>
         </div>
-        <h1 className="font-heading text-3xl font-bold text-white drop-shadow-lg">Assenze Produttori</h1>
-        <p className="text-white/80 text-sm mt-1">Assenze segnalate dai produttori del tuo mercato</p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className="font-heading text-3xl font-bold text-white drop-shadow-lg">Assenze Produttori</h1>
+            <p className="text-white/80 text-sm mt-1">Assenze segnalate dai produttori del tuo mercato</p>
+          </div>
+          <div className="flex gap-2 flex-shrink-0">
+            <Button variant="outline" size="sm" onClick={handleExportExcel} disabled={absences.length === 0} className="gap-1.5 bg-white/20 text-white border-white/40 hover:bg-white/30">
+              <Download className="w-4 h-4" /> Excel
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleExportPdf} disabled={absences.length === 0} className="gap-1.5 bg-white/20 text-white border-white/40 hover:bg-white/30">
+              <FileText className="w-4 h-4" /> PDF
+            </Button>
+          </div>
+        </div>
       </div>
 
       <div className="px-6 py-6 space-y-4">
         {/* Toolbar */}
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-2">
           <button
             onClick={() => setShowHistory(h => !h)}
             className={`text-sm font-medium px-4 py-2 rounded-xl border transition-colors ${
